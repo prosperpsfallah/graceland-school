@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS Teacher - My Students">
+  <title>My Students | GRACAIS</title>
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="module">
+    import {
+      requireUser,
+      setupLogout,
+      esc
+    } from "../assets/app.js";
+
+    const ALLOWED_ROLES = ["teacher", "instructor"];
+
+    document.getElementById("app").innerHTML = `
+      <div class="portal-shell">
+        <aside id="sidebar" class="sidebar" data-sidebar>
+          <div class="sidebar-brand">
+            <a href="./dashboard.html" class="brand-link">
+              <img src="../logo.png" alt="GRACAIS logo" class="sidebar-logo">
+              <span class="brand-text">
+                <strong>GRACAIS</strong>
+                <small>Teacher Portal</small>
+              </span>
+            </a>
+            <button type="button" id="sidebarClose" class="sidebar-close" aria-label="Close navigation">×</button>
+          </div>
+
+          <div class="sidebar-content">
+            <div class="sidebar-group">
+              <p class="sidebar-group-title">TEACHING</p>
+              <nav class="sidebar-nav">
+                <a class="sidebar-link" href="./dashboard.html"><span class="sidebar-icon">▦</span><span>Dashboard</span></a>
+                <a class="sidebar-link active" href="./my-students.html" aria-current="page"><span class="sidebar-icon">♙</span><span>My Students</span></a>
+                <a class="sidebar-link" href="./grades.html"><span class="sidebar-icon">▥</span><span>Grades</span></a>
+                <a class="sidebar-link" href="./attendance.html"><span class="sidebar-icon">✓</span><span>Attendance</span></a>
+                <a class="sidebar-link" href="./schedule.html"><span class="sidebar-icon">◷</span><span>My Schedule</span></a>
+                <a class="sidebar-link" href="./announcements.html"><span class="sidebar-icon">◉</span><span>Announcements</span></a>
+              </nav>
+            </div>
+            <div class="sidebar-group">
+              <p class="sidebar-group-title">ACCOUNT</p>
+              <nav class="sidebar-nav">
+                <a class="sidebar-link" href="./password.html"><span class="sidebar-icon">◇</span><span>Change Password</span></a>
+              </nav>
+            </div>
+          </div>
+
+          <div class="sidebar-footer">
+            <div class="sidebar-school-name">Graceland Academy International School of Excellence</div>
+            <div class="sidebar-role">Teacher</div>
+          </div>
+        </aside>
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <main class="main-area">
+          <header class="topbar">
+            <button type="button" id="menuToggle" class="menu-toggle" data-menu-toggle aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">☰</button>
+            <div class="topbar-heading">
+              <h1>My Students</h1>
+              <p>GRACAIS Academic Portal</p>
+            </div>
+            <button type="button" class="logout-button" data-logout>
+              <span aria-hidden="true">⇥</span><span>Sign Out</span>
+            </button>
+          </header>
+
+          <section id="pageContent" class="page-content">
+            <section class="card"><p>Verifying your teacher account...</p></section>
+          </section>
+        </main>
+      </div>
+    `;
+
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+    const toggle = document.getElementById("menuToggle");
+    const close = document.getElementById("sidebarClose");
+
+    function closeSidebar() {
+      sidebar.classList.remove("open");
+      overlay.classList.remove("visible");
+      toggle.setAttribute("aria-expanded", "false");
+    }
+
+    toggle.addEventListener("click", () => {
+      sidebar.classList.add("open");
+      overlay.classList.add("visible");
+      toggle.setAttribute("aria-expanded", "true");
+    });
+
+    close.addEventListener("click", closeSidebar);
+    overlay.addEventListener("click", closeSidebar);
+
+    sidebar.querySelectorAll("a").forEach(link => {
+      link.addEventListener("click", closeSidebar);
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeSidebar();
+    });
+
+    setupLogout();
+
+    const result = await requireUser(ALLOWED_ROLES);
+
+    if (result) {
+      document.getElementById("pageContent").innerHTML = `
+        <section class="page-heading">
+          <h2>My Assigned Students</h2>
+          <p>View students connected to your teaching assignments.</p>
+        </section>
+
+        <section class="card">
+          <h3>Student List</h3>
+          <p>
+            Student records will appear here when the teacher
+            assignment and enrollment database queries are connected.
+          </p>
+          <p>
+            No sample students are being displayed.
+          </p>
+        </section>
+
+        <section class="card">
+          <h3>Student Information</h3>
+          <p>
+            The connected list is intended to show student ID,
+            student name, class, and enrollment status where
+            authorized.
+          </p>
+          <p>
+            Access must be restricted by Supabase policies to
+            the teacher's assigned classes.
+          </p>
+        </section>
+      `;
+    }
+  </script>
+</body>
+</html>
