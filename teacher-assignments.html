@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS Teacher Assignments">
+  <title>Teacher Assignments | GRACAIS E-Portal</title>
+
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+
+<body>
+  <div id="app">
+    <main class="page-content">
+      <p>Loading teacher assignments...</p>
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      setupLogout
+    } from "../assets/app.js";
+
+    import {
+      initLayout
+    } from "../assets/layout.js";
+
+    const ALLOWED_ROLES = [
+      "super_admin",
+      "principal",
+      "administration",
+      "registrar"
+    ];
+
+    async function initTeacherAssignmentsPage() {
+      initLayout(
+        "super_admin",
+        "teacher-assignments.html",
+        "Teacher Assignments"
+      );
+
+      setupLogout();
+
+      const auth = await requireUser(ALLOWED_ROLES);
+      if (!auth) return;
+
+      const pageContent = document.getElementById("pageContent");
+      if (!pageContent) return;
+
+      pageContent.innerHTML = `
+        <section class="page-heading">
+          <div>
+            <h1>Teacher Assignments</h1>
+            <p>
+              Review which teachers are assigned to classes
+              and subjects at GRACAIS.
+            </p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h2>Assignment Records</h2>
+              <p>
+                Assignment records will be loaded from the
+                connected database.
+              </p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="assignmentSearch">
+              Search assignments
+            </label>
+            <input
+              type="search"
+              id="assignmentSearch"
+              placeholder="Search by teacher, class, or subject..."
+              autocomplete="off"
+              disabled
+            >
+            <small>
+              Search will be enabled after database integration.
+            </small>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Teacher ID</th>
+                  <th>Teacher Name</th>
+                  <th>Class</th>
+                  <th>Subject</th>
+                  <th>Academic Year</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="5">
+                    <div class="empty-state">
+                      <h3>No assignment records loaded</h3>
+                      <p>
+                        Real teacher assignments will appear
+                        after the database is connected.
+                        No demo assignments are being created.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `;
+    }
+
+    initTeacherAssignmentsPage().catch(error => {
+      console.error("Teacher assignments error:", error);
+
+      const app = document.getElementById("app");
+      if (app) {
+        app.innerHTML = `
+          <main class="page-content">
+            <section class="card">
+              <h2>Unable to load Teacher Assignments</h2>
+              <p>
+                Check the shared portal files and
+                authentication configuration.
+              </p>
+            </section>
+          </main>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
