@@ -2,36 +2,70 @@
 // GRACAIS E-PORTAL
 // SUPABASE CONNECTION
 // ============================================
-// Replace these two values with credentials
-// from your NEW Supabase project.
-const SUPABASE_URL = "YOUR_NEW_SUPABASE_PROJECT_URL";
-const SUPABASE_ANON_KEY = "YOUR_NEW_SUPABASE_PUBLISHABLE_OR_ANON_KEY";
+
+import { createClient } from
+  "https://esm.sh/@supabase/supabase-js@2";
+
 // ============================================
-// INITIALIZE SUPABASE
+// EXISTING SUPABASE PROJECT
 // ============================================
+
+const SUPABASE_URL =
+  "https://zrrfiieqnjeizwmxkffp.supabase.co";
+
+// IMPORTANT:
+// Replace the placeholder below with your
+// project's actual publishable/anon key.
+// Never put a service_role or secret key here.
+
+const SUPABASE_ANON_KEY =
+  "PASTE_YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY_HERE";
+
+// ============================================
+// INITIALIZE CONNECTION
+// ============================================
+
 let supabase = null;
 let supabaseReady = false;
+
 try {
+  const keyIsConfigured =
+    SUPABASE_ANON_KEY.length > 20 &&
+    !SUPABASE_ANON_KEY.includes("PASTE_YOUR_");
+
   if (
     SUPABASE_URL.startsWith("https://") &&
-    !SUPABASE_URL.includes("YOUR_NEW_") &&
-    SUPABASE_ANON_KEY &&
-    !SUPABASE_ANON_KEY.includes("YOUR_NEW_")
+    keyIsConfigured
   ) {
-    // The Supabase client must be installed or imported
-    // using the method selected for this project.
-    console.info("GRACAIS Supabase credentials are configured.");
+    supabase = createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    supabaseReady = true;
+
+    console.info(
+      "GRACAIS Supabase client initialized."
+    );
   } else {
     console.warn(
-      "GRACAIS Supabase is not configured yet."
+      "GRACAIS Supabase needs its publishable/anon key."
     );
   }
 } catch (error) {
   console.error(
-    "GRACAIS Supabase initialization error:",
+    "GRACAIS Supabase initialization failed:",
     error
   );
+
+  supabase = null;
+  supabaseReady = false;
 }
+
+// ============================================
+// EXPORT FOR PORTAL FILES
+// ============================================
+
 export {
   supabase,
   supabaseReady
