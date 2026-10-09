@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS E-Portal Audit Logs">
+  <title>Audit Logs | GRACAIS E-Portal</title>
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div id="portalLayout"></div>
+  <script type="module">
+    import {
+      initLayout,
+      requireUser
+    } from "../assets/layout.js";
+    import {
+      setupLogout
+    } from "../assets/app.js";
+    const ALLOWED_ROLES = [
+      "super_admin",
+      "principal",
+      "administration"
+    ];
+    initLayout(
+      "super_admin",
+      "audit-logs.html",
+      "Audit Logs"
+    );
+    setupLogout();
+    const user = await requireUser(ALLOWED_ROLES);
+    if (user) {
+      document.getElementById("pageContent").innerHTML = `
+        <section class="page-heading">
+          <h2>System Activity History</h2>
+          <p>
+            Review important actions performed by authorized
+            users in the GRACAIS E-Portal.
+          </p>
+        </section>
+        <section class="card">
+          <h3>Audit Log Records</h3>
+          <p>
+            No activity records are displayed yet.
+            Records will appear after the audit-log database
+            is connected and activity tracking is implemented.
+          </p>
+        </section>
+        <section class="card">
+          <h3>Activities to Track</h3>
+          <ul>
+            <li>Grade creation and changes</li>
+            <li>Grade approval decisions</li>
+            <li>Student and teacher account changes</li>
+            <li>Academic record updates</li>
+            <li>Important account and security events</li>
+          </ul>
+        </section>
+      `;
+    }
+  </script>
+</body>
+</html>
