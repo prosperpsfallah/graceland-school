@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS Student Enrollment Records">
+  <title>Student Enrollment | GRACAIS E-Portal</title>
+
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+
+<body>
+  <div id="app">
+    <main class="page-content">
+      <p>Loading enrollment records...</p>
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      setupLogout
+    } from "../assets/app.js";
+
+    import {
+      initLayout
+    } from "../assets/layout.js";
+
+    const ALLOWED_ROLES = [
+      "super_admin",
+      "principal",
+      "administration",
+      "registrar"
+    ];
+
+    async function initEnrollmentPage() {
+      initLayout(
+        "super_admin",
+        "student-enrollment.html",
+        "Student Enrollment"
+      );
+
+      setupLogout();
+
+      const auth = await requireUser(ALLOWED_ROLES);
+      if (!auth) return;
+
+      const pageContent = document.getElementById("pageContent");
+      if (!pageContent) return;
+
+      pageContent.innerHTML = `
+        <section class="page-heading">
+          <div>
+            <h1>Student Enrollment Records</h1>
+            <p>
+              Review student enrollment and class placement
+              records for GRACAIS.
+            </p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h2>Enrollment Records</h2>
+              <p>
+                Existing enrollment records will be loaded
+                from the real school database.
+              </p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="enrollmentSearch">
+              Search enrollment records
+            </label>
+            <input
+              type="search"
+              id="enrollmentSearch"
+              placeholder="Search by student ID or name..."
+              autocomplete="off"
+              disabled
+            >
+            <small>
+              Search will be enabled after database integration.
+            </small>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Student ID</th>
+                  <th>Student Name</th>
+                  <th>Class</th>
+                  <th>Academic Year</th>
+                  <th>Enrollment Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="5">
+                    <div class="empty-state">
+                      <h3>No enrollment records loaded</h3>
+                      <p>
+                        Actual enrollment records will appear
+                        after database integration. No fake
+                        student records are being created.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `;
+    }
+
+    initEnrollmentPage().catch(error => {
+      console.error("Enrollment page error:", error);
+
+      const app = document.getElementById("app");
+      if (app) {
+        app.innerHTML = `
+          <main class="page-content">
+            <section class="card">
+              <h2>Unable to load Enrollment Records</h2>
+              <p>
+                Check the shared portal files and
+                authentication configuration.
+              </p>
+            </section>
+          </main>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
