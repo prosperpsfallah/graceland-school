@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS E-Portal User Management">
+  <title>User Management | GRACAIS E-Portal</title>
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div id="portalLayout"></div>
+  <script type="module">
+    import {
+      initLayout,
+      requireUser
+    } from "../assets/layout.js";
+    import {
+      setupLogout
+    } from "../assets/app.js";
+    const ALLOWED_ROLES = [
+      "super_admin",
+      "principal",
+      "administration"
+    ];
+    initLayout(
+      "super_admin",
+      "users.html",
+      "User Management"
+    );
+    setupLogout();
+    const user = await requireUser(ALLOWED_ROLES);
+    if (user) {
+      document.getElementById("pageContent").innerHTML = `
+        <section class="page-heading">
+          <h2>Portal User Accounts</h2>
+          <p>
+            Review authorized accounts and manage access
+            according to each user's assigned role.
+          </p>
+        </section>
+        <section class="card">
+          <h3>Registered Portal Users</h3>
+          <p>
+            No user records are displayed yet.
+            Actual accounts will appear after the database
+            connection and user-listing functions are completed.
+          </p>
+        </section>
+        <section class="card">
+          <h3>Available Account Roles</h3>
+          <ul>
+            <li>Super Administrator</li>
+            <li>Principal</li>
+            <li>Administration</li>
+            <li>Registrar</li>
+            <li>Teacher / Instructor</li>
+            <li>Student</li>
+          </ul>
+        </section>
+        <section class="card">
+          <h3>Account Management</h3>
+          <p>
+            Account creation, role changes, account activation,
+            and access restrictions will be connected to the
+            secured authentication system during integration.
+          </p>
+          <p>
+            No accounts can be created or modified from this
+            page until those functions are implemented.
+          </p>
+        </section>
+      `;
+    }
+  </script>
+</body>
+</html>
