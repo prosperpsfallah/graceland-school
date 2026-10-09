@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS Academic Documents">
+  <title>Documents | GRACAIS E-Portal</title>
+
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+
+<body>
+  <div id="app">
+    <main class="page-content">
+      <p>Loading academic documents...</p>
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      setupLogout
+    } from "../assets/app.js";
+
+    import {
+      initLayout
+    } from "../assets/layout.js";
+
+    const ALLOWED_ROLES = [
+      "super_admin",
+      "principal",
+      "administration",
+      "registrar"
+    ];
+
+    async function initDocumentsPage() {
+      initLayout(
+        "super_admin",
+        "documents.html",
+        "Academic Documents"
+      );
+
+      setupLogout();
+
+      const auth = await requireUser(ALLOWED_ROLES);
+      if (!auth) return;
+
+      const pageContent = document.getElementById("pageContent");
+      if (!pageContent) return;
+
+      pageContent.innerHTML = `
+        <section class="page-heading">
+          <div>
+            <h1>Academic Documents</h1>
+            <p>
+              Access authorized school documents for
+              Graceland Academy International School
+              of Excellence (GRACAIS).
+            </p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h2>Document Library</h2>
+              <p>
+                Authorized documents will be loaded from
+                the connected database and secure storage.
+              </p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="documentSearch">Search documents</label>
+            <input
+              type="search"
+              id="documentSearch"
+              placeholder="Search by document name or type..."
+              autocomplete="off"
+              disabled
+            >
+            <small>
+              Document search will be enabled after integration.
+            </small>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Document Name</th>
+                  <th>Document Type</th>
+                  <th>Related Class</th>
+                  <th>Date Added</th>
+                  <th>Access</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="5">
+                    <div class="empty-state">
+                      <h3>No documents loaded</h3>
+                      <p>
+                        Actual documents will appear after secure
+                        storage and database integration.
+                        No sample documents are being created.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `;
+    }
+
+    initDocumentsPage().catch(error => {
+      console.error("Academic documents error:", error);
+
+      const app = document.getElementById("app");
+      if (app) {
+        app.innerHTML = `
+          <main class="page-content">
+            <section class="card">
+              <h2>Unable to load Academic Documents</h2>
+              <p>
+                Check the shared portal files and
+                authentication configuration.
+              </p>
+            </section>
+          </main>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
