@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS Academic Grades">
+  <title>Grades | GRACAIS E-Portal</title>
+
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+
+<body>
+  <div id="app">
+    <main class="page-content">
+      <p>Loading academic grades...</p>
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      setupLogout
+    } from "../assets/app.js";
+
+    import {
+      initLayout
+    } from "../assets/layout.js";
+
+    const ALLOWED_ROLES = [
+      "super_admin",
+      "principal",
+      "administration",
+      "registrar"
+    ];
+
+    async function initGradesPage() {
+      initLayout(
+        "super_admin",
+        "grades.html",
+        "Academic Grades"
+      );
+
+      setupLogout();
+
+      const auth = await requireUser(ALLOWED_ROLES);
+      if (!auth) return;
+
+      const pageContent = document.getElementById("pageContent");
+      if (!pageContent) return;
+
+      pageContent.innerHTML = `
+        <section class="page-heading">
+          <div>
+            <h1>Academic Grades</h1>
+            <p>
+              Review student results and monitor grade records
+              for Graceland Academy International School
+              of Excellence (GRACAIS).
+            </p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h2>Grade Records</h2>
+              <p>
+                Actual grades will load from the connected
+                database. This page does not create or change grades.
+              </p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="gradeSearch">Search grade records</label>
+            <input
+              type="search"
+              id="gradeSearch"
+              placeholder="Search by student ID, class, or subject..."
+              autocomplete="off"
+              disabled
+            >
+            <small>
+              Search will be enabled after database integration.
+            </small>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Student ID</th>
+                  <th>Student Name</th>
+                  <th>Class</th>
+                  <th>Subject</th>
+                  <th>Grading Period</th>
+                  <th>Score</th>
+                  <th>Grade</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td colspan="7">
+                    <div class="empty-state">
+                      <h3>No grade records loaded</h3>
+                      <p>
+                        Student results will appear here after
+                        the real database is connected.
+                        No demo grades are being inserted.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `;
+    }
+
+    initGradesPage().catch(error => {
+      console.error("Academic grades error:", error);
+
+      const app = document.getElementById("app");
+      if (app) {
+        app.innerHTML = `
+          <main class="page-content">
+            <section class="card">
+              <h2>Unable to load Academic Grades</h2>
+              <p>
+                Check the shared portal files and
+                authentication configuration.
+              </p>
+            </section>
+          </main>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
