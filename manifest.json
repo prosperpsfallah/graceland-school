@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "Graceland Academy International School of Excellence",
+  "short_name": "GRACAIS",
+  "description": "Academic Management Portal for Graceland Academy International School of Excellence.",
+  "lang": "en",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F9FD",
+  "theme_color": "#063B7A",
+  "icons": [
+    {
+      "src": "./logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
