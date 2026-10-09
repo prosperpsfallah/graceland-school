@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS Teacher Dashboard">
+  <title>Teacher Dashboard | GRACAIS</title>
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="module">
+    import {
+      requireUser,
+      setupLogout,
+      esc
+    } from "../assets/app.js";
+
+    const ALLOWED_ROLES = [
+      "teacher",
+      "instructor"
+    ];
+
+    const app = document.getElementById("app");
+
+    function showMessage(message) {
+      const content = document.getElementById("pageContent");
+
+      if (content) {
+        content.innerHTML = `
+          <section class="card">
+            <h2>Teacher Dashboard</h2>
+            <p>${esc(message)}</p>
+          </section>
+        `;
+      }
+    }
+
+    // Build the page shell.
+    app.innerHTML = `
+      <div class="portal-shell">
+        <aside id="sidebar" class="sidebar" data-sidebar>
+          <div class="sidebar-brand">
+            <a href="./dashboard.html" class="brand-link">
+              <img
+                src="../logo.png"
+                alt="GRACAIS logo"
+                class="sidebar-logo"
+              >
+              <span class="brand-text">
+                <strong>GRACAIS</strong>
+                <small>Teacher Portal</small>
+              </span>
+            </a>
+
+            <button
+              type="button"
+              id="sidebarClose"
+              class="sidebar-close"
+              aria-label="Close navigation"
+            >×</button>
+          </div>
+
+          <div class="sidebar-content">
+            <div class="sidebar-group">
+              <p class="sidebar-group-title">TEACHING</p>
+              <nav class="sidebar-nav">
+                <a class="sidebar-link active" href="./dashboard.html">
+                  <span class="sidebar-icon">▦</span>
+                  <span>Dashboard</span>
+                </a>
+                <a class="sidebar-link" href="./my-students.html">
+                  <span class="sidebar-icon">♙</span>
+                  <span>My Students</span>
+                </a>
+                <a class="sidebar-link" href="./grades.html">
+                  <span class="sidebar-icon">▥</span>
+                  <span>Grades</span>
+                </a>
+                <a class="sidebar-link" href="./attendance.html">
+                  <span class="sidebar-icon">✓</span>
+                  <span>Attendance</span>
+                </a>
+                <a class="sidebar-link" href="./schedule.html">
+                  <span class="sidebar-icon">◷</span>
+                  <span>My Schedule</span>
+                </a>
+                <a class="sidebar-link" href="./announcements.html">
+                  <span class="sidebar-icon">◉</span>
+                  <span>Announcements</span>
+                </a>
+              </nav>
+            </div>
+
+            <div class="sidebar-group">
+              <p class="sidebar-group-title">ACCOUNT</p>
+              <nav class="sidebar-nav">
+                <a class="sidebar-link" href="./password.html">
+                  <span class="sidebar-icon">◇</span>
+                  <span>Change Password</span>
+                </a>
+              </nav>
+            </div>
+          </div>
+
+          <div class="sidebar-footer">
+            <div class="sidebar-school-name">
+              Graceland Academy International School of Excellence
+            </div>
+            <div class="sidebar-role">Teacher</div>
+          </div>
+        </aside>
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <main class="main-area">
+          <header class="topbar">
+            <button
+              type="button"
+              id="menuToggle"
+              class="menu-toggle"
+              data-menu-toggle
+              aria-label="Open navigation"
+              aria-expanded="false"
+              aria-controls="sidebar"
+            >☰</button>
+
+            <div class="topbar-heading">
+              <h1>Teacher Dashboard</h1>
+              <p>GRACAIS Academic Portal</p>
+            </div>
+
+            <button
+              type="button"
+              class="logout-button"
+              data-logout
+            >
+              <span aria-hidden="true">⇥</span>
+              <span>Sign Out</span>
+            </button>
+          </header>
+
+          <section id="pageContent" class="page-content">
+            <section class="card">
+              <p>Verifying your teacher account...</p>
+            </section>
+          </section>
+        </main>
+      </div>
+    `;
+
+    // Mobile navigation.
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+    const toggle = document.getElementById("menuToggle");
+    const close = document.getElementById("sidebarClose");
+
+    function closeSidebar() {
+      sidebar.classList.remove("open");
+      overlay.classList.remove("visible");
+      toggle.setAttribute("aria-expanded", "false");
+    }
+
+    function openSidebar() {
+      sidebar.classList.add("open");
+      overlay.classList.add("visible");
+      toggle.setAttribute("aria-expanded", "true");
+    }
+
+    toggle.addEventListener("click", openSidebar);
+    close.addEventListener("click", closeSidebar);
+    overlay.addEventListener("click", closeSidebar);
+
+    sidebar.querySelectorAll("a").forEach(link => {
+      link.addEventListener("click", closeSidebar);
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeSidebar();
+    });
+
+    setupLogout();
+
+    // Require a real authenticated teacher account.
+    const result = await requireUser(ALLOWED_ROLES);
+
+    if (result) {
+      const profile = result.profile;
+      const fullName = [
+        profile.first_name,
+        profile.last_name
+      ].filter(Boolean).join(" ");
+
+      document.getElementById("pageContent").innerHTML = `
+        <section class="page-heading">
+          <h2>Welcome${fullName ? ", " + esc(fullName) : ""}!</h2>
+          <p>
+            Manage your assigned students, grades, attendance,
+            and teaching schedule from one place.
+          </p>
+        </section>
+
+        <section class="card">
+          <h3>My Teaching Workspace</h3>
+          <p>
+            Select a section below to continue your academic work.
+          </p>
+
+          <div class="dashboard-grid">
+            <a class="card" href="./my-students.html">
+              <h3>My Students</h3>
+              <p>View students assigned to your classes.</p>
+            </a>
+
+            <a class="card" href="./grades.html">
+              <h3>Grade Management</h3>
+              <p>Enter and review grades for Grades 4–12.</p>
+            </a>
+
+            <a class="card" href="./attendance.html">
+              <h3>Attendance</h3>
+              <p>Record class attendance and print attendance sheets.</p>
+            </a>
+
+            <a class="card" href="./schedule.html">
+              <h3>My Schedule</h3>
+              <p>Review your assigned timetable.</p>
+            </a>
+
+            <a class="card" href="./announcements.html">
+              <h3>Announcements</h3>
+              <p>Read school announcements.</p>
+            </a>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Academic Summary</h3>
+          <p>
+            Your assigned classes, student totals, pending grade
+            submissions, and attendance summaries will appear
+            here after the database queries are implemented.
+          </p>
+        </section>
+      `;
+
+      console.info("GRACAIS teacher account verified.");
+    }
+  </script>
+</body>
+</html>
