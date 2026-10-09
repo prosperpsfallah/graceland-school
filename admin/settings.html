@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS E-Portal System Settings">
+  <title>System Settings | GRACAIS E-Portal</title>
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div id="portalLayout"></div>
+
+  <script type="module">
+    import {
+      initLayout,
+      requireUser
+    } from "../assets/layout.js";
+
+    import {
+      setupLogout
+    } from "../assets/app.js";
+
+    const ALLOWED_ROLES = [
+      "super_admin",
+      "principal",
+      "administration"
+    ];
+
+    initLayout(
+      "super_admin",
+      "settings.html",
+      "System Settings"
+    );
+
+    setupLogout();
+
+    const user = await requireUser(ALLOWED_ROLES);
+
+    if (user) {
+      document.getElementById("pageContent").innerHTML = `
+        <section class="page-heading">
+          <h2>Portal Configuration</h2>
+          <p>
+            Review the school identity and academic settings
+            used by the GRACAIS E-Portal.
+          </p>
+        </section>
+
+        <section class="card">
+          <h3>School Information</h3>
+
+          <div class="form-group">
+            <label for="schoolName">Official School Name</label>
+            <input
+              id="schoolName"
+              type="text"
+              value="Graceland Academy International School of Excellence"
+              readonly
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="schoolAbbreviation">Abbreviation</label>
+            <input
+              id="schoolAbbreviation"
+              type="text"
+              value="GRACAIS"
+              readonly
+            >
+          </div>
+
+          <p>
+            These values are displayed for reference.
+            Editing and saving school information will be
+            implemented through the secured settings system.
+          </p>
+        </section>
+
+        <section class="card">
+          <h3>Academic Configuration</h3>
+          <ul>
+            <li>Manage academic years.</li>
+            <li>Maintain the school's class structure.</li>
+            <li>Configure academic grading periods.</li>
+            <li>Apply the approved grading rules.</li>
+          </ul>
+          <p>
+            Academic records must be preserved across school
+            years. Changes will require database integration
+            and appropriate permissions.
+          </p>
+        </section>
+
+        <section class="card">
+          <h3>Security and Access</h3>
+          <ul>
+            <li>Use authorized user accounts only.</li>
+            <li>Restrict pages according to assigned roles.</li>
+            <li>Protect student academic records.</li>
+            <li>Record important administrative actions.</li>
+          </ul>
+          <p>
+            Security settings must be enforced by Supabase
+            authentication and database access policies,
+            not just by the page interface.
+          </p>
+        </section>
+
+        <section class="card">
+          <h3>Portal Features</h3>
+          <p>
+            GRACAIS E-Portal is an academic information system
+            for student records, grades, attendance, schedules,
+            announcements, transcripts, and school documents.
+          </p>
+          <p>
+            Financial transactions, school-fee collection,
+            payment gateways, receipts, and invoicing are
+            not part of this portal.
+          </p>
+        </section>
+      `;
+    }
+  </script>
+</body>
+</html>
