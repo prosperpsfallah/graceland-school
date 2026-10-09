@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS Academic Schedule">
+  <title>Schedule | GRACAIS E-Portal</title>
+
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+
+<body>
+  <div id="app">
+    <main class="page-content">
+      <p>Loading academic schedule...</p>
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      setupLogout
+    } from "../assets/app.js";
+
+    import {
+      initLayout
+    } from "../assets/layout.js";
+
+    const ALLOWED_ROLES = [
+      "super_admin",
+      "principal",
+      "administration",
+      "registrar"
+    ];
+
+    async function initSchedulePage() {
+      initLayout(
+        "super_admin",
+        "schedule.html",
+        "Academic Schedule"
+      );
+
+      setupLogout();
+
+      const auth = await requireUser(ALLOWED_ROLES);
+      if (!auth) return;
+
+      const pageContent = document.getElementById("pageContent");
+      if (!pageContent) return;
+
+      pageContent.innerHTML = `
+        <section class="page-heading">
+          <div>
+            <h1>Academic Schedule</h1>
+            <p>
+              View school timetables and academic schedules
+              for GRACAIS.
+            </p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h2>Schedule Records</h2>
+              <p>
+                Actual timetable information will be loaded
+                from the connected database.
+              </p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="scheduleSearch">
+              Search schedule
+            </label>
+            <input
+              type="search"
+              id="scheduleSearch"
+              placeholder="Search by class, subject, or teacher..."
+              autocomplete="off"
+              disabled
+            >
+            <small>
+              Schedule search will be enabled after database integration.
+            </small>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Class</th>
+                  <th>Subject</th>
+                  <th>Teacher</th>
+                  <th>Start Time</th>
+                  <th>End Time</th>
+                  <th>Room</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="7">
+                    <div class="empty-state">
+                      <h3>No schedule records loaded</h3>
+                      <p>
+                        Real timetable records will appear
+                        after database integration. No sample
+                        timetable is being created.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `;
+    }
+
+    initSchedulePage().catch(error => {
+      console.error("Schedule page error:", error);
+
+      const app = document.getElementById("app");
+      if (app) {
+        app.innerHTML = `
+          <main class="page-content">
+            <section class="card">
+              <h2>Unable to load Academic Schedule</h2>
+              <p>
+                Check the shared portal files and
+                authentication configuration.
+              </p>
+            </section>
+          </main>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
