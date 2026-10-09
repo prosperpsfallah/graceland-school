@@ -26,6 +26,27 @@ export function esc(value) {
 }
 
 // ============================================
+// FIND LOGIN PAGE RELATIVE TO CURRENT PAGE
+// ============================================
+
+function getLoginPath() {
+  const segments = window.location.pathname
+    .split("/")
+    .filter(Boolean);
+
+  // Remove the current filename.
+  const directoryDepth = Math.max(
+    0,
+    segments.length - 1
+  );
+
+  return (
+    "../".repeat(directoryDepth) +
+    "index.html"
+  );
+}
+
+// ============================================
 // REQUIRE AUTHENTICATED USER
 // ============================================
 
@@ -38,7 +59,7 @@ export async function requireUser(
     );
 
     showAccessMessage(
-      "The portal database connection is not configured."
+      "The portal database connection is not configured. Please contact the system administrator."
     );
 
     return null;
@@ -51,7 +72,7 @@ export async function requireUser(
     } = await supabase.auth.getUser();
 
     if (authError || !authData?.user) {
-      window.location.replace("../index.html");
+      window.location.replace(getLoginPath());
       return null;
     }
 
@@ -60,7 +81,9 @@ export async function requireUser(
       error: profileError
     } = await supabase
       .from("user_profiles")
-      .select("id, school_id, first_name, last_name, role, status")
+      .select(
+        "id, school_id, first_name, last_name, role, status"
+      )
       .eq("id", authData.user.id)
       .maybeSingle();
 
@@ -86,8 +109,8 @@ export async function requireUser(
     }
 
     if (
-      profile.status &&
-      profile.status !== "active"
+      String(profile.status || "").toLowerCase() !==
+      "active"
     ) {
       showAccessMessage(
         "Your account is not active. Please contact the administrator."
@@ -130,34 +153,51 @@ export async function requireUser(
 // ============================================
 
 function showAccessMessage(message) {
-  const app = document.getElementById("app");
+  const app =
+    document.getElementById("pageContent") ||
+    document.getElementById("app") ||
+    document.getElementById("portalLayout");
 
-  if (!app) {
-    console.error(message);
-    return;
-  }
+  const safeMessage = esc(message);
 
-  app.innerHTML = `
+  const content = `
     <main style="
-      max-width: 600px;
-      margin: 60px auto;
+      max-width: 650px;
+      margin: 40px auto;
       padding: 24px;
       font-family: Arial, sans-serif;
       text-align: center;
+      background: #FFFFFF;
+      border-radius: 12px;
+      box-shadow: 0 4px 18px rgba(6, 59, 122, 0.08);
     ">
       <h1 style="color: #063B7A;">
         GRACAIS
       </h1>
 
-      <p style="margin-top: 16px;">
-        ${esc(message)}
+      <p style="
+        margin-top: 16px;
+        color: #334155;
+        line-height: 1.6;
+      ">
+        ${safeMessage}
       </p>
 
-      <p style="margin-top: 12px; color: #64748B;">
+      <p style="
+        margin-top: 12px;
+        color: #64748B;
+        font-size: 14px;
+      ">
         Graceland Academy International School of Excellence
       </p>
     </main>
   `;
+
+  if (app) {
+    app.innerHTML = content;
+  } else {
+    document.body.innerHTML = content;
+  }
 }
 
 // ============================================
@@ -167,28 +207,49 @@ function showAccessMessage(message) {
 export async function logout() {
   if (!supabaseReady || !supabase) {
     console.error(
-      "Cannot log out: Supabase is not configured."
+      "Cannot complete logout: Supabase is not configured."
+    );
+
+    showAccessMessage(
+      "Logout could not be completed because the authentication connection is unavailable. Please try again."
     );
 
     return false;
   }
 
-  const {
-    error
-  } = await supabase.auth.signOut();
+  try {
+    const {
+      error
+    } = await supabase.auth.signOut();
 
-  if (error) {
+    if (error) {
+      console.error(
+        "GRACAIS logout failed:",
+        error.message
+      );
+
+      showAccessMessage(
+        "Logout failed. Please try again."
+      );
+
+      return false;
+    }
+
+    window.location.replace(getLoginPath());
+
+    return true;
+  } catch (error) {
     console.error(
-      "GRACAIS logout failed:",
-      error.message
+      "GRACAIS logout error:",
+      error
+    );
+
+    showAccessMessage(
+      "An error occurred while logging out. Please try again."
     );
 
     return false;
   }
-
-  window.location.replace("../index.html");
-
-  return true;
 }
 
 // ============================================
@@ -201,17 +262,26 @@ export function setupLogout() {
   );
 
   buttons.forEach(button => {
-    button.addEventListener("click", async event => {
-      event.preventDefault();
+    if (button.dataset.logoutInitialized === "true") {
+      return;
+    }
 
-      button.disabled = true;
+    button.dataset.logoutInitialized = "true";
 
-      try {
-        await logout();
-      } finally {
-        button.disabled = false;
+    button.addEventListener(
+      "click",
+      async event => {
+        event.preventDefault();
+
+        button.disabled = true;
+
+        try {
+          await logout();
+        } finally {
+          button.disabled = false;
+        }
       }
-    });
+    );
   });
 }
 
@@ -231,6 +301,12 @@ export function setupMenu() {
   if (!toggle || !menu) {
     return;
   }
+
+  if (toggle.dataset.menuInitialized === "true") {
+    return;
+  }
+
+  toggle.dataset.menuInitialized = "true";
 
   toggle.addEventListener("click", () => {
     const isOpen = menu.classList.toggle("open");
