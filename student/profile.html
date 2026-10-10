@@ -1,0 +1,542 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="Student Profile - GRACAIS E-Portal">
+
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="stylesheet" href="../assets/style.css">
+
+  <title>My Profile | GRACAIS E-Portal</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #F4F9FD;
+      color: #18324B;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .portal {
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .sidebar {
+      width: 250px;
+      flex-shrink: 0;
+      background: #032A58;
+      color: #fff;
+      padding: 24px 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px 24px;
+      border-bottom: 1px solid rgba(255,255,255,.15);
+    }
+
+    .brand img {
+      width: 45px;
+      height: 45px;
+      object-fit: contain;
+      background: #fff;
+      border-radius: 8px;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .brand small {
+      display: block;
+      color: #BAE6FD;
+      margin-top: 4px;
+    }
+
+    .nav-title {
+      margin: 24px 10px 10px;
+      font-size: 11px;
+      color: #BAE6FD;
+      letter-spacing: 1px;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 12px 13px;
+      margin: 5px 0;
+      color: #EAF6FF;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      background: #0B5CAD;
+      color: #fff;
+    }
+
+    .main {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #DCEAF5;
+      padding: 18px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .topbar h2 {
+      margin: 0;
+      color: #063B7A;
+      font-size: 20px;
+    }
+
+    .topbar p {
+      margin: 5px 0 0;
+      font-size: 13px;
+      color: #64748B;
+    }
+
+    .logout {
+      border: 0;
+      border-radius: 8px;
+      background: #063B7A;
+      color: #fff;
+      padding: 10px 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .content {
+      padding: 28px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .welcome {
+      background: linear-gradient(120deg, #063B7A, #0B5CAD);
+      color: #fff;
+      border-radius: 14px;
+      padding: 25px;
+      margin-bottom: 24px;
+    }
+
+    .welcome h1 {
+      margin: 0 0 9px;
+      font-size: 25px;
+    }
+
+    .welcome p {
+      margin: 0;
+      line-height: 1.7;
+      color: #E0F5FF;
+      font-size: 14px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #E0EAF2;
+      border-radius: 12px;
+      padding: 22px;
+      margin-bottom: 22px;
+      box-shadow: 0 3px 12px rgba(3,42,88,.04);
+    }
+
+    .card h3 {
+      color: #063B7A;
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+
+    .muted {
+      color: #64748B;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .profile-heading {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #E2E8F0;
+    }
+
+    .avatar {
+      width: 76px;
+      height: 76px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: #E0F5FF;
+      color: #063B7A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 27px;
+      font-weight: bold;
+      border: 2px solid #BAE6FD;
+    }
+
+    .profile-heading h3 {
+      margin: 0 0 7px;
+      font-size: 20px;
+    }
+
+    .profile-heading p {
+      margin: 0;
+      color: #64748B;
+      font-size: 13px;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .profile-item {
+      padding: 15px;
+      background: #F8FCFF;
+      border: 1px solid #E0EAF2;
+      border-radius: 9px;
+      min-width: 0;
+    }
+
+    .profile-item span {
+      display: block;
+      color: #64748B;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .profile-item strong {
+      display: block;
+      color: #18324B;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .account-status {
+      display: inline-block;
+      border-radius: 20px;
+      background: #E0F5FF;
+      color: #063B7A;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .notice {
+      margin-top: 18px;
+      padding: 13px 15px;
+      background: #FFF8E6;
+      border: 1px solid #F4D58D;
+      color: #795716;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .error-message {
+      display: none;
+      padding: 14px;
+      margin-bottom: 18px;
+      border-radius: 8px;
+      color: #991B1B;
+      background: #FEE2E2;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .footer {
+      text-align: center;
+      color: #64748B;
+      font-size: 12px;
+      padding: 20px;
+    }
+
+    .menu-button {
+      display: none;
+      background: #E0F5FF;
+      color: #063B7A;
+      border: 0;
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-weight: bold;
+    }
+
+    @media (max-width: 760px) {
+      .portal { display: block; }
+
+      .sidebar {
+        display: none;
+        width: 100%;
+      }
+
+      .sidebar.open { display: block; }
+
+      .topbar {
+        padding: 15px;
+        flex-wrap: wrap;
+      }
+
+      .topbar h2 { font-size: 17px; }
+
+      .menu-button { display: inline-block; }
+
+      .content { padding: 16px; }
+
+      .welcome { padding: 20px; }
+
+      .welcome h1 { font-size: 21px; }
+
+      .card { padding: 17px; }
+
+      .profile-grid { grid-template-columns: 1fr; }
+
+      .avatar {
+        width: 62px;
+        height: 62px;
+        font-size: 23px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="portal">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="../logo.png" alt="GRACAIS Logo">
+        <div>
+          <strong>GRACAIS</strong>
+          <small>Student E-Portal</small>
+        </div>
+      </div>
+
+      <div class="nav-title">STUDENT MENU</div>
+
+      <nav>
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="grades.html">My Grades</a>
+        <a class="nav-link" href="attendance.html">My Attendance</a>
+        <a class="nav-link" href="subjects.html">My Subjects</a>
+        <a class="nav-link" href="schedule.html">My Schedule</a>
+        <a class="nav-link" href="announcements.html">Announcements</a>
+        <a class="nav-link active" href="profile.html">My Profile</a>
+        <a class="nav-link" href="password.html">Change Password</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="menu-button" id="menuButton" type="button">
+            ☰ Menu
+          </button>
+
+          <div>
+            <h2>My Profile</h2>
+            <p>Graceland Academy International School of Excellence</p>
+          </div>
+        </div>
+
+        <button class="logout" id="logoutButton" type="button">
+          Log Out
+        </button>
+      </header>
+
+      <section class="content">
+        <div class="welcome">
+          <h1>Student Profile</h1>
+          <p>
+            View the account information associated with your authenticated
+            student profile.
+          </p>
+        </div>
+
+        <div class="error-message" id="errorMessage" role="alert"></div>
+
+        <section class="card">
+          <div class="profile-heading">
+            <div class="avatar" id="avatar">S</div>
+            <div>
+              <h3 id="profileName">Loading profile...</h3>
+              <p id="profileRole">Student Account</p>
+            </div>
+          </div>
+
+          <h3>Personal and Account Information</h3>
+          <p class="muted">
+            Information below comes from your signed-in account profile.
+            Fields that are not available in the current profile are marked
+            as unavailable rather than guessed.
+          </p>
+
+          <div class="profile-grid" style="margin-top:20px;">
+            <div class="profile-item">
+              <span>First Name</span>
+              <strong id="firstName">Loading...</strong>
+            </div>
+
+            <div class="profile-item">
+              <span>Last Name</span>
+              <strong id="lastName">Loading...</strong>
+            </div>
+
+            <div class="profile-item">
+              <span>Student ID</span>
+              <strong id="studentId">Unavailable</strong>
+            </div>
+
+            <div class="profile-item">
+              <span>Account Role</span>
+              <strong id="accountRole">Student</strong>
+            </div>
+
+            <div class="profile-item">
+              <span>Account Status</span>
+              <strong>
+                <span class="account-status" id="accountStatus">
+                  Checking...
+                </span>
+              </strong>
+            </div>
+
+            <div class="profile-item">
+              <span>Class / Grade</span>
+              <strong id="studentClass">Not loaded</strong>
+            </div>
+
+            <div class="profile-item">
+              <span>Email Address</span>
+              <strong id="emailAddress">Unavailable</strong>
+            </div>
+
+            <div class="profile-item">
+              <span>Academic Year</span>
+              <strong id="academicYear">Not loaded</strong>
+            </div>
+          </div>
+
+          <div class="notice">
+            Official student details, class enrollment, and academic-year
+            information must be retrieved from the school's authorized records.
+            Contact the school administration if your information is incorrect.
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Account Security</h3>
+          <p class="muted">
+            Keep your login credentials private. If you need to update your
+            password, use the Change Password page.
+          </p>
+
+          <p style="margin-top:16px;">
+            <a
+              href="password.html"
+              style="display:inline-block;background:#063B7A;color:#fff;padding:11px 16px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:bold;"
+            >
+              Change Password
+            </a>
+          </p>
+        </section>
+
+        <div class="footer">
+          GRACAIS E-Portal · Academic Information System
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      logout
+    } from "../assets/app.js";
+
+    const ALLOWED_ROLES = ["student"];
+
+    const byId = (id) => document.getElementById(id);
+
+    function setText(id, value) {
+      byId(id).textContent =
+        value === undefined || value === null || value === ""
+          ? "Unavailable"
+          : String(value);
+    }
+
+    function initials(firstName, lastName) {
+      const first = String(firstName || "").trim().charAt(0);
+      const last = String(lastName || "").trim().charAt(0);
+      return (first + last).toUpperCase() || "S";
+    }
+
+    byId("menuButton").addEventListener("click", () => {
+      byId("sidebar").classList.toggle("open");
+    });
+
+    byId("logoutButton").addEventListener("click", async () => {
+      await logout();
+    });
+
+    async function initializeProfile() {
+      const result = await requireUser(ALLOWED_ROLES);
+
+      if (!result) return;
+
+      const profile = result.profile || {};
+      const user = result.user || {};
+
+      const firstName = profile.first_name || "";
+      const lastName = profile.last_name || "";
+      const fullName = [firstName, lastName].filter(Boolean).join(" ");
+
+      setText("profileName", fullName || "Student");
+      setText("firstName", firstName);
+      setText("lastName", lastName);
+      setText("studentId", profile.school_id);
+      setText("accountRole", profile.role || "student");
+      setText("accountStatus", profile.status);
+      setText("emailAddress", user.email);
+
+      byId("profileRole").textContent = "Student Account";
+      byId("avatar").textContent = initials(firstName, lastName);
+
+      // Class and academic year will be loaded when the student enrollment
+      // query is connected to the verified database schema.
+      setText("studentClass", "");
+      setText("academicYear", "");
+    }
+
+    initializeProfile().catch((error) => {
+      console.error("Unable to load student profile:", error);
+
+      const errorBox = byId("errorMessage");
+      errorBox.textContent =
+        "We could not load your profile information. Please refresh the page. " +
+        "If the problem continues, contact the school administrator.";
+      errorBox.style.display = "block";
+    });
+  </script>
+</body>
+</html>
