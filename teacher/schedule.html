@@ -1,0 +1,281 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS Teacher Schedule">
+  <title>My Schedule | GRACAIS</title>
+  <link rel="icon" href="../logo.png">
+  <link rel="stylesheet" href="../assets/style.css">
+
+  <style>
+    .teacher-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .page-heading {
+      margin-bottom: 22px;
+    }
+
+    .page-heading h1 {
+      color: #063B7A;
+      margin-bottom: 8px;
+    }
+
+    .notice {
+      padding: 14px 16px;
+      margin: 16px 0;
+      border: 1px solid #bae6fd;
+      border-radius: 10px;
+      background: #f0f9ff;
+      color: #075985;
+      line-height: 1.6;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #dbe7f0;
+      border-radius: 14px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 4px 14px rgba(3, 42, 88, 0.05);
+    }
+
+    .empty-state {
+      border: 1px dashed #b7c9d9;
+      border-radius: 12px;
+      padding: 32px 18px;
+      text-align: center;
+      color: #526579;
+      line-height: 1.7;
+      margin-top: 16px;
+    }
+
+    .empty-state h2 {
+      color: #063B7A;
+      margin-bottom: 10px;
+    }
+
+    .schedule-table-wrap {
+      overflow-x: auto;
+      margin-top: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th, td {
+      padding: 13px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      color: #063B7A;
+      background: #f4f9fd;
+    }
+
+    .status-message {
+      margin-top: 14px;
+      color: #526579;
+      line-height: 1.6;
+      font-size: .92rem;
+    }
+
+    @media (max-width: 760px) {
+      .teacher-page {
+        padding: 14px;
+      }
+
+      .panel {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <p style="padding:24px;">Checking teacher access…</p>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      setupLogout
+    } from "../assets/app.js";
+
+    const ALLOWED_ROLES = ["teacher", "instructor"];
+
+    function renderPage() {
+      const app = document.getElementById("app");
+
+      app.innerHTML = `
+        <div class="portal-shell">
+          <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+              <img
+                src="../logo.png"
+                alt="GRACAIS logo"
+                style="width:48px;height:48px;object-fit:contain;"
+                onerror="this.style.display='none'"
+              >
+              <div>
+                <strong>GRACAIS</strong>
+                <small>Teacher Portal</small>
+              </div>
+            </div>
+
+            <nav class="sidebar-nav" aria-label="Teacher navigation">
+              <a href="./dashboard.html">Dashboard</a>
+              <a href="./my-students.html">My Students</a>
+              <a href="./grades.html">Grade Management</a>
+              <a href="./attendance.html">Attendance</a>
+              <a href="./schedule.html" aria-current="page">My Schedule</a>
+              <a href="./announcements.html">Announcements</a>
+              <a href="./password.html">Change Password</a>
+            </nav>
+
+            <div class="sidebar-footer">
+              <button type="button" id="logoutButton" class="logout-button">
+                Sign Out
+              </button>
+            </div>
+          </aside>
+
+          <div class="main-area">
+            <header class="topbar">
+              <button
+                type="button"
+                id="menuButton"
+                aria-label="Open navigation menu"
+                aria-expanded="false"
+              >☰</button>
+              <div>
+                <strong>My Schedule</strong>
+                <div id="teacherName" style="font-size:13px;color:#64748b;">
+                  Teacher Portal
+                </div>
+              </div>
+            </header>
+
+            <main class="teacher-page">
+              <section class="page-heading">
+                <h1>My Teaching Schedule</h1>
+                <p>View your assigned classes and scheduled periods.</p>
+              </section>
+
+              <div class="notice">
+                <strong>Schedule information:</strong>
+                Only schedules assigned to the signed-in teacher should be
+                displayed. Real schedule records must be loaded from Supabase.
+              </div>
+
+              <section class="panel">
+                <h2>Weekly Schedule</h2>
+
+                <div class="empty-state">
+                  <h2>No schedule loaded</h2>
+                  <p>
+                    Your teaching schedule will appear here after the school
+                    schedule and teacher-assignment database queries are
+                    connected.
+                  </p>
+                  <p>
+                    No sample classes, subjects, rooms, or times are being
+                    displayed as if they were real.
+                  </p>
+                </div>
+
+                <p class="status-message">
+                  Schedule records should include the academic year, class,
+                  subject, weekday, start time, end time, and room when
+                  applicable.
+                </p>
+              </section>
+
+              <section class="panel">
+                <h2>Schedule Information</h2>
+                <div class="schedule-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Day</th>
+                        <th>Time</th>
+                        <th>Class</th>
+                        <th>Subject</th>
+                        <th>Room</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colspan="5" style="text-align:center;padding:24px;">
+                          No schedule records available.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="status-message">
+                  This table is an empty placeholder. It does not indicate
+                  that the school has no scheduled classes.
+                </p>
+              </section>
+            </main>
+          </div>
+
+          <div id="sidebarOverlay" class="sidebar-overlay"></div>
+        </div>
+      `;
+
+      const menuButton = document.getElementById("menuButton");
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("sidebarOverlay");
+
+      function closeMenu() {
+        sidebar?.classList.remove("open");
+        overlay?.classList.remove("show");
+        menuButton?.setAttribute("aria-expanded", "false");
+      }
+
+      menuButton?.addEventListener("click", () => {
+        const isOpen = sidebar.classList.toggle("open");
+        overlay.classList.toggle("show", isOpen);
+        menuButton.setAttribute("aria-expanded", String(isOpen));
+      });
+
+      overlay?.addEventListener("click", closeMenu);
+
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") closeMenu();
+      });
+    }
+
+    setupLogout();
+
+    const result = await requireUser(ALLOWED_ROLES);
+
+    if (result) {
+      renderPage();
+
+      const profile = result.profile || {};
+      const fullName = [
+        profile.first_name,
+        profile.last_name
+      ].filter(Boolean).join(" ");
+
+      document.getElementById("teacherName").textContent =
+        fullName || "Authorized Teacher";
+
+      setupLogout();
+    }
+  </script>
+</body>
+</html>
