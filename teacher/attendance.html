@@ -1,0 +1,425 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS Teacher Attendance">
+  <title>Attendance | GRACAIS</title>
+  <link rel="icon" href="../logo.png">
+  <link rel="stylesheet" href="../assets/style.css">
+
+  <style>
+    .teacher-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .page-heading {
+      margin-bottom: 22px;
+    }
+
+    .page-heading h1 {
+      color: #063B7A;
+      margin-bottom: 8px;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #dbe7f0;
+      border-radius: 14px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 4px 14px rgba(3, 42, 88, 0.05);
+    }
+
+    .notice {
+      padding: 14px 16px;
+      border: 1px solid #bae6fd;
+      border-radius: 10px;
+      background: #f0f9ff;
+      color: #075985;
+      line-height: 1.6;
+      margin: 16px 0;
+    }
+
+    .attendance-fields {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .field label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 7px;
+      color: #17324d;
+    }
+
+    .field select,
+    .field input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      font: inherit;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .action-button {
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 17px;
+      background: #063B7A;
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .action-button.secondary {
+      background: #e0f5ff;
+      color: #063B7A;
+      border: 1px solid #bae6fd;
+    }
+
+    .action-button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .empty-state {
+      border: 1px dashed #b7c9d9;
+      border-radius: 12px;
+      padding: 32px 18px;
+      text-align: center;
+      color: #526579;
+      line-height: 1.7;
+      margin-top: 16px;
+    }
+
+    .empty-state h2 {
+      color: #063B7A;
+      margin-bottom: 10px;
+    }
+
+    .status-message {
+      color: #526579;
+      font-size: .92rem;
+      margin-top: 14px;
+      line-height: 1.6;
+    }
+
+    .print-heading {
+      display: none;
+    }
+
+    @media (max-width: 760px) {
+      .teacher-page {
+        padding: 14px;
+      }
+
+      .panel {
+        padding: 15px;
+      }
+
+      .attendance-fields {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+      }
+
+      .sidebar,
+      .topbar,
+      .sidebar-overlay,
+      .no-print,
+      .notice {
+        display: none !important;
+      }
+
+      .portal-shell,
+      .main-area,
+      .teacher-page {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+
+      .panel {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+
+      .print-heading {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .empty-state {
+        border: 1px solid #888;
+        color: black;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <p style="padding:24px;">Checking teacher access…</p>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      setupLogout
+    } from "../assets/app.js";
+
+    const ALLOWED_ROLES = ["teacher", "instructor"];
+
+    const classes = Array.from(
+      { length: 9 },
+      (_, index) => index + 4
+    );
+
+    function renderPage() {
+      const app = document.getElementById("app");
+
+      app.innerHTML = `
+        <div class="portal-shell">
+          <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+              <img
+                src="../logo.png"
+                alt="GRACAIS logo"
+                style="width:48px;height:48px;object-fit:contain;"
+                onerror="this.style.display='none'"
+              >
+              <div>
+                <strong>GRACAIS</strong>
+                <small>Teacher Portal</small>
+              </div>
+            </div>
+
+            <nav class="sidebar-nav" aria-label="Teacher navigation">
+              <a href="./dashboard.html">Dashboard</a>
+              <a href="./my-students.html">My Students</a>
+              <a href="./grades.html">Grade Management</a>
+              <a href="./attendance.html" aria-current="page">Attendance</a>
+              <a href="./schedule.html">My Schedule</a>
+              <a href="./announcements.html">Announcements</a>
+              <a href="./password.html">Change Password</a>
+            </nav>
+
+            <div class="sidebar-footer">
+              <button type="button" id="logoutButton" class="logout-button">
+                Sign Out
+              </button>
+            </div>
+          </aside>
+
+          <div class="main-area">
+            <header class="topbar">
+              <button
+                type="button"
+                id="menuButton"
+                aria-label="Open navigation menu"
+                aria-expanded="false"
+              >☰</button>
+              <div>
+                <strong>Attendance Management</strong>
+                <div id="teacherName" style="font-size:13px;color:#64748b;">
+                  Teacher Portal
+                </div>
+              </div>
+            </header>
+
+            <main class="teacher-page">
+              <div class="print-heading">
+                <h1>GRACAIS</h1>
+                <h2>Student Attendance Sheet</h2>
+                <p>Graceland Academy International School of Excellence</p>
+                <p id="printDetails"></p>
+              </div>
+
+              <section class="page-heading no-print">
+                <h1>Attendance Management</h1>
+                <p>Prepare attendance for your assigned classes.</p>
+              </section>
+
+              <div class="notice no-print">
+                <strong>Secure academic records.</strong>
+                Only assigned classes should be available to a teacher.
+                Student records and attendance saving require the connected
+                database and its access policies. No sample students are used.
+              </div>
+
+              <section class="panel">
+                <h2 class="no-print">Attendance Sheet Setup</h2>
+
+                <div class="attendance-fields no-print">
+                  <div class="field">
+                    <label for="classSelect">Class</label>
+                    <select id="classSelect">
+                      <option value="">Select class</option>
+                      ${classes.map(number =>
+                        `<option value="${number}">Grade ${number}</option>`
+                      ).join("")}
+                    </select>
+                  </div>
+
+                  <div class="field">
+                    <label for="attendanceDate">Date</label>
+                    <input type="date" id="attendanceDate">
+                  </div>
+
+                  <div class="field">
+                    <label for="sessionSelect">Session</label>
+                    <select id="sessionSelect">
+                      <option value="Morning">Morning</option>
+                      <option value="Afternoon">Afternoon</option>
+                      <option value="Full Day">Full Day</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="actions no-print">
+                  <button class="action-button" id="printButton" type="button">
+                    Print Attendance Sheet
+                  </button>
+                  <button
+                    class="action-button secondary"
+                    id="prepareButton"
+                    type="button"
+                  >
+                    Check Sheet Details
+                  </button>
+                </div>
+
+                <p id="statusMessage" class="status-message no-print">
+                  Choose a class and date. Printing creates a blank attendance
+                  sheet; it does not load or save student records.
+                </p>
+
+                <div class="empty-state" id="studentArea">
+                  <h2>No student list loaded</h2>
+                  <p>
+                    The real student list will appear here after the secure
+                    teacher-class and enrollment queries are connected.
+                  </p>
+                  <p>
+                    Attendance cannot be marked or submitted from this page yet.
+                  </p>
+                </div>
+              </section>
+            </main>
+          </div>
+
+          <div id="sidebarOverlay" class="sidebar-overlay"></div>
+        </div>
+      `;
+
+      const menuButton = document.getElementById("menuButton");
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("sidebarOverlay");
+
+      function closeMenu() {
+        sidebar?.classList.remove("open");
+        overlay?.classList.remove("show");
+        menuButton?.setAttribute("aria-expanded", "false");
+      }
+
+      menuButton?.addEventListener("click", () => {
+        const open = sidebar.classList.toggle("open");
+        overlay.classList.toggle("show", open);
+        menuButton.setAttribute("aria-expanded", String(open));
+      });
+
+      overlay?.addEventListener("click", closeMenu);
+
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") closeMenu();
+      });
+
+      const classSelect = document.getElementById("classSelect");
+      const dateInput = document.getElementById("attendanceDate");
+      const sessionSelect = document.getElementById("sessionSelect");
+      const statusMessage = document.getElementById("statusMessage");
+
+      function getDetails() {
+        if (!classSelect.value || !dateInput.value) {
+          statusMessage.textContent =
+            "Please select a class and date first.";
+          return null;
+        }
+
+        return {
+          className: "Grade " + classSelect.value,
+          date: dateInput.value,
+          session: sessionSelect.value
+        };
+      }
+
+      document.getElementById("prepareButton").addEventListener("click", () => {
+        const details = getDetails();
+        if (!details) return;
+
+        document.getElementById("printDetails").textContent =
+          `${details.className} | Date: ${details.date} | Session: ${details.session}`;
+
+        statusMessage.textContent =
+          "Details prepared. The student list is not connected, so the printed sheet will be blank for manual completion.";
+      });
+
+      document.getElementById("printButton").addEventListener("click", () => {
+        const details = getDetails();
+        if (!details) return;
+
+        document.getElementById("printDetails").textContent =
+          `${details.className} | Date: ${details.date} | Session: ${details.session}`;
+
+        window.print();
+      });
+    }
+
+    setupLogout();
+
+    const result = await requireUser(ALLOWED_ROLES);
+
+    if (result) {
+      renderPage();
+
+      const profile = result.profile || {};
+      const fullName = [
+        profile.first_name,
+        profile.last_name
+      ].filter(Boolean).join(" ");
+
+      document.getElementById("teacherName").textContent =
+        fullName || "Authorized Teacher";
+
+      setupLogout();
+    }
+  </script>
+</body>
+</html>
