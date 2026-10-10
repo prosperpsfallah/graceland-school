@@ -1,0 +1,399 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="Student Announcements - GRACAIS E-Portal">
+
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="stylesheet" href="../assets/style.css">
+
+  <title>Announcements | GRACAIS E-Portal</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #F4F9FD;
+      color: #18324B;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .portal { min-height: 100vh; display: flex; }
+
+    .sidebar {
+      width: 250px;
+      flex-shrink: 0;
+      background: #032A58;
+      color: #fff;
+      padding: 24px 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px 24px;
+      border-bottom: 1px solid rgba(255,255,255,.15);
+    }
+
+    .brand img {
+      width: 45px;
+      height: 45px;
+      object-fit: contain;
+      background: #fff;
+      border-radius: 8px;
+    }
+
+    .brand strong { display: block; font-size: 13px; line-height: 1.4; }
+    .brand small { display: block; color: #BAE6FD; margin-top: 4px; }
+
+    .nav-title {
+      margin: 24px 10px 10px;
+      font-size: 11px;
+      color: #BAE6FD;
+      letter-spacing: 1px;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 12px 13px;
+      margin: 5px 0;
+      color: #EAF6FF;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      background: #0B5CAD;
+      color: #fff;
+    }
+
+    .main { min-width: 0; flex: 1; }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #DCEAF5;
+      padding: 18px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .topbar h2 { margin: 0; color: #063B7A; font-size: 20px; }
+    .topbar p { margin: 5px 0 0; font-size: 13px; color: #64748B; }
+
+    .logout {
+      border: 0;
+      border-radius: 8px;
+      background: #063B7A;
+      color: #fff;
+      padding: 10px 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .content { padding: 28px; max-width: 1200px; margin: 0 auto; }
+
+    .welcome {
+      background: linear-gradient(120deg, #063B7A, #0B5CAD);
+      color: #fff;
+      border-radius: 14px;
+      padding: 25px;
+      margin-bottom: 24px;
+    }
+
+    .welcome h1 { margin: 0 0 9px; font-size: 25px; }
+    .welcome p { margin: 0; line-height: 1.7; color: #E0F5FF; font-size: 14px; }
+
+    .card {
+      background: #fff;
+      border: 1px solid #E0EAF2;
+      border-radius: 12px;
+      padding: 22px;
+      margin-bottom: 22px;
+      box-shadow: 0 3px 12px rgba(3,42,88,.04);
+    }
+
+    .card h3 { color: #063B7A; margin: 0 0 8px; font-size: 17px; }
+    .muted { color: #64748B; font-size: 13px; line-height: 1.7; }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: #334155;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .field select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+      color: #18324B;
+      font-size: 14px;
+    }
+
+    .announcement-list {
+      display: grid;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .announcement {
+      border: 1px solid #E0EAF2;
+      border-left: 4px solid #38BDF8;
+      border-radius: 10px;
+      padding: 18px;
+      background: #fff;
+    }
+
+    .announcement h4 {
+      color: #063B7A;
+      font-size: 16px;
+      margin: 0 0 10px;
+    }
+
+    .announcement p {
+      color: #475569;
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .announcement-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: #64748B;
+      font-size: 12px;
+      margin-top: 14px;
+    }
+
+    .empty {
+      border: 1px dashed #B8D5E8;
+      border-radius: 10px;
+      padding: 30px 18px;
+      text-align: center;
+      margin-top: 20px;
+      background: #F8FCFF;
+    }
+
+    .empty .symbol { font-size: 32px; margin-bottom: 10px; }
+    .empty h4 { margin: 0 0 8px; color: #063B7A; font-size: 16px; }
+
+    .empty p {
+      margin: 0 auto;
+      max-width: 480px;
+      color: #64748B;
+      line-height: 1.7;
+      font-size: 13px;
+    }
+
+    .notice {
+      margin-top: 18px;
+      padding: 13px 15px;
+      background: #FFF8E6;
+      border: 1px solid #F4D58D;
+      color: #795716;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .footer { text-align: center; color: #64748B; font-size: 12px; padding: 20px; }
+
+    .menu-button {
+      display: none;
+      background: #E0F5FF;
+      color: #063B7A;
+      border: 0;
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-weight: bold;
+    }
+
+    @media (max-width: 760px) {
+      .portal { display: block; }
+      .sidebar { display: none; width: 100%; }
+      .sidebar.open { display: block; }
+      .topbar { padding: 15px; flex-wrap: wrap; }
+      .topbar h2 { font-size: 17px; }
+      .menu-button { display: inline-block; }
+      .content { padding: 16px; }
+      .welcome { padding: 20px; }
+      .welcome h1 { font-size: 21px; }
+      .card { padding: 17px; }
+      .filters { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="portal">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="../logo.png" alt="GRACAIS Logo">
+        <div>
+          <strong>GRACAIS</strong>
+          <small>Student E-Portal</small>
+        </div>
+      </div>
+
+      <div class="nav-title">STUDENT MENU</div>
+      <nav>
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="grades.html">My Grades</a>
+        <a class="nav-link" href="attendance.html">My Attendance</a>
+        <a class="nav-link" href="subjects.html">My Subjects</a>
+        <a class="nav-link" href="schedule.html">My Schedule</a>
+        <a class="nav-link active" href="announcements.html">Announcements</a>
+        <a class="nav-link" href="profile.html">My Profile</a>
+        <a class="nav-link" href="password.html">Change Password</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="menu-button" id="menuButton" type="button">☰ Menu</button>
+          <div>
+            <h2>School Announcements</h2>
+            <p>Graceland Academy International School of Excellence</p>
+          </div>
+        </div>
+        <button class="logout" id="logoutButton" type="button">Log Out</button>
+      </header>
+
+      <section class="content">
+        <div class="welcome">
+          <h1 id="welcomeTitle">School Announcements</h1>
+          <p>
+            Stay informed about school activities, academic notices,
+            examination information, timetable updates, and important messages.
+          </p>
+        </div>
+
+        <section class="card">
+          <h3>Find Announcements</h3>
+          <p class="muted">
+            Filter the published school notices by category.
+          </p>
+
+          <div class="filters">
+            <div class="field">
+              <label for="categoryFilter">Announcement Category</label>
+              <select id="categoryFilter">
+                <option value="">All categories</option>
+                <option value="academic">Academic Notices</option>
+                <option value="examination">Examinations</option>
+                <option value="activities">School Activities</option>
+                <option value="general">General Notices</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="searchInput">Search Announcements</label>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Search published notices..."
+                style="width:100%;min-height:44px;border:1px solid #CBD5E1;border-radius:8px;padding:10px;font-size:14px;"
+              >
+            </div>
+          </div>
+
+          <div class="notice">
+            Only announcements published by authorized school staff should
+            appear here. The page does not generate sample announcements.
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Published Notices</h3>
+          <p class="muted">
+            The latest school announcements will be displayed here.
+          </p>
+
+          <div class="empty" id="emptyState">
+            <div class="symbol">📢</div>
+            <h4>No announcements loaded</h4>
+            <p>
+              Announcements have not been loaded from the school database yet.
+              This does not necessarily mean that the school has no notices.
+              The secure database connection must be completed before published
+              announcements can appear here.
+            </p>
+          </div>
+
+          <div class="announcement-list" id="announcementList" hidden></div>
+        </section>
+
+        <div class="footer">
+          GRACAIS E-Portal · Academic Information System
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      logout
+    } from "../assets/app.js";
+
+    const ALLOWED_ROLES = ["student"];
+
+    const sidebar = document.getElementById("sidebar");
+
+    document.getElementById("menuButton").addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      await logout();
+    });
+
+    async function initializeAnnouncementsPage() {
+      const result = await requireUser(ALLOWED_ROLES);
+
+      if (!result) return;
+
+      const profile = result.profile || {};
+      const fullName = [
+        profile.first_name || "",
+        profile.last_name || ""
+      ].filter(Boolean).join(" ");
+
+      if (fullName) {
+        document.getElementById("welcomeTitle").textContent =
+          "Announcements for " + fullName;
+      }
+
+      // Live announcement retrieval and filtering will be connected to
+      // Supabase after confirming the actual announcements table schema.
+      // No fake notices are displayed.
+    }
+
+    initializeAnnouncementsPage();
+  </script>
+</body>
+</html>
