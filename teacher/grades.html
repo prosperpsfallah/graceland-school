@@ -1,0 +1,441 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS Teacher Grade Management">
+  <title>Grade Management | GRACAIS</title>
+  <link rel="icon" href="../logo.png">
+  <link rel="stylesheet" href="../assets/style.css">
+
+  <style>
+    .teacher-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .page-heading {
+      margin-bottom: 22px;
+    }
+
+    .page-heading h1 {
+      color: var(--deep-blue, #063B7A);
+      margin-bottom: 8px;
+    }
+
+    .grade-notice {
+      padding: 14px 16px;
+      margin: 16px 0;
+      border: 1px solid #bae6fd;
+      border-radius: 10px;
+      background: #f0f9ff;
+      color: #075985;
+      line-height: 1.6;
+    }
+
+    .grade-panel {
+      background: white;
+      border: 1px solid #dbe7f0;
+      border-radius: 14px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 4px 14px rgba(3, 42, 88, 0.05);
+    }
+
+    .grade-fields {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .grade-fields label {
+      display: block;
+      font-weight: 600;
+      color: #17324d;
+      margin-bottom: 7px;
+    }
+
+    .grade-fields select,
+    .grade-fields input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      color: #17324d;
+      font: inherit;
+    }
+
+    .grade-fields input:disabled,
+    .grade-fields select:disabled {
+      background: #f1f5f9;
+      cursor: not-allowed;
+    }
+
+    .score-preview {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 10px;
+      background: #f4f9fd;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 22px;
+      align-items: center;
+    }
+
+    .preview-item small {
+      display: block;
+      color: #526579;
+      margin-bottom: 5px;
+    }
+
+    .preview-item strong {
+      color: #063B7A;
+      font-size: 1.25rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 36px 18px;
+      border: 1px dashed #b7c9d9;
+      border-radius: 12px;
+      color: #526579;
+      line-height: 1.7;
+    }
+
+    .empty-state h2 {
+      color: #063B7A;
+      margin-bottom: 10px;
+    }
+
+    .grade-scale {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    .grade-scale th,
+    .grade-scale td {
+      padding: 11px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .grade-scale th {
+      background: #f4f9fd;
+      color: #063B7A;
+    }
+
+    .status-message {
+      margin-top: 12px;
+      color: #526579;
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 760px) {
+      .grade-fields {
+        grid-template-columns: 1fr;
+      }
+
+      .teacher-page {
+        padding: 14px;
+      }
+
+      .grade-panel {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <p style="padding:24px;">Checking teacher access…</p>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      setupLogout,
+      esc
+    } from "../assets/app.js";
+
+    const ALLOWED_ROLES = ["teacher", "instructor"];
+
+    const periods = [
+      "1st Period",
+      "2nd Period",
+      "3rd Period",
+      "3rd Period Exam",
+      "4th Period",
+      "5th Period",
+      "6th Period",
+      "6th Period Exam"
+    ];
+
+    const gradeOptions = Array.from(
+      { length: 9 },
+      (_, index) => index + 4
+    );
+
+    function buildPage() {
+      const app = document.getElementById("app");
+
+      app.innerHTML = `
+        <div class="portal-shell">
+          <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+              <img
+                src="../logo.png"
+                alt="GRACAIS logo"
+                style="width:48px;height:48px;object-fit:contain;"
+                onerror="this.style.display='none'"
+              >
+              <div>
+                <strong>GRACAIS</strong>
+                <small>Teacher Portal</small>
+              </div>
+            </div>
+
+            <nav class="sidebar-nav" aria-label="Teacher navigation">
+              <a href="./dashboard.html">Dashboard</a>
+              <a href="./my-students.html">My Students</a>
+              <a href="./grades.html" aria-current="page">Grade Management</a>
+              <a href="./attendance.html">Attendance</a>
+              <a href="./schedule.html">My Schedule</a>
+              <a href="./announcements.html">Announcements</a>
+              <a href="./password.html">Change Password</a>
+            </nav>
+
+            <div class="sidebar-footer">
+              <button type="button" id="logoutButton" class="logout-button">
+                Sign Out
+              </button>
+            </div>
+          </aside>
+
+          <div class="main-area">
+            <header class="topbar">
+              <button
+                type="button"
+                id="menuButton"
+                aria-label="Open navigation menu"
+                aria-expanded="false"
+              >☰</button>
+              <div>
+                <strong>Grade Management</strong>
+                <div id="teacherName" style="font-size:13px;color:#64748b;">
+                  Teacher Portal
+                </div>
+              </div>
+            </header>
+
+            <main class="teacher-page">
+              <section class="page-heading">
+                <h1>Grade Management</h1>
+                <p>Manage academic grades for your assigned classes.</p>
+              </section>
+
+              <div class="grade-notice">
+                <strong>Academic records only.</strong>
+                This page contains no fee or payment features. Student names
+                and grade records will only appear after the secure database
+                queries and teacher-class assignments are connected.
+              </div>
+
+              <section class="grade-panel">
+                <h2>Grade Entry Settings</h2>
+                <p style="margin:8px 0 20px;color:#64748b;">
+                  Select the academic class and grading period.
+                </p>
+
+                <div class="grade-fields">
+                  <div>
+                    <label for="gradeClass">Class</label>
+                    <select id="gradeClass">
+                      <option value="">Select class</option>
+                      ${gradeOptions.map(number =>
+                        `<option value="${number}">Grade ${number}</option>`
+                      ).join("")}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="gradePeriod">Grading Period</label>
+                    <select id="gradePeriod">
+                      <option value="">Select period</option>
+                      ${periods.map(period =>
+                        `<option value="${esc(period)}">${esc(period)}</option>`
+                      ).join("")}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="gradeScore">Score (0–100)</label>
+                    <input
+                      id="gradeScore"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      placeholder="Enter score to preview"
+                      inputmode="numeric"
+                    >
+                  </div>
+                </div>
+
+                <div class="score-preview" aria-live="polite">
+                  <div class="preview-item">
+                    <small>Numeric Score</small>
+                    <strong id="scorePreview">—</strong>
+                  </div>
+                  <div class="preview-item">
+                    <small>Letter Grade</small>
+                    <strong id="letterPreview">—</strong>
+                  </div>
+                </div>
+
+                <p class="status-message" id="gradeMessage">
+                  Preview only: scores are not saved to the school database.
+                </p>
+              </section>
+
+              <section class="grade-panel">
+                <h2>Assigned Students</h2>
+                <div class="empty-state">
+                  <h2>No student records loaded</h2>
+                  <p>
+                    This is an empty state, not an error indicating that the
+                    school has no students.
+                  </p>
+                  <p>
+                    The secure Supabase query must load only students in
+                    classes assigned to the signed-in teacher before grades
+                    can be entered or submitted.
+                  </p>
+                </div>
+              </section>
+
+              <section class="grade-panel">
+                <h2>Grading Scale</h2>
+                <table class="grade-scale">
+                  <thead>
+                    <tr>
+                      <th scope="col">Score</th>
+                      <th scope="col">Letter Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>90–100</td><td>A</td></tr>
+                    <tr><td>80–89</td><td>B</td></tr>
+                    <tr><td>70–79</td><td>C</td></tr>
+                    <tr><td>60–69</td><td>D</td></tr>
+                    <tr><td>Below 60</td><td>F</td></tr>
+                  </tbody>
+                </table>
+                <p class="status-message">
+                  Automatic averages will be calculated from actual saved
+                  period grades after database integration is completed.
+                </p>
+              </section>
+            </main>
+          </div>
+
+          <div id="sidebarOverlay" class="sidebar-overlay"></div>
+        </div>
+      `;
+
+      const menuButton = document.getElementById("menuButton");
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("sidebarOverlay");
+
+      function closeMenu() {
+        sidebar?.classList.remove("open");
+        overlay?.classList.remove("show");
+        menuButton?.setAttribute("aria-expanded", "false");
+      }
+
+      menuButton?.addEventListener("click", () => {
+        const isOpen = sidebar.classList.toggle("open");
+        overlay.classList.toggle("show", isOpen);
+        menuButton.setAttribute("aria-expanded", String(isOpen));
+      });
+
+      overlay?.addEventListener("click", closeMenu);
+
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") closeMenu();
+      });
+
+      const scoreInput = document.getElementById("gradeScore");
+      const scorePreview = document.getElementById("scorePreview");
+      const letterPreview = document.getElementById("letterPreview");
+      const gradeMessage = document.getElementById("gradeMessage");
+
+      scoreInput.addEventListener("input", () => {
+        const rawValue = scoreInput.value;
+
+        if (rawValue === "") {
+          scorePreview.textContent = "—";
+          letterPreview.textContent = "—";
+          gradeMessage.textContent =
+            "Preview only: scores are not saved to the school database.";
+          return;
+        }
+
+        const score = Number(rawValue);
+
+        if (!Number.isFinite(score) || score < 0 || score > 100) {
+          scorePreview.textContent = "Invalid";
+          letterPreview.textContent = "—";
+          gradeMessage.textContent =
+            "Enter a score from 0 to 100.";
+          return;
+        }
+
+        if (!Number.isInteger(score)) {
+          scorePreview.textContent = "Invalid";
+          letterPreview.textContent = "—";
+          gradeMessage.textContent =
+            "Enter a whole-number score from 0 to 100.";
+          return;
+        }
+
+        let letter = "F";
+        if (score >= 90) letter = "A";
+        else if (score >= 80) letter = "B";
+        else if (score >= 70) letter = "C";
+        else if (score >= 60) letter = "D";
+
+        scorePreview.textContent = String(score);
+        letterPreview.textContent = letter;
+        gradeMessage.textContent =
+          "Preview calculated locally only. Nothing has been saved.";
+      });
+    }
+
+    setupLogout();
+
+    const result = await requireUser(ALLOWED_ROLES);
+
+    if (result) {
+      buildPage();
+
+      const profile = result.profile || {};
+      const fullName = [
+        profile.first_name,
+        profile.last_name
+      ].filter(Boolean).join(" ");
+
+      document.getElementById("teacherName").textContent =
+        fullName || "Authorized Teacher";
+
+      setupLogout();
+    }
+  </script>
+</body>
+</html>
