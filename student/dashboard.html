@@ -1,0 +1,371 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="GRACAIS Student Academic Portal">
+  <title>Student Dashboard | GRACAIS</title>
+  <link rel="icon" href="../logo.png">
+  <link rel="stylesheet" href="../assets/style.css">
+
+  <style>
+    .student-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .welcome-panel {
+      padding: 26px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #063B7A, #0B5CAD);
+      color: white;
+      margin-bottom: 24px;
+    }
+
+    .welcome-panel h1 {
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      margin-bottom: 10px;
+    }
+
+    .welcome-panel p {
+      line-height: 1.7;
+    }
+
+    .student-label {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 5px 10px;
+      border: 1px solid rgba(255,255,255,.45);
+      border-radius: 30px;
+      font-size: .85rem;
+    }
+
+    .section-title {
+      color: #063B7A;
+      margin-bottom: 16px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+
+    .dashboard-card {
+      display: block;
+      padding: 20px;
+      border: 1px solid #dbe7f0;
+      border-radius: 14px;
+      background: white;
+      color: #17324d;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(3,42,88,.04);
+      transition: transform .15s ease;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .card-icon {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #E0F5FF;
+      color: #063B7A;
+      font-size: 1.35rem;
+      margin-bottom: 14px;
+    }
+
+    .dashboard-card h3 {
+      color: #063B7A;
+      margin-bottom: 8px;
+    }
+
+    .dashboard-card p {
+      color: #64748b;
+      font-size: .94rem;
+      line-height: 1.6;
+    }
+
+    .information-panel {
+      background: white;
+      border: 1px solid #dbe7f0;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .information-panel p {
+      color: #526579;
+      line-height: 1.7;
+    }
+
+    .status-note {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      color: #075985;
+      border-radius: 10px;
+      padding: 14px 16px;
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+
+    .profile-details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .detail-item {
+      padding: 14px;
+      background: #f4f9fd;
+      border-radius: 9px;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-item small {
+      display: block;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    .detail-item strong {
+      color: #063B7A;
+    }
+
+    @media (max-width: 850px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .student-page {
+        padding: 14px;
+      }
+
+      .dashboard-grid,
+      .profile-details {
+        grid-template-columns: 1fr;
+      }
+
+      .welcome-panel {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <p style="padding:24px;">Checking student access…</p>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      setupLogout,
+      esc
+    } from "../assets/app.js";
+
+    const ALLOWED_ROLES = ["student"];
+
+    function renderDashboard(profile) {
+      const app = document.getElementById("app");
+
+      const firstName = profile.first_name || "";
+      const lastName = profile.last_name || "";
+      const fullName = [firstName, lastName]
+        .filter(Boolean)
+        .join(" ") || "Student";
+
+      app.innerHTML = `
+        <div class="portal-shell">
+          <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+              <img
+                src="../logo.png"
+                alt="GRACAIS logo"
+                style="width:48px;height:48px;object-fit:contain;"
+                onerror="this.style.display='none'"
+              >
+              <div>
+                <strong>GRACAIS</strong>
+                <small>Student Portal</small>
+              </div>
+            </div>
+
+            <nav class="sidebar-nav" aria-label="Student navigation">
+              <a href="./dashboard.html" aria-current="page">Dashboard</a>
+              <a href="./grades.html">My Grades</a>
+              <a href="./attendance.html">My Attendance</a>
+              <a href="./subjects.html">My Subjects</a>
+              <a href="./schedule.html">My Schedule</a>
+              <a href="./announcements.html">Announcements</a>
+              <a href="./profile.html">My Profile</a>
+              <a href="./password.html">Change Password</a>
+            </nav>
+
+            <div class="sidebar-footer">
+              <button type="button" id="logoutButton" class="logout-button">
+                Sign Out
+              </button>
+            </div>
+          </aside>
+
+          <div class="main-area">
+            <header class="topbar">
+              <button
+                type="button"
+                id="menuButton"
+                aria-label="Open navigation menu"
+                aria-expanded="false"
+              >☰</button>
+
+              <div>
+                <strong>Student Dashboard</strong>
+                <div style="font-size:13px;color:#64748b;">
+                  GRACAIS Academic Portal
+                </div>
+              </div>
+            </header>
+
+            <main class="student-page">
+              <section class="welcome-panel">
+                <span class="student-label">Student Account</span>
+                <h1>Welcome, ${esc(firstName || "Student")}!</h1>
+                <p>
+                  Welcome to the Graceland Academy International School of
+                  Excellence student portal. Access your academic information
+                  and school updates here.
+                </p>
+              </section>
+
+              <div class="status-note">
+                <strong>Academic information only.</strong>
+                Grades, attendance, subjects, and schedules will appear when
+                the relevant school records are connected and available to
+                your account.
+              </div>
+
+              <section>
+                <h2 class="section-title">My Academic Portal</h2>
+
+                <div class="dashboard-grid">
+                  <a class="dashboard-card" href="./grades.html">
+                    <div class="card-icon" aria-hidden="true">A</div>
+                    <h3>My Grades</h3>
+                    <p>View your available grades and academic performance.</p>
+                  </a>
+
+                  <a class="dashboard-card" href="./attendance.html">
+                    <div class="card-icon" aria-hidden="true">✓</div>
+                    <h3>My Attendance</h3>
+                    <p>Review your recorded attendance information.</p>
+                  </a>
+
+                  <a class="dashboard-card" href="./subjects.html">
+                    <div class="card-icon" aria-hidden="true">▤</div>
+                    <h3>My Subjects</h3>
+                    <p>View subjects associated with your class.</p>
+                  </a>
+
+                  <a class="dashboard-card" href="./schedule.html">
+                    <div class="card-icon" aria-hidden="true">◷</div>
+                    <h3>My Schedule</h3>
+                    <p>Check your class timetable when it is available.</p>
+                  </a>
+
+                  <a class="dashboard-card" href="./announcements.html">
+                    <div class="card-icon" aria-hidden="true">◉</div>
+                    <h3>Announcements</h3>
+                    <p>Read published school updates and notices.</p>
+                  </a>
+
+                  <a class="dashboard-card" href="./profile.html">
+                    <div class="card-icon" aria-hidden="true">♙</div>
+                    <h3>My Profile</h3>
+                    <p>View your school account information.</p>
+                  </a>
+                </div>
+              </section>
+
+              <section class="information-panel">
+                <h2 class="section-title">My Account</h2>
+
+                <div class="profile-details">
+                  <div class="detail-item">
+                    <small>Student Name</small>
+                    <strong>${esc(fullName)}</strong>
+                  </div>
+
+                  <div class="detail-item">
+                    <small>Account Role</small>
+                    <strong>Student</strong>
+                  </div>
+
+                  <div class="detail-item">
+                    <small>School ID</small>
+                    <strong>${esc(profile.school_id || "Not assigned")}</strong>
+                  </div>
+
+                  <div class="detail-item">
+                    <small>Academic Records</small>
+                    <strong>View available records</strong>
+                  </div>
+                </div>
+
+                <p style="margin-top:16px;">
+                  For corrections to your school records, contact the
+                  appropriate school office.
+                </p>
+              </section>
+            </main>
+          </div>
+
+          <div id="sidebarOverlay" class="sidebar-overlay"></div>
+        </div>
+      `;
+
+      const menuButton = document.getElementById("menuButton");
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("sidebarOverlay");
+
+      function closeMenu() {
+        sidebar.classList.remove("open");
+        overlay.classList.remove("show");
+        menuButton.setAttribute("aria-expanded", "false");
+      }
+
+      menuButton.addEventListener("click", () => {
+        const isOpen = sidebar.classList.toggle("open");
+        overlay.classList.toggle("show", isOpen);
+        menuButton.setAttribute("aria-expanded", String(isOpen));
+      });
+
+      overlay.addEventListener("click", closeMenu);
+
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") closeMenu();
+      });
+    }
+
+    setupLogout();
+
+    const result = await requireUser(ALLOWED_ROLES);
+
+    if (result) {
+      renderDashboard(result.profile || {});
+      setupLogout();
+    }
+  </script>
+</body>
+</html>
