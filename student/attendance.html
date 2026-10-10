@@ -1,0 +1,560 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#063B7A">
+  <meta name="description" content="Student Attendance - GRACAIS E-Portal">
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="stylesheet" href="../assets/style.css">
+
+  <title>My Attendance | GRACAIS E-Portal</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #F4F9FD;
+      color: #18324B;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .portal {
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .sidebar {
+      width: 250px;
+      flex-shrink: 0;
+      background: #032A58;
+      color: #fff;
+      padding: 24px 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px 24px;
+      border-bottom: 1px solid rgba(255,255,255,.15);
+    }
+
+    .brand img {
+      width: 45px;
+      height: 45px;
+      object-fit: contain;
+      background: #fff;
+      border-radius: 8px;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .brand small {
+      display: block;
+      color: #BAE6FD;
+      margin-top: 4px;
+    }
+
+    .nav-title {
+      margin: 24px 10px 10px;
+      font-size: 11px;
+      color: #BAE6FD;
+      letter-spacing: 1px;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 12px 13px;
+      margin: 5px 0;
+      color: #EAF6FF;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      background: #0B5CAD;
+      color: #fff;
+    }
+
+    .main {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #DCEAF5;
+      padding: 18px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .topbar h2 {
+      margin: 0;
+      color: #063B7A;
+      font-size: 20px;
+    }
+
+    .topbar p {
+      margin: 5px 0 0;
+      font-size: 13px;
+      color: #64748B;
+    }
+
+    .logout {
+      border: 0;
+      border-radius: 8px;
+      background: #063B7A;
+      color: #fff;
+      padding: 10px 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .content {
+      padding: 28px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .welcome {
+      background: linear-gradient(120deg, #063B7A, #0B5CAD);
+      color: #fff;
+      border-radius: 14px;
+      padding: 25px;
+      margin-bottom: 24px;
+    }
+
+    .welcome h1 {
+      margin: 0 0 9px;
+      font-size: 25px;
+    }
+
+    .welcome p {
+      margin: 0;
+      line-height: 1.7;
+      color: #E0F5FF;
+      font-size: 14px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #E0EAF2;
+      border-radius: 12px;
+      padding: 22px;
+      margin-bottom: 22px;
+      box-shadow: 0 3px 12px rgba(3,42,88,.04);
+    }
+
+    .card h3 {
+      color: #063B7A;
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+
+    .muted {
+      color: #64748B;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: #334155;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .field select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+      color: #18324B;
+      font-size: 14px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .summary-card {
+      background: #fff;
+      border: 1px solid #E0EAF2;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .summary-card span {
+      display: block;
+      color: #64748B;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .summary-card strong {
+      color: #063B7A;
+      font-size: 25px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 18px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 560px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 14px 12px;
+      border-bottom: 1px solid #E2E8F0;
+      font-size: 13px;
+    }
+
+    th {
+      background: #E0F5FF;
+      color: #063B7A;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .present {
+      background: #DCFCE7;
+      color: #166534;
+    }
+
+    .absent {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    .late {
+      background: #FEF3C7;
+      color: #92400E;
+    }
+
+    .excused {
+      background: #DBEAFE;
+      color: #1D4ED8;
+    }
+
+    .empty {
+      border: 1px dashed #B8D5E8;
+      border-radius: 10px;
+      padding: 28px 18px;
+      text-align: center;
+      margin-top: 18px;
+      background: #F8FCFF;
+    }
+
+    .empty .symbol {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .empty h4 {
+      margin: 0 0 8px;
+      color: #063B7A;
+      font-size: 16px;
+    }
+
+    .empty p {
+      margin: 0 auto;
+      max-width: 480px;
+      color: #64748B;
+      line-height: 1.7;
+      font-size: 13px;
+    }
+
+    .notice {
+      margin-top: 18px;
+      padding: 13px 15px;
+      background: #FFF8E6;
+      border: 1px solid #F4D58D;
+      color: #795716;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .footer {
+      text-align: center;
+      color: #64748B;
+      font-size: 12px;
+      padding: 20px;
+    }
+
+    .menu-button {
+      display: none;
+      background: #E0F5FF;
+      color: #063B7A;
+      border: 0;
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-weight: bold;
+    }
+
+    @media (max-width: 760px) {
+      .portal { display: block; }
+
+      .sidebar {
+        display: none;
+        width: 100%;
+      }
+
+      .sidebar.open { display: block; }
+
+      .topbar {
+        padding: 15px;
+        flex-wrap: wrap;
+      }
+
+      .topbar h2 { font-size: 17px; }
+
+      .menu-button { display: inline-block; }
+
+      .content { padding: 16px; }
+
+      .welcome { padding: 20px; }
+
+      .welcome h1 { font-size: 21px; }
+
+      .card { padding: 17px; }
+
+      .filters { grid-template-columns: 1fr; }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="portal">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="../logo.png" alt="GRACAIS Logo">
+        <div>
+          <strong>GRACAIS</strong>
+          <small>Student E-Portal</small>
+        </div>
+      </div>
+
+      <div class="nav-title">STUDENT MENU</div>
+
+      <nav>
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="grades.html">My Grades</a>
+        <a class="nav-link active" href="attendance.html">My Attendance</a>
+        <a class="nav-link" href="subjects.html">My Subjects</a>
+        <a class="nav-link" href="schedule.html">My Schedule</a>
+        <a class="nav-link" href="announcements.html">Announcements</a>
+        <a class="nav-link" href="profile.html">My Profile</a>
+        <a class="nav-link" href="password.html">Change Password</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="menu-button" id="menuButton" type="button">
+            ☰ Menu
+          </button>
+          <div>
+            <h2>My Attendance</h2>
+            <p>Graceland Academy International School of Excellence</p>
+          </div>
+        </div>
+
+        <button class="logout" id="logoutButton" type="button">
+          Log Out
+        </button>
+      </header>
+
+      <section class="content">
+        <div class="welcome">
+          <h1 id="welcomeTitle">My Attendance Records</h1>
+          <p>
+            Review your school attendance history, including days present,
+            absences, lateness, and excused absences when those records are available.
+          </p>
+        </div>
+
+        <section class="summary-grid">
+          <div class="summary-card">
+            <span>Days Present</span>
+            <strong id="presentCount">—</strong>
+          </div>
+
+          <div class="summary-card">
+            <span>Days Absent</span>
+            <strong id="absentCount">—</strong>
+          </div>
+
+          <div class="summary-card">
+            <span>Attendance Rate</span>
+            <strong id="attendanceRate">—</strong>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Filter Attendance</h3>
+          <p class="muted">
+            Choose a school year and month to review your attendance.
+          </p>
+
+          <div class="filters">
+            <div class="field">
+              <label for="academicYear">Academic Year</label>
+              <select id="academicYear">
+                <option value="">Academic years will load from school records</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="month">Month</label>
+              <select id="month">
+                <option value="">All months</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="notice">
+            Attendance summaries will be calculated from verified school records.
+            Until the database connection is completed, the dashes above mean
+            that no attendance totals have been loaded.
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Attendance History</h3>
+          <p class="muted">
+            Your recorded attendance dates and statuses will appear below.
+          </p>
+
+          <div class="empty" id="emptyState">
+            <div class="symbol">📅</div>
+            <h4>No attendance records loaded</h4>
+            <p>
+              Attendance records have not been loaded into this page yet.
+              This does not mean you were absent. The secure database connection
+              still needs to be completed and tested.
+            </p>
+          </div>
+
+          <div class="table-wrap" id="attendanceTableWrap" hidden>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="footer">
+          GRACAIS E-Portal · Academic Information System
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      requireUser,
+      logout,
+      esc
+    } from "../assets/app.js";
+
+    const ALLOWED_ROLES = ["student"];
+
+    const sidebar = document.getElementById("sidebar");
+    const menuButton = document.getElementById("menuButton");
+    const logoutButton = document.getElementById("logoutButton");
+
+    menuButton.addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+    });
+
+    logoutButton.addEventListener("click", async () => {
+      await logout();
+    });
+
+    async function initializeAttendancePage() {
+      const result = await requireUser(ALLOWED_ROLES);
+
+      if (!result) return;
+
+      const profile = result.profile || {};
+
+      const studentName = [
+        profile.first_name || "",
+        profile.last_name || ""
+      ].filter(Boolean).join(" ");
+
+      if (studentName) {
+        document.getElementById("welcomeTitle").textContent =
+          "Attendance — " + esc(studentName);
+      }
+
+      // Academic years and attendance totals will be loaded from Supabase
+      // when the secure student-record query is implemented.
+      // Do not display invented attendance data.
+    }
+
+    initializeAttendancePage();
+  </script>
+</body>
+</html>
