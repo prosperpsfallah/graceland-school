@@ -76,13 +76,14 @@ export async function requireUser(
       return null;
     }
 
+    // Updated select to pull all relevant profile fields including email and grade_level
     const {
       data: profile,
       error: profileError
     } = await supabase
       .from("user_profiles")
       .select(
-        "id, school_id, first_name, last_name, role, status"
+        "id, school_id, first_name, last_name, role, status, grade_level, email"
       )
       .eq("id", authData.user.id)
       .maybeSingle();
@@ -108,10 +109,10 @@ export async function requireUser(
       return null;
     }
 
-    if (
-      String(profile.status || "").toLowerCase() !==
-      "active"
-    ) {
+    // Default to 'active' if status is not explicitly set in user_profiles
+    const accountStatus = String(profile.status || "active").toLowerCase();
+
+    if (accountStatus !== "active") {
       showAccessMessage(
         "Your account is not active. Please contact the administrator."
       );
@@ -132,7 +133,10 @@ export async function requireUser(
 
     return {
       user: authData.user,
-      profile
+      profile: {
+        ...profile,
+        email: profile.email || authData.user.email
+      }
     };
   } catch (error) {
     console.error(
