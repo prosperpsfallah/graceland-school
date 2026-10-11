@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,7 +94,10 @@
       padding: 10px 15px;
       font-weight: bold;
       cursor: pointer;
+      transition: background 0.2s ease;
     }
+
+    .logout:hover { background: #0B5CAD; }
 
     .content { padding: 28px; max-width: 1200px; margin: 0 auto; }
 
@@ -105,28 +107,29 @@
       border-radius: 14px;
       padding: 25px;
       margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.08);
     }
 
     .welcome h1 { margin: 0 0 9px; font-size: 25px; }
     .welcome p { margin: 0; line-height: 1.7; color: #E0F5FF; font-size: 14px; }
 
-    .card {
+    .portal-card {
       background: #fff;
-      border: 1px solid #E0EAF2;
+      border: 1px solid #D9E5F0;
       border-radius: 12px;
-      padding: 22px;
-      margin-bottom: 22px;
-      box-shadow: 0 3px 12px rgba(3,42,88,.04);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
     }
 
-    .card h3 { color: #063B7A; margin: 0 0 8px; font-size: 17px; }
+    .portal-card h3 { color: #063B7A; margin: 0 0 8px; font-size: 17px; }
     .muted { color: #64748B; font-size: 13px; line-height: 1.7; }
 
     .filter-row {
       display: flex;
-      gap: 14px;
+      gap: 16px;
       align-items: end;
-      margin-top: 20px;
+      margin-top: 18px;
     }
 
     .field { flex: 1; min-width: 0; }
@@ -144,47 +147,128 @@
       min-height: 44px;
       border: 1px solid #CBD5E1;
       border-radius: 8px;
-      padding: 10px;
+      padding: 10px 14px;
       background: #fff;
       color: #18324B;
       font-size: 14px;
     }
 
-    .table-wrap { overflow-x: auto; margin-top: 20px; }
+    .field select:focus {
+      outline: none;
+      border-color: #063B7A;
+      box-shadow: 0 0 0 3px rgba(6, 59, 122, 0.1);
+    }
 
-    table {
+    /* Table Chart Layout */
+    .table-container {
       width: 100%;
-      min-width: 650px;
+      overflow-x: auto;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .portal-table {
+      width: 100%;
       border-collapse: collapse;
-    }
-
-    th, td {
       text-align: left;
-      padding: 14px 12px;
+      font-size: 0.88rem;
+    }
+
+    .portal-table th {
+      background: #F8FAFC;
+      color: #063B7A;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 2px solid #E2E8F0;
+      white-space: nowrap;
+    }
+
+    .portal-table td {
+      padding: 14px 16px;
       border-bottom: 1px solid #E2E8F0;
-      font-size: 13px;
+      color: #334155;
+      vertical-align: middle;
     }
 
-    th { background: #E0F5FF; color: #063B7A; }
+    .font-bold-title {
+      font-weight: 600;
+      color: #0F172A;
+    }
 
-    .empty {
-      border: 1px dashed #B8D5E8;
-      border-radius: 10px;
-      padding: 30px 18px;
+    .day-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #E0F5FF;
+      color: #063B7A;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Dropdown Action System */
+    .portal-action-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .portal-action-btn {
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      color: #0F172A;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .portal-action-btn:hover { background: #E2E8F0; }
+
+    .portal-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: #ffffff;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      min-width: 170px;
+      z-index: 50;
+      overflow: hidden;
+    }
+
+    .portal-dropdown-menu.show { display: block; }
+
+    .portal-dropdown-item {
+      width: 100%;
+      text-align: left;
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      color: #334155;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+
+    .portal-dropdown-item:hover {
+      background: #F8FAFC;
+      color: #063B7A;
+    }
+
+    .empty-state-cell {
       text-align: center;
-      margin-top: 20px;
-      background: #F8FCFF;
-    }
-
-    .empty .symbol { font-size: 32px; margin-bottom: 10px; }
-    .empty h4 { margin: 0 0 8px; color: #063B7A; font-size: 16px; }
-
-    .empty p {
-      margin: 0 auto;
-      max-width: 480px;
+      padding: 32px 16px;
       color: #64748B;
-      line-height: 1.7;
-      font-size: 13px;
     }
 
     .notice {
@@ -208,6 +292,7 @@
       border-radius: 7px;
       padding: 9px 12px;
       font-weight: bold;
+      cursor: pointer;
     }
 
     @media (max-width: 760px) {
@@ -220,7 +305,7 @@
       .content { padding: 16px; }
       .welcome { padding: 20px; }
       .welcome h1 { font-size: 21px; }
-      .card { padding: 17px; }
+      .portal-card { padding: 18px; }
       .filter-row { flex-direction: column; align-items: stretch; }
     }
   </style>
@@ -256,7 +341,7 @@
           <button class="menu-button" id="menuButton" type="button">☰ Menu</button>
           <div>
             <h2>My Class Schedule</h2>
-            <p>Graceland Academy International School of Excellence</p>
+            <p>Graceland Academy International School of Excellence [Grades 4th - 12th]</p>
           </div>
         </div>
         <button class="logout" id="logoutButton" type="button">Log Out</button>
@@ -266,16 +351,15 @@
         <div class="welcome">
           <h1 id="welcomeTitle">My Class Timetable</h1>
           <p>
-            View your official class timetable, subjects, assigned teachers,
-            and lesson times once the school schedule is available.
+            View your official class timetable, subjects, assigned teachers, and lesson times.
           </p>
         </div>
 
-        <section class="card">
+        <!-- Filters Card -->
+        <section class="portal-card">
           <h3>Schedule Filters</h3>
           <p class="muted">
-            Choose a day to review your timetable. Schedule records will be
-            loaded from the school's official timetable.
+            Choose a day to review your timetable. Schedule records load from the official school timetable.
           </p>
 
           <div class="filter-row">
@@ -293,24 +377,18 @@
           </div>
         </section>
 
-        <section class="card">
-          <h3>Weekly Timetable</h3>
-          <p class="muted">
-            Your scheduled classes and lesson times will appear here.
-          </p>
-
-          <div class="empty" id="emptyState">
-            <div class="symbol">🗓️</div>
-            <h4>No timetable loaded</h4>
-            <p>
-              The official timetable has not been loaded into this page yet.
-              This does not mean you have no classes. The schedule database
-              connection must be completed before your timetable can appear.
-            </p>
+        <!-- Timetable Table Card -->
+        <section class="portal-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3>Weekly Timetable</h3>
+              <p class="muted" style="margin:4px 0 0 0;">Your scheduled classes and lesson times.</p>
+            </div>
+            <p id="scheduleStatus" style="margin:0; font-weight:600; color:#063B7A; font-size:0.88rem;">0 sessions loaded</p>
           </div>
 
-          <div class="table-wrap" id="scheduleTableWrap" hidden>
-            <table>
+          <div class="table-container">
+            <table class="portal-table">
               <thead>
                 <tr>
                   <th>Day</th>
@@ -319,15 +397,23 @@
                   <th>Subject</th>
                   <th>Teacher</th>
                   <th>Room</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
-              <tbody id="scheduleRows"></tbody>
+              <tbody id="scheduleRows">
+                <tr>
+                  <td colspan="7" class="empty-state-cell">
+                    <div style="font-size:28px; margin-bottom:8px;">🗓️</div>
+                    <strong style="color:#063B7A; display:block; margin-bottom:4px;">No timetable loaded</strong>
+                    <span>The official timetable has not been loaded into this page yet. Database connection required.</span>
+                  </td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
           <div class="notice">
-            This is a read-only student page. Only authorized school staff
-            should manage official timetable records.
+            This is a read-only student page. Only authorized school staff manage official timetable records.
           </div>
         </section>
 
@@ -341,10 +427,12 @@
   <script type="module">
     import {
       requireUser,
-      logout
+      logout,
+      esc
     } from "../assets/app.js";
 
     const ALLOWED_ROLES = ["student"];
+    let studentSchedule = [];
 
     document.getElementById("menuButton").addEventListener("click", () => {
       document.getElementById("sidebar").classList.toggle("open");
@@ -353,6 +441,113 @@
     document.getElementById("logoutButton").addEventListener("click", async () => {
       await logout();
     });
+
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
+    function renderSchedule(records) {
+      const tbody = document.getElementById("scheduleRows");
+      const status = document.getElementById("scheduleStatus");
+      const selectedDay = document.getElementById("dayFilter").value.toLowerCase();
+      if (!tbody || !status) return;
+
+      const filtered = records.filter(item => {
+        const dayVal = (item.day || item.day_of_week || "").toLowerCase();
+        return !selectedDay || dayVal === selectedDay;
+      });
+
+      status.textContent = `${filtered.length} session${filtered.length === 1 ? "" : "s"} shown`;
+
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="empty-state-cell">
+              <div style="font-size:28px; margin-bottom:8px;">🗓️</div>
+              <strong style="color:#063B7A; display:block; margin-bottom:4px;">No matching sessions</strong>
+              <span>No scheduled timetable entries match the selected day filter.</span>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((item, index) => {
+        const dayVal = item.day || item.day_of_week || "—";
+        const startVal = item.start_time || item.start || "—";
+        const endVal = item.end_time || item.end || "—";
+        const subjectVal = item.subject_name || item.subject || "—";
+        const teacherVal = item.teacher_name || item.teacher || "—";
+        const roomVal = item.room || item.classroom || "—";
+
+        return `
+          <tr>
+            <td><span class="day-badge">${esc(dayVal)}</span></td>
+            <td class="font-bold-title">${esc(startVal)}</td>
+            <td>${esc(endVal)}</td>
+            <td class="font-bold-title">${esc(subjectVal)}</td>
+            <td>${esc(teacherVal)}</td>
+            <td>${esc(roomVal)}</td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item inspect-schedule-btn" data-index="${index}">
+                    👁️ Inspect Session
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-schedule-btn" data-subject="${esc(subjectVal)}" data-day="${esc(dayVal)}" data-time="${esc(startVal)}">
+                    📋 Copy Summary
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".inspect-schedule-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const rec = filtered[btn.dataset.index];
+          alert(`--- Timetable Session ---\nSubject: ${rec.subject_name || rec.subject || 'N/A'}\nDay: ${rec.day || rec.day_of_week || 'N/A'}\nTime: ${rec.start_time || 'N/A'} - ${rec.end_time || 'N/A'}\nTeacher: ${rec.teacher_name || rec.teacher || 'N/A'}\nRoom: ${rec.room || rec.classroom || 'N/A'}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-schedule-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const summary = `GRACAIS Schedule: ${btn.dataset.subject} on ${btn.dataset.day} at ${btn.dataset.time}`;
+          navigator.clipboard.writeText(summary);
+          alert(`Copied summary: ${summary}`);
+        });
+      });
+    }
 
     async function initializeSchedulePage() {
       const result = await requireUser(ALLOWED_ROLES);
@@ -370,8 +565,11 @@
           "Class Timetable — " + fullName;
       }
 
-      // Live timetable loading will be connected to Supabase.
-      // No example classes, teachers, times, or rooms are invented.
+      document.getElementById("dayFilter").addEventListener("change", () => {
+        renderSchedule(studentSchedule);
+      });
+
+      renderSchedule(studentSchedule);
     }
 
     initializeSchedulePage();
