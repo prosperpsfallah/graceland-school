@@ -6,89 +6,201 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Subject Management">
   <title>Subjects | GRACAIS E-Portal</title>
-
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
-
 <body>
-  <div id="app">
-    <main class="page-content">
-      <p>Loading subject records...</p>
-    </main>
-  </div>
-
+  <div id="portalLayout"></div>
   <script type="module">
     import {
-      requireUser,
-      setupLogout
+      setupLogout,
+      esc
     } from "../assets/app.js";
-
     import {
-      initLayout
+      initLayout,
+      requireUser
     } from "../assets/layout.js";
-
+    import { supabase } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
-
+    let subjectRecords = [];
+    function safe(value) {
+      return esc(String(value ?? ""));
+    }
+    function getSubjectName(subject) {
+      return subject.subject_name
+        || subject.name
+        || subject.title
+        || "—";
+    }
+    function getSubjectId(subject) {
+      return subject.subject_id
+        || subject.id
+        || "—";
+    }
+    function getClassName(subject) {
+      return subject.classes?.name
+        || subject.class_name
+        || subject.class_id
+        || "—";
+    }
+    function getAcademicYear(subject) {
+      return subject.academic_years?.name
+        || subject.academic_year
+        || subject.academic_year_id
+        || "—";
+    }
+    function getStatus(subject) {
+      return subject.status
+        || "—";
+    }
+    function renderSubjects() {
+      const tbody = document.getElementById("subjectRows");
+      const status = document.getElementById("subjectStatus");
+      const searchInput = document.getElementById("subjectSearch");
+      if (!tbody || !status || !searchInput) return;
+      const query = searchInput.value.trim().toLowerCase();
+      const filtered = subjectRecords.filter(subject => {
+        const searchable = [
+          getSubjectId(subject),
+          getSubjectName(subject),
+          getClassName(subject),
+          getAcademicYear(subject),
+          getStatus(subject)
+        ].join(" ").toLowerCase();
+        return searchable.includes(query);
+      });
+      status.textContent =
+        `${filtered.length} subject record${filtered.length === 1 ? "" : "s"}`;
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>${query ? "No matching subjects" : "No subject records found"}</h3>
+                <p>
+                  ${query
+                    ? "Try another subject name, ID, class, or academic year."
+                    : "Existing subject records will appear here when available in the database."}
+                </p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      tbody.innerHTML = filtered.map(subject => `
+        <tr>
+          <td>${safe(getSubjectId(subject))}</td>
+          <td>${safe(getSubjectName(subject))}</td>
+          <td>${safe(getClassName(subject))}</td>
+          <td>${safe(getAcademicYear(subject))}</td>
+          <td>${safe(getStatus(subject))}</td>
+        </tr>
+      `).join("");
+    }
+    async function loadSubjects() {
+      const tbody = document.getElementById("subjectRows");
+      const status = document.getElementById("subjectStatus");
+      const refreshButton = document.getElementById("refreshSubjects");
+      if (!tbody || !status || !refreshButton) return;
+      refreshButton.disabled = true;
+      status.textContent = "Loading subject records...";
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5">Loading subject records...</td>
+        </tr>
+      `;
+      try {
+        // Read existing records only. No sample data is inserted.
+        const { data, error } = await supabase
+          .from("subjects")
+          .select("*");
+        if (error) throw error;
+        subjectRecords = data ?? [];
+        subjectRecords.sort((a, b) =>
+          getSubjectName(a).localeCompare(getSubjectName(b))
+        );
+        renderSubjects();
+      } catch (error) {
+        console.error("Subject loading error:", error);
+        status.textContent = "Unable to load subjects";
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>Could not load subject records</h3>
+                <p>
+                  Check the subjects table, its column names,
+                  and the Supabase access policies.
+                </p>
+                <p id="subjectError"></p>
+              </div>
+            </td>
+          </tr>
+        `;
+        const errorElement = document.getElementById("subjectError");
+        if (errorElement) {
+          errorElement.textContent =
+            error?.message || "An unexpected database error occurred.";
+        }
+      } finally {
+        refreshButton.disabled = false;
+      }
+    }
     async function initSubjectsPage() {
       initLayout(
         "super_admin",
         "subjects.html",
         "Subject Management"
       );
-
       setupLogout();
-
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
-
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
-
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
             <h1>Subject Management</h1>
             <p>
-              View and manage the academic subjects taught
-              at Graceland Academy International School
-              of Excellence (GRACAIS).
+              View academic subjects for Graceland Academy
+              International School of Excellence (GRACAIS).
             </p>
           </div>
         </section>
-
         <section class="card">
           <div class="card-header">
             <div>
               <h2>Academic Subjects</h2>
-              <p>
-                Subject information will come from the
-                connected GRACAIS database.
-              </p>
+              <p>Existing subject records from the connected database.</p>
             </div>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="refreshSubjects"
+            >
+              Refresh
+            </button>
           </div>
-
           <div class="form-group">
             <label for="subjectSearch">Search subjects</label>
             <input
               type="search"
               id="subjectSearch"
-              placeholder="Search by subject name..."
+              placeholder="Search by subject name, ID, class, or year..."
               autocomplete="off"
-              disabled
             >
-            <small>
-              Search will be enabled after database integration.
-            </small>
           </div>
-
+          <p id="subjectStatus" aria-live="polite">
+            Preparing subject records...
+          </p>
           <div class="table-container">
             <table>
               <thead>
@@ -100,41 +212,34 @@
                   <th>Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="subjectRows">
                 <tr>
-                  <td colspan="5">
-                    <div class="empty-state">
-                      <h3>No subject records loaded</h3>
-                      <p>
-                        Real subject records will appear after
-                        database integration. No sample subjects
-                        are being inserted.
-                      </p>
-                    </div>
-                  </td>
+                  <td colspan="5">Loading subject records...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
       `;
+      document
+        .getElementById("subjectSearch")
+        .addEventListener("input", renderSubjects);
+      document
+        .getElementById("refreshSubjects")
+        .addEventListener("click", loadSubjects);
+      await loadSubjects();
     }
-
     initSubjectsPage().catch(error => {
-      console.error("Subject management error:", error);
-
-      const app = document.getElementById("app");
-      if (app) {
-        app.innerHTML = `
-          <main class="page-content">
-            <section class="card">
-              <h2>Unable to load Subject Management</h2>
-              <p>
-                Check the shared portal files and
-                authentication configuration.
-              </p>
-            </section>
-          </main>
+      console.error("Subject management page error:", error);
+      const pageContent = document.getElementById("pageContent");
+      if (pageContent) {
+        pageContent.innerHTML = `
+          <section class="card">
+            <h2>Unable to load Subject Management</h2>
+            <p>
+              Check the shared portal files and authentication configuration.
+            </p>
+          </section>
         `;
       }
     });
