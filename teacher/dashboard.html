@@ -8,6 +8,139 @@
   <title>Teacher Dashboard | GRACAIS</title>
   <link rel="icon" href="../logo.png" type="image/png">
   <link rel="stylesheet" href="../assets/style.css">
+
+  <style>
+    .teacher-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .welcome-panel {
+      padding: 28px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #063B7A, #0B5CAD);
+      color: white;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.08);
+    }
+
+    .welcome-panel h1 {
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      margin: 0 0 10px 0;
+    }
+
+    .welcome-panel p {
+      line-height: 1.7;
+      margin: 0;
+      color: #E0F5FF;
+    }
+
+    .teacher-label {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 4px 12px;
+      border: 1px solid rgba(255,255,255,.45);
+      border-radius: 30px;
+      font-size: .82rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .section-title {
+      color: #063B7A;
+      font-size: 1.25rem;
+      margin-bottom: 16px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+
+    .dashboard-card {
+      display: block;
+      padding: 20px;
+      border: 1px solid #D9E5F0;
+      border-radius: 12px;
+      background: white;
+      color: #17324d;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(3,42,88,.04);
+      transition: transform .15s ease, border-color .15s ease;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-2px);
+      border-color: #063B7A;
+    }
+
+    .card-icon {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: #E0F5FF;
+      color: #063B7A;
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 14px;
+    }
+
+    .dashboard-card h3 {
+      color: #063B7A;
+      margin: 0 0 6px 0;
+      font-size: 1.05rem;
+    }
+
+    .dashboard-card p {
+      color: #64748b;
+      font-size: .88rem;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .portal-card {
+      background: white;
+      border: 1px solid #D9E5F0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+    }
+
+    .portal-card p {
+      color: #526579;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .status-note {
+      background: #FFF8E6;
+      border: 1px solid #F4D58D;
+      color: #795716;
+      border-radius: 10px;
+      padding: 14px 18px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 850px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .teacher-page { padding: 16px; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .welcome-panel { padding: 20px; }
+    }
+  </style>
 </head>
 <body>
   <div id="app"></div>
@@ -25,19 +158,6 @@
     ];
 
     const app = document.getElementById("app");
-
-    function showMessage(message) {
-      const content = document.getElementById("pageContent");
-
-      if (content) {
-        content.innerHTML = `
-          <section class="card">
-            <h2>Teacher Dashboard</h2>
-            <p>${esc(message)}</p>
-          </section>
-        `;
-      }
-    }
 
     // Build the page shell.
     app.innerHTML = `
@@ -110,7 +230,7 @@
             <div class="sidebar-school-name">
               Graceland Academy International School of Excellence
             </div>
-            <div class="sidebar-role">Teacher</div>
+            <div class="sidebar-role">Teacher Portal [Grades 4th - 12th]</div>
           </div>
         </aside>
 
@@ -130,7 +250,7 @@
 
             <div class="topbar-heading">
               <h1>Teacher Dashboard</h1>
-              <p>GRACAIS Academic Portal</p>
+              <p>GRACAIS Academic Portal [Grades 4th - 12th]</p>
             </div>
 
             <button
@@ -143,10 +263,10 @@
             </button>
           </header>
 
-          <section id="pageContent" class="page-content">
-            <section class="card">
+          <section id="pageContent" class="page-content teacher-page">
+            <div class="portal-card">
               <p>Verifying your teacher account...</p>
-            </section>
+            </div>
           </section>
         </main>
       </div>
@@ -188,61 +308,72 @@
     const result = await requireUser(ALLOWED_ROLES);
 
     if (result) {
-      const profile = result.profile;
+      const profile = result.profile || {};
       const fullName = [
         profile.first_name,
         profile.last_name
       ].filter(Boolean).join(" ");
 
       document.getElementById("pageContent").innerHTML = `
-        <section class="page-heading">
-          <h2>Welcome${fullName ? ", " + esc(fullName) : ""}!</h2>
+        <section class="welcome-panel">
+          <span class="teacher-label">Faculty Account</span>
+          <h1>Welcome${fullName ? ", " + esc(fullName) : ""}!</h1>
           <p>
-            Manage your assigned students, grades, attendance,
-            and teaching schedule from one place.
+            Manage your assigned students, grade records, attendance sheets, and class timetable for Grades 4th through 12th.
           </p>
         </section>
 
-        <section class="card">
-          <h3>My Teaching Workspace</h3>
-          <p>
-            Select a section below to continue your academic work.
-          </p>
+        <div class="status-note">
+          <strong>Faculty Workspace Notice:</strong>
+          Assigned student rosters, grade records, and timetable sessions will update dynamically as official school queries synchronize with your account.
+        </div>
+
+        <section>
+          <h2 class="section-title">My Teaching Workspace</h2>
 
           <div class="dashboard-grid">
-            <a class="card" href="./my-students.html">
+            <a class="dashboard-card" href="./my-students.html">
+              <div class="card-icon" aria-hidden="true">♙</div>
               <h3>My Students</h3>
-              <p>View students assigned to your classes.</p>
+              <p>View student rosters assigned to your classes.</p>
             </a>
 
-            <a class="card" href="./grades.html">
+            <a class="dashboard-card" href="./grades.html">
+              <div class="card-icon" aria-hidden="true">▥</div>
               <h3>Grade Management</h3>
-              <p>Enter and review grades for Grades 4–12.</p>
+              <p>Enter and review academic marks for Grades 4th–12th.</p>
             </a>
 
-            <a class="card" href="./attendance.html">
+            <a class="dashboard-card" href="./attendance.html">
+              <div class="card-icon" aria-hidden="true">✓</div>
               <h3>Attendance</h3>
-              <p>Record class attendance and print attendance sheets.</p>
+              <p>Record daily class attendance and print formal sheet logs.</p>
             </a>
 
-            <a class="card" href="./schedule.html">
+            <a class="dashboard-card" href="./schedule.html">
+              <div class="card-icon" aria-hidden="true">◷</div>
               <h3>My Schedule</h3>
-              <p>Review your assigned timetable.</p>
+              <p>Review your weekly teaching timetable.</p>
             </a>
 
-            <a class="card" href="./announcements.html">
+            <a class="dashboard-card" href="./announcements.html">
+              <div class="card-icon" aria-hidden="true">◉</div>
               <h3>Announcements</h3>
-              <p>Read school announcements.</p>
+              <p>Read official published updates from administration.</p>
+            </a>
+
+            <a class="dashboard-card" href="./password.html">
+              <div class="card-icon" aria-hidden="true">◇</div>
+              <h3>Change Password</h3>
+              <p>Update your teacher account credentials securely.</p>
             </a>
           </div>
         </section>
 
-        <section class="card">
-          <h3>Academic Summary</h3>
+        <section class="portal-card">
+          <h2 class="section-title" style="margin-top:0;">Academic Summary</h2>
           <p>
-            Your assigned classes, student totals, pending grade
-            submissions, and attendance summaries will appear
-            here after the database queries are implemented.
+            Your assigned classes, student counts, pending grade submissions, and attendance totals will display here upon connection with authorized database records.
           </p>
         </section>
       `;
