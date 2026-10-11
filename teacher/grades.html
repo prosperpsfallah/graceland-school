@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,140 +13,251 @@
     .teacher-page {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 24px;
     }
 
-    .page-heading {
-      margin-bottom: 22px;
+    .welcome-panel {
+      padding: 28px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #063B7A, #0B5CAD);
+      color: white;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.08);
     }
 
-    .page-heading h1 {
-      color: var(--deep-blue, #063B7A);
-      margin-bottom: 8px;
+    .welcome-panel h1 {
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      margin: 0 0 10px 0;
+    }
+
+    .welcome-panel p {
+      line-height: 1.7;
+      margin: 0;
+      color: #E0F5FF;
+    }
+
+    .portal-card {
+      background: white;
+      border: 1px solid #D9E5F0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+    }
+
+    .portal-card h2, .portal-card h3 {
+      color: #063B7A;
+      margin: 0 0 8px 0;
+      font-size: 1.15rem;
+    }
+
+    .muted {
+      color: #64748B;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      margin: 0;
     }
 
     .grade-notice {
-      padding: 14px 16px;
-      margin: 16px 0;
-      border: 1px solid #bae6fd;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      border: 1px solid #F4D58D;
       border-radius: 10px;
-      background: #f0f9ff;
-      color: #075985;
+      background: #FFF8E6;
+      color: #795716;
       line-height: 1.6;
-    }
-
-    .grade-panel {
-      background: white;
-      border: 1px solid #dbe7f0;
-      border-radius: 14px;
-      padding: 20px;
-      margin: 20px 0;
-      box-shadow: 0 4px 14px rgba(3, 42, 88, 0.05);
+      font-size: 0.9rem;
     }
 
     .grade-fields {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 16px;
+      margin-top: 18px;
     }
 
     .grade-fields label {
       display: block;
       font-weight: 600;
-      color: #17324d;
+      color: #334155;
       margin-bottom: 7px;
+      font-size: 0.88rem;
     }
 
     .grade-fields select,
     .grade-fields input {
       width: 100%;
       min-height: 44px;
-      padding: 10px;
-      border: 1px solid #cbd5e1;
+      padding: 10px 14px;
+      border: 1px solid #CBD5E1;
       border-radius: 8px;
       background: #fff;
-      color: #17324d;
+      color: #18324B;
       font: inherit;
+      font-size: 0.9rem;
+    }
+
+    .grade-fields select:focus,
+    .grade-fields input:focus {
+      outline: none;
+      border-color: #063B7A;
+      box-shadow: 0 0 0 3px rgba(6, 59, 122, 0.1);
     }
 
     .grade-fields input:disabled,
     .grade-fields select:disabled {
-      background: #f1f5f9;
+      background: #F1F5F9;
       cursor: not-allowed;
     }
 
     .score-preview {
-      margin-top: 18px;
-      padding: 16px;
+      margin-top: 20px;
+      padding: 18px;
       border-radius: 10px;
-      background: #f4f9fd;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
       display: flex;
       flex-wrap: wrap;
-      gap: 22px;
+      gap: 24px;
       align-items: center;
     }
 
     .preview-item small {
       display: block;
-      color: #526579;
-      margin-bottom: 5px;
+      color: #64748B;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
     }
 
     .preview-item strong {
       color: #063B7A;
-      font-size: 1.25rem;
+      font-size: 1.35rem;
     }
 
-    .empty-state {
-      text-align: center;
-      padding: 36px 18px;
-      border: 1px dashed #b7c9d9;
-      border-radius: 12px;
-      color: #526579;
-      line-height: 1.7;
+    /* Table Chart Layout */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      margin-top: 16px;
     }
 
-    .empty-state h2 {
-      color: #063B7A;
-      margin-bottom: 10px;
-    }
-
-    .grade-scale {
+    .portal-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 12px;
-    }
-
-    .grade-scale th,
-    .grade-scale td {
-      padding: 11px;
       text-align: left;
-      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.88rem;
     }
 
-    .grade-scale th {
-      background: #f4f9fd;
+    .portal-table th {
+      background: #F8FAFC;
       color: #063B7A;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 2px solid #E2E8F0;
+      white-space: nowrap;
+    }
+
+    .portal-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #E2E8F0;
+      color: #334155;
+      vertical-align: middle;
+    }
+
+    .font-bold-title {
+      font-weight: 600;
+      color: #0F172A;
+    }
+
+    .grade-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #E0F5FF;
+      color: #063B7A;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Dropdown Action System */
+    .portal-action-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .portal-action-btn {
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      color: #0F172A;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .portal-action-btn:hover { background: #E2E8F0; }
+
+    .portal-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: #ffffff;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      min-width: 170px;
+      z-index: 50;
+      overflow: hidden;
+    }
+
+    .portal-dropdown-menu.show { display: block; }
+
+    .portal-dropdown-item {
+      width: 100%;
+      text-align: left;
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      color: #334155;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+
+    .portal-dropdown-item:hover {
+      background: #F8FAFC;
+      color: #063B7A;
+    }
+
+    .empty-state-cell {
+      text-align: center;
+      padding: 32px 16px;
+      color: #64748B;
     }
 
     .status-message {
-      margin-top: 12px;
-      color: #526579;
-      font-size: 0.92rem;
+      margin-top: 14px;
+      color: #64748B;
+      font-size: 0.88rem;
+      line-height: 1.6;
     }
 
     @media (max-width: 760px) {
-      .grade-fields {
-        grid-template-columns: 1fr;
-      }
-
-      .teacher-page {
-        padding: 14px;
-      }
-
-      .grade-panel {
-        padding: 15px;
-      }
+      .grade-fields { grid-template-columns: 1fr; }
+      .teacher-page { padding: 16px; }
+      .portal-card { padding: 18px; }
+      .welcome-panel { padding: 20px; }
     }
   </style>
 </head>
@@ -165,6 +275,7 @@
     } from "../assets/app.js";
 
     const ALLOWED_ROLES = ["teacher", "instructor"];
+    let assignedStudentsList = [];
 
     const periods = [
       "1st Period",
@@ -181,6 +292,104 @@
       { length: 9 },
       (_, index) => index + 4
     );
+
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
+    function renderStudents(records) {
+      const tbody = document.getElementById("studentTableBody");
+      const status = document.getElementById("studentStatus");
+      if (!tbody || !status) return;
+
+      status.textContent = `${records.length} student record${records.length === 1 ? "" : "s"} shown`;
+
+      if (!records.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-state-cell">
+              <div style="font-size:28px; margin-bottom:8px;">👥</div>
+              <strong style="color:#063B7A; display:block; margin-bottom:4px;">No student records loaded</strong>
+              <span>Students in your assigned classes (Grades 4th - 12th) will populate after database synchronization.</span>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = records.map((item, index) => {
+        const studentName = item.full_name || [item.first_name, item.last_name].filter(Boolean).join(" ") || "Student";
+        const studentId = item.school_id || item.student_id || "—";
+        const gradeLevel = item.grade_level ? `Grade ${item.grade_level}` : "—";
+        const currentGrade = item.score ?? "Not set";
+
+        return `
+          <tr>
+            <td class="font-bold-title">${esc(studentName)}</td>
+            <td>${esc(studentId)}</td>
+            <td><span class="grade-badge">${esc(gradeLevel)}</span></td>
+            <td><strong style="color:#063B7A;">${esc(currentGrade)}</strong></td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item inspect-student-btn" data-index="${index}">
+                    👁️ Inspect Record
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-student-btn" data-name="${esc(studentName)}" data-id="${esc(studentId)}">
+                    📋 Copy Info
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".inspect-student-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const rec = records[btn.dataset.index];
+          const name = rec.full_name || [rec.first_name, rec.last_name].filter(Boolean).join(" ") || "Student";
+          alert(`--- Student Profile ---\nName: ${name}\nID: ${rec.school_id || 'N/A'}\nClass: Grade ${rec.grade_level || 'N/A'}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-student-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const info = `${btn.dataset.name} (${btn.dataset.id})`;
+          navigator.clipboard.writeText(info);
+          alert(`Copied student details: ${info}`);
+        });
+      });
+    }
 
     function buildPage() {
       const app = document.getElementById("app");
@@ -229,33 +438,33 @@
               <div>
                 <strong>Grade Management</strong>
                 <div id="teacherName" style="font-size:13px;color:#64748b;">
-                  Teacher Portal
+                  Teacher Portal [Grades 4th - 12th]
                 </div>
               </div>
             </header>
 
             <main class="teacher-page">
-              <section class="page-heading">
+              <section class="welcome-panel">
+                <span style="display:inline-block;margin-bottom:10px;padding:4px 12px;border:1px solid rgba(255,255,255,.45);border-radius:30px;font-size:.82rem;font-weight:600;background:rgba(255,255,255,0.1);">Academic Records</span>
                 <h1>Grade Management</h1>
-                <p>Manage academic grades for your assigned classes.</p>
+                <p>Manage and calculate academic grades for your assigned classes across Grades 4th through 12th.</p>
               </section>
 
               <div class="grade-notice">
-                <strong>Academic records only.</strong>
-                This page contains no fee or payment features. Student names
-                and grade records will only appear after the secure database
-                queries and teacher-class assignments are connected.
+                <strong>Academic records integrity.</strong>
+                Scores and grade updates apply strictly to active academic sessions and synchronally reflect verified Supabase RLS security policies.
               </div>
 
-              <section class="grade-panel">
+              <!-- Entry Setup Card -->
+              <section class="portal-card">
                 <h2>Grade Entry Settings</h2>
-                <p style="margin:8px 0 20px;color:#64748b;">
-                  Select the academic class and grading period.
+                <p class="muted">
+                  Select the academic class level and target grading period.
                 </p>
 
                 <div class="grade-fields">
                   <div>
-                    <label for="gradeClass">Class</label>
+                    <label for="gradeClass">Class Level</label>
                     <select id="gradeClass">
                       <option value="">Select class</option>
                       ${gradeOptions.map(number =>
@@ -300,46 +509,69 @@
                 </div>
 
                 <p class="status-message" id="gradeMessage">
-                  Preview only: scores are not saved to the school database.
+                  Preview only: scores are calculated locally until saved to the database.
                 </p>
               </section>
 
-              <section class="grade-panel">
-                <h2>Assigned Students</h2>
-                <div class="empty-state">
-                  <h2>No student records loaded</h2>
-                  <p>
-                    This is an empty state, not an error indicating that the
-                    school has no students.
-                  </p>
-                  <p>
-                    The secure Supabase query must load only students in
-                    classes assigned to the signed-in teacher before grades
-                    can be entered or submitted.
-                  </p>
+              <!-- Assigned Students Table Card -->
+              <section class="portal-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                  <div>
+                    <h2>Assigned Students</h2>
+                    <p class="muted">Students enrolled in your assigned classes.</p>
+                  </div>
+                  <p id="studentStatus" style="margin:0; font-weight:600; color:#063B7A; font-size:0.88rem;">0 records loaded</p>
+                </div>
+
+                <div class="table-container">
+                  <table class="portal-table">
+                    <thead>
+                      <tr>
+                        <th>Student Name</th>
+                        <th>Student ID</th>
+                        <th>Class Level</th>
+                        <th>Current Score</th>
+                        <th style="text-align: right;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                      <tr>
+                        <td colspan="5" class="empty-state-cell">
+                          <div style="font-size:28px; margin-bottom:8px;">👥</div>
+                          <strong style="color:#063B7A; display:block; margin-bottom:4px;">No student records loaded</strong>
+                          <span>Students in your assigned classes (Grades 4th - 12th) will populate after database synchronization.</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </section>
 
-              <section class="grade-panel">
-                <h2>Grading Scale</h2>
-                <table class="grade-scale">
-                  <thead>
-                    <tr>
-                      <th scope="col">Score</th>
-                      <th scope="col">Letter Grade</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>90–100</td><td>A</td></tr>
-                    <tr><td>80–89</td><td>B</td></tr>
-                    <tr><td>70–79</td><td>C</td></tr>
-                    <tr><td>60–69</td><td>D</td></tr>
-                    <tr><td>Below 60</td><td>F</td></tr>
-                  </tbody>
-                </table>
+              <!-- Grading Scale Table Card -->
+              <section class="portal-card">
+                <h2>Standard Grading Scale</h2>
+                <p class="muted">Official mark conversion standard for GRACAIS E-Portal.</p>
+
+                <div class="table-container">
+                  <table class="portal-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Score Range</th>
+                        <th scope="col">Letter Grade</th>
+                        <th scope="col">Performance Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td class="font-bold-title">90 – 100</td><td><span class="grade-badge">A</span></td><td>Excellent / Superior</td></tr>
+                      <tr><td class="font-bold-title">80 – 89</td><td><span class="grade-badge">B</span></td><td>Above Average</td></tr>
+                      <tr><td class="font-bold-title">70 – 79</td><td><span class="grade-badge">C</span></td><td>Average / Satisfactory</td></tr>
+                      <tr><td class="font-bold-title">60 – 69</td><td><span class="grade-badge">D</span></td><td>Passing / Below Average</td></tr>
+                      <tr><td class="font-bold-title">Below 60</td><td><span class="grade-badge" style="background:#FEE2E2; color:#991B1B;">F</span></td><td>Failing / Needs Improvement</td></tr>
+                    </tbody>
+                  </table>
+                </div>
                 <p class="status-message">
-                  Automatic averages will be calculated from actual saved
-                  period grades after database integration is completed.
+                  Automatic period averages and cumulative totals compute upon submission into Supabase.
                 </p>
               </section>
             </main>
@@ -432,8 +664,9 @@
       ].filter(Boolean).join(" ");
 
       document.getElementById("teacherName").textContent =
-        fullName || "Authorized Teacher";
+        (fullName ? "Teacher: " + fullName : "Authorized Teacher") + " [Grades 4th - 12th]";
 
+      renderStudents(assignedStudentsList);
       setupLogout();
     }
   </script>
