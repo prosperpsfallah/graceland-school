@@ -4,17 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#063B7A">
-  <meta name="description" content="GRACAIS Teacher Assignments">
-  <title>Teacher Assignments | GRACAIS E-Portal</title>
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <meta name="description" content="GRACAIS Academic Years">
+  <title>Academic Years | GRACAIS E-Portal</title>
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
   <div id="app">
     <main class="page-content">
-      <p>Loading teacher assignments...</p>
+      <p>Loading academic years...</p>
     </main>
   </div>
   <script type="module">
@@ -25,99 +25,339 @@
     import {
       initLayout
     } from "../assets/layout.js";
+    import {
+      supabase
+    } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
-    async function initTeacherAssignmentsPage() {
+    let academicYears = [];
+    let currentUserRole = "";
+    const escapeHTML = (value) =>
+      String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[character]);
+    function showMessage(message, type = "info") {
+      const box = document.getElementById("yearMessage");
+      if (!box) return;
+      box.textContent = message;
+      box.className = "year-message " + type;
+      box.hidden = false;
+    }
+    function renderYears() {
+      const tbody = document.getElementById("yearsTableBody");
+      const search = document.getElementById("yearSearch");
+      if (!tbody) return;
+      const term = (search?.value || "").trim().toLowerCase();
+      const filtered = academicYears.filter(year =>
+        [
+          year.name,
+          year.start_date,
+          year.end_date,
+          year.is_active ? "active" : "inactive"
+        ].some(value =>
+          String(value ?? "").toLowerCase().includes(term)
+        )
+      );
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>${academicYears.length ? "No matching academic years" : "No academic years yet"}</h3>
+                <p>
+                  ${academicYears.length
+                    ? "Try another search."
+                    : "Create the first academic year when the school is ready."}
+                </p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      tbody.innerHTML = filtered.map(year => `
+        <tr>
+          <td>${escapeHTML(year.name)}</td>
+          <td>${escapeHTML(year.start_date || "Not set")}</td>
+          <td>${escapeHTML(year.end_date || "Not set")}</td>
+          <td>
+            <span class="status-badge">
+              ${year.is_active ? "Active" : "Inactive"}
+            </span>
+          </td>
+          <td>
+            ${year.is_active
+              ? '<span>Current year</span>'
+              : `<button class="btn btn-primary activate-year"
+                   type="button"
+                   data-id="${escapeHTML(year.id)}">
+                   Activate
+                 </button>`}
+          </td>
+        </tr>
+      `).join("");
+      tbody.querySelectorAll(".activate-year").forEach(button => {
+        button.addEventListener("click", () => {
+          activateYear(button.dataset.id);
+        });
+      });
+    }
+    async function loadYears() {
+      const tbody = document.getElementById("yearsTableBody");
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr><td colspan="5">Loading academic years...</td></tr>
+        `;
+      }
+      const { data, error } = await supabase
+        .from("academic_years")
+        .select("id, name, start_date, end_date, is_active")
+        .order("start_date", { ascending: false });
+      if (error) {
+        console.error("Academic years query error:", error);
+        showMessage(
+          "Could not load academic years. Check the table columns and your Supabase permissions.",
+          "error"
+        );
+        return;
+      }
+      academicYears = data || [];
+      renderYears();
+    }
+    async function createYear(event) {
+      event.preventDefault();
+      if (!["super_admin", "principal", "administration", "registrar"].includes(currentUserRole)) {
+        showMessage("You are not authorized to create academic years.", "error");
+        return;
+      }
+      const name = document.getElementById("yearName").value.trim();
+      const startDate = document.getElementById("yearStart").value;
+      const endDate = document.getElementById("yearEnd").value;
+      if (!name || !startDate || !endDate) {
+        showMessage("Please complete all academic-year fields.", "error");
+        return;
+      }
+      if (endDate < startDate) {
+        showMessage("The end date must be after the start date.", "error");
+        return;
+      }
+      const duplicate = academicYears.some(year =>
+        String(year.name).toLowerCase() === name.toLowerCase()
+      );
+      if (duplicate) {
+        showMessage("An academic year with that name already exists.", "error");
+        return;
+      }
+      const button = document.getElementById("createYearButton");
+      button.disabled = true;
+      button.textContent = "Saving...";
+      const { error } = await supabase
+        .from("academic_years")
+        .insert([{
+          name,
+          start_date: startDate,
+          end_date: endDate,
+          is_active: false
+        }]);
+      button.disabled = false;
+      button.textContent = "Create Academic Year";
+      if (error) {
+        console.error("Create academic year error:", error);
+        showMessage(
+          "Could not save the academic year. Check your database columns and permissions.",
+          "error"
+        );
+        return;
+      }
+      document.getElementById("createYearForm").reset();
+      showMessage("Academic year created successfully.", "success");
+      await loadYears();
+    }
+    async function activateYear(id) {
+      const selectedYear = academicYears.find(year => String(year.id) === String(id));
+      if (!selectedYear) {
+        showMessage("Academic year not found. Refresh and try again.", "error");
+        return;
+      }
+      if (!confirm(`Activate "${selectedYear.name}"? This will deactivate the currently active academic year.`)) {
+        return;
+      }
+      const { error: deactivateError } = await supabase
+        .from("academic_years")
+        .update({ is_active: false })
+        .eq("is_active", true);
+      if (deactivateError) {
+        console.error("Deactivate academic year error:", deactivateError);
+        showMessage("Could not update the active academic year.", "error");
+        return;
+      }
+      const { error: activateError } = await supabase
+        .from("academic_years")
+        .update({ is_active: true })
+        .eq("id", id);
+      if (activateError) {
+        console.error("Activate academic year error:", activateError);
+        showMessage(
+          "The previous active year may have been deactivated, but this year could not be activated. Refresh and check the records.",
+          "error"
+        );
+        await loadYears();
+        return;
+      }
+      showMessage("Academic year activated successfully.", "success");
+      await loadYears();
+    }
+    async function initAcademicYearsPage() {
       initLayout(
         "super_admin",
-        "teacher-assignments.html",
-        "Teacher Assignments"
+        "academic-years.html",
+        "Academic Years"
       );
       setupLogout();
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
+      currentUserRole =
+        auth.profile?.role ||
+        auth.user?.user_metadata?.role ||
+        "";
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
-            <h1>Teacher Assignments</h1>
-            <p>
-              Review which teachers are assigned to classes
-              and subjects at GRACAIS.
-            </p>
+            <h1>Academic Years</h1>
+            <p>Manage the school academic years for GRACAIS.</p>
           </div>
+          <button class="btn btn-secondary" id="refreshYearsButton" type="button">
+            Refresh
+          </button>
+        </section>
+        <div id="yearMessage" class="year-message" role="status" hidden></div>
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h2>Create Academic Year</h2>
+              <p>Add an academic year to the connected database.</p>
+            </div>
+          </div>
+          <form id="createYearForm">
+            <div class="form-group">
+              <label for="yearName">Academic Year Name</label>
+              <input
+                id="yearName"
+                name="name"
+                type="text"
+                placeholder="Example: 2026-2027"
+                required
+                maxlength="50"
+              >
+            </div>
+            <div class="form-group">
+              <label for="yearStart">Start Date</label>
+              <input id="yearStart" name="start_date" type="date" required>
+            </div>
+            <div class="form-group">
+              <label for="yearEnd">End Date</label>
+              <input id="yearEnd" name="end_date" type="date" required>
+            </div>
+            <button class="btn btn-primary" id="createYearButton" type="submit">
+              Create Academic Year
+            </button>
+          </form>
         </section>
         <section class="card">
           <div class="card-header">
             <div>
-              <h2>Assignment Records</h2>
-              <p>
-                Assignment records will be loaded from the
-                connected database.
-              </p>
+              <h2>Academic Year Records</h2>
+              <p>View and activate real academic years stored in Supabase.</p>
             </div>
           </div>
           <div class="form-group">
-            <label for="assignmentSearch">
-              Search assignments
-            </label>
+            <label for="yearSearch">Search academic years</label>
             <input
+              id="yearSearch"
               type="search"
-              id="assignmentSearch"
-              placeholder="Search by teacher, class, or subject..."
+              placeholder="Search by name, date, or status..."
               autocomplete="off"
-              disabled
             >
-            <small>
-              Search will be enabled after database integration.
-            </small>
           </div>
           <div class="table-container">
             <table>
               <thead>
                 <tr>
-                  <th>Teacher ID</th>
-                  <th>Teacher Name</th>
-                  <th>Class</th>
-                  <th>Subject</th>
                   <th>Academic Year</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td colspan="5">
-                    <div class="empty-state">
-                      <h3>No assignment records loaded</h3>
-                      <p>
-                        Real teacher assignments will appear
-                        after the database is connected.
-                        No demo assignments are being created.
-                      </p>
-                    </div>
-                  </td>
-                </tr>
+              <tbody id="yearsTableBody">
+                <tr><td colspan="5">Loading academic years...</td></tr>
               </tbody>
             </table>
           </div>
         </section>
+        <style>
+          .year-message {
+            padding: 12px 15px;
+            margin: 12px 0;
+            border-radius: 8px;
+            background: #E0F5FF;
+            color: #063B7A;
+          }
+          .year-message.error {
+            background: #FEE2E2;
+            color: #991B1B;
+          }
+          .year-message.success {
+            background: #DCFCE7;
+            color: #166534;
+          }
+          .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: #E0F5FF;
+            color: #063B7A;
+            font-size: 0.85rem;
+          }
+          #createYearForm {
+            display: grid;
+            gap: 14px;
+          }
+          #createYearForm .form-group {
+            margin-bottom: 0;
+          }
+        </style>
       `;
+      document.getElementById("createYearForm")
+        .addEventListener("submit", createYear);
+      document.getElementById("yearSearch")
+        .addEventListener("input", renderYears);
+      document.getElementById("refreshYearsButton")
+        .addEventListener("click", loadYears);
+      await loadYears();
     }
-    initTeacherAssignmentsPage().catch(error => {
-      console.error("Teacher assignments error:", error);
+    initAcademicYearsPage().catch(error => {
+      console.error("Academic years page error:", error);
       const app = document.getElementById("app");
       if (app) {
         app.innerHTML = `
           <main class="page-content">
             <section class="card">
-              <h2>Unable to load Teacher Assignments</h2>
+              <h2>Unable to load Academic Years</h2>
               <p>
-                Check the shared portal files and
-                authentication configuration.
+                Check the shared portal files, Supabase connection,
+                academic_years table, and database permissions.
               </p>
             </section>
           </main>
