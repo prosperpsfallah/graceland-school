@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -120,7 +119,10 @@
       padding: 10px 15px;
       font-weight: bold;
       cursor: pointer;
+      transition: background 0.2s ease;
     }
+
+    .logout:hover { background: #0B5CAD; }
 
     .content {
       padding: 28px;
@@ -134,6 +136,7 @@
       border-radius: 14px;
       padding: 25px;
       margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.08);
     }
 
     .welcome h1 {
@@ -148,16 +151,16 @@
       font-size: 14px;
     }
 
-    .card {
+    .portal-card {
       background: #fff;
-      border: 1px solid #E0EAF2;
+      border: 1px solid #D9E5F0;
       border-radius: 12px;
-      padding: 22px;
-      margin-bottom: 22px;
-      box-shadow: 0 3px 12px rgba(3,42,88,.04);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
     }
 
-    .card h3 {
+    .portal-card h3 {
       color: #063B7A;
       margin: 0 0 8px;
       font-size: 17px;
@@ -173,7 +176,7 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 16px;
-      margin-top: 20px;
+      margin-top: 18px;
     }
 
     .field label {
@@ -189,62 +192,128 @@
       min-height: 44px;
       border: 1px solid #CBD5E1;
       border-radius: 8px;
-      padding: 10px;
+      padding: 10px 14px;
       background: #fff;
       color: #18324B;
       font-size: 14px;
     }
 
-    .table-wrap {
-      overflow-x: auto;
-      margin-top: 18px;
+    .field select:focus {
+      outline: none;
+      border-color: #063B7A;
+      box-shadow: 0 0 0 3px rgba(6, 59, 122, 0.1);
     }
 
-    table {
+    /* Table Chart Layout */
+    .table-container {
       width: 100%;
-      min-width: 560px;
+      overflow-x: auto;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .portal-table {
+      width: 100%;
       border-collapse: collapse;
-    }
-
-    th, td {
       text-align: left;
-      padding: 14px 12px;
-      border-bottom: 1px solid #E2E8F0;
-      font-size: 13px;
+      font-size: 0.88rem;
     }
 
-    th {
+    .portal-table th {
+      background: #F8FAFC;
+      color: #063B7A;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 2px solid #E2E8F0;
+      white-space: nowrap;
+    }
+
+    .portal-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #E2E8F0;
+      color: #334155;
+      vertical-align: middle;
+    }
+
+    .font-bold-title {
+      font-weight: 600;
+      color: #0F172A;
+    }
+
+    .grade-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
       background: #E0F5FF;
       color: #063B7A;
-      font-weight: bold;
+      font-size: 0.8rem;
+      font-weight: 600;
     }
 
-    .empty {
-      border: 1px dashed #B8D5E8;
-      border-radius: 10px;
-      padding: 28px 18px;
-      text-align: center;
-      margin-top: 18px;
-      background: #F8FCFF;
+    /* Dropdown Action System */
+    .portal-action-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: flex-end;
     }
 
-    .empty .symbol {
-      font-size: 30px;
-      margin-bottom: 10px;
+    .portal-action-btn {
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      color: #0F172A;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .empty h4 {
-      margin: 0 0 8px;
+    .portal-action-btn:hover { background: #E2E8F0; }
+
+    .portal-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: #ffffff;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      min-width: 160px;
+      z-index: 50;
+      overflow: hidden;
+    }
+
+    .portal-dropdown-menu.show { display: block; }
+
+    .portal-dropdown-item {
+      width: 100%;
+      text-align: left;
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      color: #334155;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+
+    .portal-dropdown-item:hover {
+      background: #F8FAFC;
       color: #063B7A;
-      font-size: 16px;
     }
 
-    .empty p {
-      margin: 0 auto;
-      max-width: 460px;
+    .empty-state-cell {
+      text-align: center;
+      padding: 32px 16px;
       color: #64748B;
-      line-height: 1.7;
-      font-size: 13px;
     }
 
     .notice {
@@ -273,35 +342,20 @@
       border-radius: 7px;
       padding: 9px 12px;
       font-weight: bold;
+      cursor: pointer;
     }
 
     @media (max-width: 760px) {
       .portal { display: block; }
-
-      .sidebar {
-        display: none;
-        width: 100%;
-      }
-
+      .sidebar { display: none; width: 100%; }
       .sidebar.open { display: block; }
-
-      .topbar {
-        padding: 15px;
-        flex-wrap: wrap;
-      }
-
+      .topbar { padding: 15px; flex-wrap: wrap; }
       .topbar h2 { font-size: 17px; }
-
       .menu-button { display: inline-block; }
-
       .content { padding: 16px; }
-
       .welcome { padding: 20px; }
-
       .welcome h1 { font-size: 21px; }
-
-      .card { padding: 17px; }
-
+      .portal-card { padding: 18px; }
       .filters { grid-template-columns: 1fr; }
     }
   </style>
@@ -340,7 +394,7 @@
           </button>
           <div>
             <h2>My Academic Grades</h2>
-            <p>Graceland Academy International School of Excellence</p>
+            <p>Graceland Academy International School of Excellence [Grades 4th - 12th]</p>
           </div>
         </div>
 
@@ -358,8 +412,9 @@
           </p>
         </div>
 
-        <section class="card">
-          <h3>Academic Results</h3>
+        <!-- Filters Card -->
+        <section class="portal-card">
+          <h3>Academic Results Filter</h3>
           <p class="muted">
             Select an academic year and grading period to prepare your results view.
           </p>
@@ -389,40 +444,40 @@
           </div>
 
           <div class="notice">
-            <strong>Important:</strong> Your actual grades will appear after
-            the academic-year records and secure grade retrieval are connected
-            to the Supabase database. This page does not create or invent grades.
+            <strong>Important:</strong> Your actual grades will appear after academic-year records and secure grade retrieval are connected to the Supabase database.
           </div>
         </section>
 
-        <section class="card">
-          <h3>Grade Report</h3>
-          <p class="muted">
-            Your subjects, scores, letter grades, and averages will be displayed here.
-          </p>
-
-          <div class="empty" id="emptyState">
-            <div class="symbol">📘</div>
-            <h4>No grade records loaded</h4>
-            <p>
-              There are no grade results loaded on this page yet.
-              This does not necessarily mean that you have no grades.
-              The database connection for displaying your personal results
-              still needs to be completed and tested.
-            </p>
+        <!-- Grade Report Table Card -->
+        <section class="portal-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3>Grade Report</h3>
+              <p class="muted" style="margin:4px 0 0 0;">Your subjects, scores, letter grades, and averages.</p>
+            </div>
+            <p id="gradeStatus" style="margin:0; font-weight:600; color:#063B7A; font-size:0.88rem;">0 results loaded</p>
           </div>
 
-          <div class="table-wrap" id="gradeTableWrap" hidden>
-            <table>
+          <div class="table-container">
+            <table class="portal-table">
               <thead>
                 <tr>
                   <th>Subject</th>
                   <th>Score</th>
                   <th>Letter Grade</th>
                   <th>Grading Period</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
-              <tbody id="gradeRows"></tbody>
+              <tbody id="gradeRows">
+                <tr>
+                  <td colspan="5" class="empty-state-cell">
+                    <div style="font-size:28px; margin-bottom:8px;">📘</div>
+                    <strong style="color:#063B7A; display:block; margin-bottom:4px;">No grade records loaded</strong>
+                    <span>There are no grade results loaded on this page yet. Database connection required.</span>
+                  </td>
+                </tr>
+              </tbody>
             </table>
           </div>
         </section>
@@ -442,6 +497,7 @@
     } from "../assets/app.js";
 
     const ALLOWED_ROLES = ["student"];
+    let studentGrades = [];
 
     const menuButton = document.getElementById("menuButton");
     const sidebar = document.getElementById("sidebar");
@@ -455,24 +511,114 @@
       await logout();
     });
 
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
+    function renderGrades(records) {
+      const tbody = document.getElementById("gradeRows");
+      const status = document.getElementById("gradeStatus");
+      if (!tbody || !status) return;
+
+      status.textContent = `${records.length} result${records.length === 1 ? "" : "s"} shown`;
+
+      if (!records.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-state-cell">
+              <div style="font-size:28px; margin-bottom:8px;">📘</div>
+              <strong style="color:#063B7A; display:block; margin-bottom:4px;">No grade records</strong>
+              <span>No grade entries match the selected period or school year filter.</span>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = records.map((record, index) => {
+        const subjectVal = record.subject_name || record.subject || "—";
+        const scoreVal = record.score ?? record.grade ?? "—";
+        const letterVal = record.letter_grade || record.letter || "—";
+        const periodVal = record.period || record.grading_period || "—";
+
+        return `
+          <tr>
+            <td class="font-bold-title">${esc(subjectVal)}</td>
+            <td><strong style="color:#063B7A;">${esc(scoreVal)}</strong></td>
+            <td><span class="grade-badge">${esc(letterVal)}</span></td>
+            <td>${esc(periodVal)}</td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item inspect-grade-btn" data-index="${index}">
+                    👁️ Inspect Grade
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-grade-btn" data-subject="${esc(subjectVal)}" data-score="${esc(scoreVal)}">
+                    📋 Copy Score
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".inspect-grade-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const rec = records[btn.dataset.index];
+          alert(`--- Academic Grade Record ---\nSubject: ${rec.subject_name || rec.subject || 'N/A'}\nScore: ${rec.score ?? rec.grade ?? 'N/A'}\nLetter Grade: ${rec.letter_grade || rec.letter || 'N/A'}\nGrading Period: ${rec.period || rec.grading_period || 'N/A'}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-grade-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const summary = `${btn.dataset.subject}: ${btn.dataset.score}`;
+          navigator.clipboard.writeText(summary);
+          alert(`Copied grade score: ${summary}`);
+        });
+      });
+    }
+
     async function initializeGradesPage() {
       const result = await requireUser(ALLOWED_ROLES);
 
       if (!result) return;
 
       const profile = result.profile || {};
-
-      // Keep the page restricted to authenticated student accounts.
-      // Actual grade retrieval will be added with the secure database integration.
       const yearSelect = document.getElementById("academicYear");
 
-      // Academic years are intentionally not invented or hard-coded.
-      // They will be populated from the academic_years table.
       yearSelect.innerHTML =
-        '<option value="">Academic years will load from the school records</option>';
+        '<option value="">Academic years will load from school records</option>';
 
-      // Safely prepare the student's identity for later use without exposing
-      // another student's grades or creating sample records.
       const studentName = [
         profile.first_name || "",
         profile.last_name || ""
@@ -482,6 +628,8 @@
         document.querySelector(".welcome h1").textContent =
           "My Grades — " + esc(studentName);
       }
+
+      renderGrades(studentGrades);
     }
 
     initializeGradesPage();
