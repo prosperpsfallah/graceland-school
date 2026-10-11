@@ -28,6 +28,7 @@
     import {
       supabase
     } from "../assets/supabase.js";
+
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
@@ -36,6 +37,7 @@
     ];
     let academicYears = [];
     let currentUserRole = "";
+
     const escapeHTML = (value) =>
       String(value ?? "").replace(/[&<>"']/g, character => ({
         "&": "&amp;",
@@ -44,6 +46,7 @@
         '"': "&quot;",
         "'": "&#39;"
       })[character]);
+
     function showMessage(message, type = "info") {
       const box = document.getElementById("yearMessage");
       if (!box) return;
@@ -51,21 +54,40 @@
       box.className = "year-message " + type;
       box.hidden = false;
     }
+
+    function getYearName(year) {
+      return year.name || year.title || year.year_name || "Untitled Year";
+    }
+
+    function getStartDate(year) {
+      return year.start_date || year.begin_date || year.date_start || "";
+    }
+
+    function getEndDate(year) {
+      return year.end_date || year.finish_date || year.date_end || "";
+    }
+
+    function isActiveYear(year) {
+      return year.is_active === true || year.active === true || year.status === "Active" || year.status === "active";
+    }
+
     function renderYears() {
       const tbody = document.getElementById("yearsTableBody");
       const search = document.getElementById("yearSearch");
       if (!tbody) return;
+
       const term = (search?.value || "").trim().toLowerCase();
       const filtered = academicYears.filter(year =>
         [
-          year.name,
-          year.start_date,
-          year.end_date,
-          year.is_active ? "active" : "inactive"
+          getYearName(year),
+          getStartDate(year),
+          getEndDate(year),
+          isActiveYear(year) ? "active" : "inactive"
         ].some(value =>
           String(value ?? "").toLowerCase().includes(term)
         )
       );
+
       if (!filtered.length) {
         tbody.innerHTML = `
           <tr>
@@ -83,33 +105,66 @@
         `;
         return;
       }
-      tbody.innerHTML = filtered.map(year => `
-        <tr>
-          <td>${escapeHTML(year.name)}</td>
-          <td>${escapeHTML(year.start_date || "Not set")}</td>
-          <td>${escapeHTML(year.end_date || "Not set")}</td>
-          <td>
-            <span class="status-badge">
-              ${year.is_active ? "Active" : "Inactive"}
-            </span>
-          </td>
-          <td>
-            ${year.is_active
-              ? '<span>Current year</span>'
-              : `<button class="btn btn-primary activate-year"
-                   type="button"
-                   data-id="${escapeHTML(year.id)}">
-                   Activate
-                 </button>`}
-          </td>
-        </tr>
-      `).join("");
+
+      tbody.innerHTML = filtered.map(year => {
+        const active = isActiveYear(year);
+        return `
+          <tr>
+            <td>${escapeHTML(getYearName(year))}</td>
+            <td>${escapeHTML(getStartDate(year) || "Not set")}</td>
+            <td>${escapeHTML(getEndDate(year) || "Not set")}</td>
+            <td>
+              <span class="status-badge">
+                ${active ? "Active" : "Inactive"}
+              </span>
+            </td>
+            <td>
+              ${active
+                ? '<span>Current year</span>'
+                : `<button class="btn btn-primary activate-year"
+                     type="button"
+                     data-id="${escapeHTML(year.id)}">
+                     Activate
+                   </button>`}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
       tbody.querySelectorAll(".activate-year").forEach(button => {
         button.addEventListener("click", () => {
           activateYear(button.dataset.id);
         });
       });
     }
+
+    async function fetchYearsData() {
+      // 1. Try primary table
+      let res = await supabase
+        .from("academic_years")
+        .select("*");
+
+      if (!res.error) return res;
+
+      console.warn("academic_years table query failed, trying academic_terms...", res.error);
+
+      // 2. Fallback table: academic_terms
+      res = await supabase
+        .from("academic_terms")
+        .select("*");
+
+      if (!res.error) return res;
+
+      // 3. Fallback table: school_years
+      res = await supabase
+        .from("school_years")
+        .select("*");
+
+      if (!res.error) return res;
+
+      return res;
+    }
+
     async function loadYears() {
       const tbody = document.getElementById("yearsTableBody");
       if (tbody) {
@@ -117,48 +172,69 @@
           <tr><td colspan="5">Loading academic years...</td></tr>
         `;
       }
-      const { data, error } = await supabase
-        .from("academic_years")
-        .select("id, name, start_date, end_date, is_active")
-        .order("start_date", { ascending: false });
+
+      const { data, error } = await fetchYearsData();
+
       if (error) {
         console.error("Academic years query error:", error);
         showMessage(
-          "Could not load academic years. Check the table columns and your Supabase permissions.",
+          `Could not load academic years: ${error.message || "Check table columns and permissions."}`,
           "error"
         );
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5">
+                <div class="empty-state">
+                  <h3>Unable to load academic years</h3>
+                  <p>Check the academic_years table columns and your Supabase access policies.</p>
+                  <p class="error-detail">${escapeHTML(error.message || "")}</p>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
         return;
       }
+
       academicYears = data || [];
       renderYears();
     }
+
     async function createYear(event) {
       event.preventDefault();
       if (!["super_admin", "principal", "administration", "registrar"].includes(currentUserRole)) {
         showMessage("You are not authorized to create academic years.", "error");
         return;
       }
+
       const name = document.getElementById("yearName").value.trim();
       const startDate = document.getElementById("yearStart").value;
       const endDate = document.getElementById("yearEnd").value;
+
       if (!name || !startDate || !endDate) {
         showMessage("Please complete all academic-year fields.", "error");
         return;
       }
+
       if (endDate < startDate) {
         showMessage("The end date must be after the start date.", "error");
         return;
       }
+
       const duplicate = academicYears.some(year =>
-        String(year.name).toLowerCase() === name.toLowerCase()
+        String(getYearName(year)).toLowerCase() === name.toLowerCase()
       );
+
       if (duplicate) {
         showMessage("An academic year with that name already exists.", "error");
         return;
       }
+
       const button = document.getElementById("createYearButton");
       button.disabled = true;
       button.textContent = "Saving...";
+
       const { error } = await supabase
         .from("academic_years")
         .insert([{
@@ -167,54 +243,65 @@
           end_date: endDate,
           is_active: false
         }]);
+
       button.disabled = false;
       button.textContent = "Create Academic Year";
+
       if (error) {
         console.error("Create academic year error:", error);
         showMessage(
-          "Could not save the academic year. Check your database columns and permissions.",
+          `Could not save academic year: ${error.message || "Check database columns and permissions."}`,
           "error"
         );
         return;
       }
+
       document.getElementById("createYearForm").reset();
       showMessage("Academic year created successfully.", "success");
       await loadYears();
     }
+
     async function activateYear(id) {
       const selectedYear = academicYears.find(year => String(year.id) === String(id));
       if (!selectedYear) {
         showMessage("Academic year not found. Refresh and try again.", "error");
         return;
       }
-      if (!confirm(`Activate "${selectedYear.name}"? This will deactivate the currently active academic year.`)) {
+
+      if (!confirm(`Activate "${getYearName(selectedYear)}"? This will deactivate the currently active academic year.`)) {
         return;
       }
+
       const { error: deactivateError } = await supabase
         .from("academic_years")
         .update({ is_active: false })
         .eq("is_active", true);
+
       if (deactivateError) {
         console.error("Deactivate academic year error:", deactivateError);
         showMessage("Could not update the active academic year.", "error");
         return;
       }
+
       const { error: activateError } = await supabase
         .from("academic_years")
         .update({ is_active: true })
         .eq("id", id);
+
       if (activateError) {
         console.error("Activate academic year error:", activateError);
         showMessage(
-          "The previous active year may have been deactivated, but this year could not be activated. Refresh and check the records.",
+          "The previous active year may have been deactivated, but this year could not be activated. Refresh and check records.",
           "error"
         );
         await loadYears();
         return;
       }
+
       showMessage("Academic year activated successfully.", "success");
       await loadYears();
     }
+
     async function initAcademicYearsPage() {
       initLayout(
         "super_admin",
@@ -222,14 +309,18 @@
         "Academic Years"
       );
       setupLogout();
+
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
+
       currentUserRole =
         auth.profile?.role ||
         auth.user?.user_metadata?.role ||
         "";
+
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
+
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
@@ -322,6 +413,11 @@
             background: #DCFCE7;
             color: #166534;
           }
+          .error-detail {
+            color: #DC2626;
+            font-size: 13px;
+            margin-top: 6px;
+          }
           .status-badge {
             display: inline-block;
             padding: 5px 10px;
@@ -339,14 +435,17 @@
           }
         </style>
       `;
+
       document.getElementById("createYearForm")
         .addEventListener("submit", createYear);
       document.getElementById("yearSearch")
         .addEventListener("input", renderYears);
       document.getElementById("refreshYearsButton")
         .addEventListener("click", loadYears);
+
       await loadYears();
     }
+
     initAcademicYearsPage().catch(error => {
       console.error("Academic years page error:", error);
       const app = document.getElementById("app");
