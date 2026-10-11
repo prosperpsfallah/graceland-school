@@ -6,138 +6,292 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Academic Documents">
   <title>Documents | GRACAIS E-Portal</title>
-
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
-
 <body>
-  <div id="app">
-    <main class="page-content">
-      <p>Loading academic documents...</p>
-    </main>
-  </div>
-
+  <div id="portalLayout"></div>
   <script type="module">
-    import {
-      requireUser,
-      setupLogout
-    } from "../assets/app.js";
-
-    import {
-      initLayout
-    } from "../assets/layout.js";
-
+    import { initLayout, requireUser } from "../assets/layout.js";
+    import { setupLogout } from "../assets/app.js";
+    import { supabase } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
-
-    async function initDocumentsPage() {
-      initLayout(
-        "super_admin",
-        "documents.html",
-        "Academic Documents"
-      );
-
-      setupLogout();
-
-      const auth = await requireUser(ALLOWED_ROLES);
-      if (!auth) return;
-
+    const BUCKET = "academic-documents";
+    initLayout("super_admin", "documents.html", "Academic Documents");
+    setupLogout();
+    const auth = await requireUser(ALLOWED_ROLES);
+    if (auth) {
       const pageContent = document.getElementById("pageContent");
-      if (!pageContent) return;
-
-      pageContent.innerHTML = `
-        <section class="page-heading">
-          <div>
+      if (pageContent) {
+        pageContent.innerHTML = `
+          <section class="page-heading">
             <h1>Academic Documents</h1>
             <p>
-              Access authorized school documents for
-              Graceland Academy International School
-              of Excellence (GRACAIS).
+              Manage authorized school documents for
+              Graceland Academy International School of Excellence (GRACAIS).
             </p>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-header">
-            <div>
-              <h2>Document Library</h2>
-              <p>
-                Authorized documents will be loaded from
-                the connected database and secure storage.
-              </p>
+          </section>
+          <section class="card">
+            <h2>Upload a Document</h2>
+            <p style="margin:8px 0 16px;">
+              Upload approved academic documents to secure storage.
+            </p>
+            <form id="documentForm">
+              <div class="form-group">
+                <label for="documentName">Document name</label>
+                <input
+                  id="documentName"
+                  type="text"
+                  maxlength="150"
+                  required
+                  placeholder="Enter document name"
+                >
+              </div>
+              <div class="form-group">
+                <label for="documentType">Document type</label>
+                <select id="documentType" required>
+                  <option value="">Select type</option>
+                  <option value="Academic Report">Academic Report</option>
+                  <option value="Exam Paper">Exam Paper</option>
+                  <option value="Class Material">Class Material</option>
+                  <option value="School Notice">School Notice</option>
+                  <option value="Policy">Policy</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="documentFile">Choose file</label>
+                <input
+                  id="documentFile"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg"
+                  required
+                >
+                <small>Maximum file size: 10 MB.</small>
+              </div>
+              <button type="submit" id="uploadButton" class="btn btn-primary">
+                Upload Document
+              </button>
+              <p id="uploadMessage" role="status" style="margin-top:12px;"></p>
+            </form>
+          </section>
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Document Library</h2>
+                <p>Documents saved in the school database.</p>
+              </div>
+              <button type="button" id="refreshDocuments" class="btn btn-primary">
+                Refresh
+              </button>
             </div>
-          </div>
-
-          <div class="form-group">
-            <label for="documentSearch">Search documents</label>
-            <input
-              type="search"
-              id="documentSearch"
-              placeholder="Search by document name or type..."
-              autocomplete="off"
-              disabled
-            >
-            <small>
-              Document search will be enabled after integration.
-            </small>
-          </div>
-
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Document Name</th>
-                  <th>Document Type</th>
-                  <th>Related Class</th>
-                  <th>Date Added</th>
-                  <th>Access</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td colspan="5">
-                    <div class="empty-state">
-                      <h3>No documents loaded</h3>
-                      <p>
-                        Actual documents will appear after secure
-                        storage and database integration.
-                        No sample documents are being created.
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      `;
-    }
-
-    initDocumentsPage().catch(error => {
-      console.error("Academic documents error:", error);
-
-      const app = document.getElementById("app");
-      if (app) {
-        app.innerHTML = `
-          <main class="page-content">
-            <section class="card">
-              <h2>Unable to load Academic Documents</h2>
-              <p>
-                Check the shared portal files and
-                authentication configuration.
-              </p>
-            </section>
-          </main>
+            <div class="form-group">
+              <label for="documentSearch">Search documents</label>
+              <input
+                type="search"
+                id="documentSearch"
+                placeholder="Search by document name or type..."
+                autocomplete="off"
+              >
+            </div>
+            <p id="listMessage" role="status">Loading documents...</p>
+            <div class="table-container" style="overflow-x:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Document Name</th>
+                    <th>Document Type</th>
+                    <th>Date Added</th>
+                    <th>Access</th>
+                  </tr>
+                </thead>
+                <tbody id="documentsBody">
+                  <tr><td colspan="4">Loading documents...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         `;
+        const form = document.getElementById("documentForm");
+        const uploadMessage = document.getElementById("uploadMessage");
+        const listMessage = document.getElementById("listMessage");
+        const uploadButton = document.getElementById("uploadButton");
+        const documentsBody = document.getElementById("documentsBody");
+        const searchInput = document.getElementById("documentSearch");
+        let documents = [];
+        function escapeHTML(value) {
+          return String(value ?? "").replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+          })[char]);
+        }
+        function formatDate(value) {
+          if (!value) return "—";
+          const date = new Date(value);
+          return Number.isNaN(date.getTime())
+            ? "—"
+            : date.toLocaleDateString();
+        }
+        function renderDocuments() {
+          const term = searchInput.value.trim().toLowerCase();
+          const filtered = documents.filter(doc =>
+            [doc.name, doc.document_type]
+              .some(value => String(value ?? "").toLowerCase().includes(term))
+          );
+          if (!filtered.length) {
+            documentsBody.innerHTML = `
+              <tr><td colspan="4">No matching documents found.</td></tr>
+            `;
+            return;
+          }
+          documentsBody.innerHTML = filtered.map(doc => `
+            <tr>
+              <td>${escapeHTML(doc.name)}</td>
+              <td>${escapeHTML(doc.document_type || "—")}</td>
+              <td>${escapeHTML(formatDate(doc.created_at))}</td>
+              <td>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  data-document-id="${escapeHTML(doc.id)}"
+                >Open</button>
+              </td>
+            </tr>
+          `).join("");
+          documentsBody.querySelectorAll("[data-document-id]").forEach(button => {
+            button.addEventListener("click", () => {
+              const doc = documents.find(
+                item => String(item.id) === button.dataset.documentId
+              );
+              if (doc) openDocument(doc);
+            });
+          });
+        }
+        async function loadDocuments() {
+          listMessage.textContent = "Loading documents...";
+          documentsBody.innerHTML =
+            '<tr><td colspan="4">Loading...</td></tr>';
+          const { data, error } = await supabase
+            .from("documents")
+            .select("id, name, document_type, storage_path, created_at")
+            .order("created_at", { ascending: false });
+          if (error) {
+            console.error("Document loading error:", error);
+            documents = [];
+            documentsBody.innerHTML = `
+              <tr>
+                <td colspan="4">
+                  Could not load documents. Check the documents table,
+                  column names, and Supabase access policies.
+                </td>
+              </tr>
+            `;
+            listMessage.textContent = "Document loading failed.";
+            return;
+          }
+          documents = data || [];
+          listMessage.textContent = `${documents.length} document(s) loaded.`;
+          renderDocuments();
+        }
+        async function openDocument(doc) {
+          if (!doc.storage_path) {
+            uploadMessage.textContent =
+              "This document has no storage path recorded.";
+            return;
+          }
+          const { data, error } = await supabase.storage
+            .from(BUCKET)
+            .createSignedUrl(doc.storage_path, 60);
+          if (error || !data?.signedUrl) {
+            console.error("Document access error:", error);
+            uploadMessage.textContent =
+              "Unable to open this document. Check storage permissions.";
+            return;
+          }
+          window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+        }
+        form.addEventListener("submit", async event => {
+          event.preventDefault();
+          const name = document.getElementById("documentName").value.trim();
+          const documentType = document.getElementById("documentType").value;
+          const file = document.getElementById("documentFile").files[0];
+          if (!name || !documentType || !file) {
+            uploadMessage.textContent = "Complete all fields and choose a file.";
+            return;
+          }
+          if (file.size > 10 * 1024 * 1024) {
+            uploadMessage.textContent = "The file exceeds the 10 MB limit.";
+            return;
+          }
+          const allowedExtensions = [
+            "pdf", "doc", "docx", "xls", "xlsx",
+            "ppt", "pptx", "png", "jpg", "jpeg"
+          ];
+          const extension = file.name.split(".").pop().toLowerCase();
+          if (!allowedExtensions.includes(extension)) {
+            uploadMessage.textContent = "This file type is not allowed.";
+            return;
+          }
+          uploadButton.disabled = true;
+          uploadMessage.textContent = "Uploading document...";
+          const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const storagePath =
+            `${crypto.randomUUID()}-${safeFileName}`;
+          const { error: storageError } = await supabase.storage
+            .from(BUCKET)
+            .upload(storagePath, file, {
+              upsert: false,
+              contentType: file.type || "application/octet-stream"
+            });
+          if (storageError) {
+            console.error("Storage upload error:", storageError);
+            uploadButton.disabled = false;
+            uploadMessage.textContent =
+              "Upload failed. Check that the academic-documents bucket exists and upload permission is configured.";
+            return;
+          }
+          const { error: databaseError } = await supabase
+            .from("documents")
+            .insert({
+              name,
+              document_type: documentType,
+              storage_path: storagePath
+            });
+          if (databaseError) {
+            console.error("Document record error:", databaseError);
+            // Remove the uploaded file if its database record could not be saved.
+            const { error: cleanupError } = await supabase.storage
+              .from(BUCKET)
+              .remove([storagePath]);
+            if (cleanupError) {
+              console.error("Storage cleanup error:", cleanupError);
+            }
+            uploadButton.disabled = false;
+            uploadMessage.textContent =
+              "The database record could not be saved. Check the documents table columns and insert policy.";
+            return;
+          }
+          form.reset();
+          uploadButton.disabled = false;
+          uploadMessage.textContent = "Document uploaded successfully.";
+          await loadDocuments();
+        });
+        searchInput.addEventListener("input", renderDocuments);
+        document.getElementById("refreshDocuments")
+          .addEventListener("click", loadDocuments);
+        await loadDocuments();
       }
-    });
+    }
   </script>
 </body>
 </html>
