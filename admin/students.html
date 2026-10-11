@@ -6,33 +6,140 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Student Records">
   <title>Students | GRACAIS E-Portal</title>
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
-  <div id="app">
-    <main class="page-content">
-      <p>Loading student records...</p>
-    </main>
-  </div>
+  <div id="portalLayout"></div>
   <script type="module">
     import {
-      requireUser,
       setupLogout,
       esc
     } from "../assets/app.js";
     import {
       initLayout,
-      emptyState
+      requireUser
     } from "../assets/layout.js";
+    import { supabase } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
+    let students = [];
+    function safe(value) {
+      return esc(String(value ?? ""));
+    }
+    function studentClass(student) {
+      return student.classes?.name
+        || student.class_name
+        || "—";
+    }
+    function studentStatus(student) {
+      return student.status
+        || student.enrollment_status
+        || "—";
+    }
+    function renderStudents() {
+      const tbody = document.getElementById("studentRows");
+      const status = document.getElementById("studentStatus");
+      const searchInput = document.getElementById("studentSearch");
+      if (!tbody || !status || !searchInput) return;
+      const query = searchInput.value.trim().toLowerCase();
+      const filtered = students.filter(student => {
+        const searchable = [
+          student.student_id,
+          student.first_name,
+          student.last_name,
+          studentClass(student),
+          studentStatus(student)
+        ].filter(Boolean).join(" ").toLowerCase();
+        return searchable.includes(query);
+      });
+      status.textContent =
+        `${filtered.length} student record${filtered.length === 1 ? "" : "s"}`;
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>${query ? "No matching students" : "No student records found"}</h3>
+                <p>
+                  ${query
+                    ? "Try another student ID, first name, last name, class, or status."
+                    : "Actual student records will appear here when available in the database."}
+                </p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      tbody.innerHTML = filtered.map(student => `
+        <tr>
+          <td>${safe(student.student_id || "—")}</td>
+          <td>${safe(student.first_name || "—")}</td>
+          <td>${safe(student.last_name || "—")}</td>
+          <td>${safe(studentClass(student))}</td>
+          <td>${safe(studentStatus(student))}</td>
+        </tr>
+      `).join("");
+    }
+    async function loadStudents() {
+      const tbody = document.getElementById("studentRows");
+      const status = document.getElementById("studentStatus");
+      const refreshButton = document.getElementById("refreshStudents");
+      if (!tbody || !status || !refreshButton) return;
+      refreshButton.disabled = true;
+      status.textContent = "Loading student records...";
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5">Loading student records...</td>
+        </tr>
+      `;
+      try {
+        /*
+          Read existing student records only.
+          The classes relationship is optional in the display:
+          if it is not configured, class names may be unavailable.
+        */
+        const { data, error } = await supabase
+          .from("students")
+          .select("*")
+          .order("last_name", { ascending: true });
+        if (error) throw error;
+        students = data ?? [];
+        renderStudents();
+      } catch (error) {
+        console.error("Student records loading error:", error);
+        status.textContent = "Unable to load student records";
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>Could not load student records</h3>
+                <p>
+                  Check that the students table exists and
+                  that your Supabase access policies allow
+                  authorized staff to read it.
+                </p>
+                <p id="studentError"></p>
+              </div>
+            </td>
+          </tr>
+        `;
+        const errorElement = document.getElementById("studentError");
+        if (errorElement) {
+          errorElement.textContent =
+            error?.message || "An unexpected database error occurred.";
+        }
+      } finally {
+        refreshButton.disabled = false;
+      }
+    }
     async function initStudentsPage() {
       initLayout(
         "super_admin",
@@ -49,9 +156,8 @@
           <div>
             <h1>Student Records</h1>
             <p>
-              View and manage student academic records
-              for Graceland Academy International School
-              of Excellence.
+              View student academic records for Graceland
+              Academy International School of Excellence.
             </p>
           </div>
         </section>
@@ -59,27 +165,28 @@
           <div class="card-header">
             <div>
               <h2>Students</h2>
-              <p>
-                Student records will appear here when
-                the real database is connected.
-              </p>
+              <p>Student records retrieved from the connected database.</p>
             </div>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="refreshStudents"
+            >
+              Refresh
+            </button>
           </div>
           <div class="form-group">
-            <label for="studentSearch">
-              Search student records
-            </label>
+            <label for="studentSearch">Search student records</label>
             <input
               type="search"
               id="studentSearch"
               placeholder="Search by student ID or name..."
               autocomplete="off"
-              disabled
             >
-            <small>
-              Search will be enabled after database integration.
-            </small>
           </div>
+          <p id="studentStatus" aria-live="polite">
+            Preparing student records...
+          </p>
           <div class="table-container">
             <table>
               <thead>
@@ -91,42 +198,34 @@
                   <th>Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="studentRows">
                 <tr>
-                  <td colspan="5">
-                    <div class="empty-state">
-                      <h3>No records loaded</h3>
-                      <p>
-                        Connect the GRACAIS database to display
-                        actual student records. No sample students
-                        or demo records are being inserted.
-                      </p>
-                    </div>
-                  </td>
+                  <td colspan="5">Loading student records...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
       `;
-      console.info(
-        "GRACAIS Student Records page initialized."
-      );
+      document
+        .getElementById("studentSearch")
+        .addEventListener("input", renderStudents);
+      document
+        .getElementById("refreshStudents")
+        .addEventListener("click", loadStudents);
+      await loadStudents();
     }
     initStudentsPage().catch(error => {
       console.error("Students page error:", error);
-      const app = document.getElementById("app");
-      if (app) {
-        app.innerHTML = `
-          <main class="page-content">
-            <section class="card">
-              <h2>Unable to load Student Records</h2>
-              <p>
-                Please check the shared portal files
-                and authentication configuration.
-              </p>
-            </section>
-          </main>
+      const pageContent = document.getElementById("pageContent");
+      if (pageContent) {
+        pageContent.innerHTML = `
+          <section class="card">
+            <h2>Unable to load Student Records</h2>
+            <p>
+              Check the shared portal files and authentication configuration.
+            </p>
+          </section>
         `;
       }
     });
