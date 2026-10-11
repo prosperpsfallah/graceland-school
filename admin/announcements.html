@@ -86,11 +86,34 @@
       return item.created_at || item.date || item.published_at || item.created_date || null;
     }
 
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
     function renderAnnouncements() {
-      const list = document.getElementById("announcementList");
+      const tbody = document.getElementById("announcementsTableBody");
       const search = document.getElementById("announcementSearch");
 
-      if (!list) return;
+      if (!tbody) return;
 
       const term = (search?.value || "").trim().toLowerCase();
 
@@ -102,28 +125,67 @@
       });
 
       if (filtered.length === 0) {
-        list.innerHTML = `
-          <div class="empty-state">
-            <h3>${announcements.length ? "No matching announcements" : "No announcements available"}</h3>
-            <p>
-              ${announcements.length
-                ? "Try another search term."
-                : "School announcements will appear here when they are added to the database."}
-            </p>
-          </div>
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4">
+              <div class="empty-state">
+                <h3>${announcements.length ? "No matching announcements" : "No announcements available"}</h3>
+                <p>
+                  ${announcements.length
+                    ? "Try another search term."
+                    : "School announcements will appear here when they are added to the database."}
+                </p>
+              </div>
+            </td>
+          </tr>
         `;
         return;
       }
 
-      list.innerHTML = filtered.map(item => `
-        <article class="announcement-card">
-          <h3>${escapeHTML(item.title || item.subject || "Untitled announcement")}</h3>
-          <p class="announcement-date">
-            ${escapeHTML(formatDate(getAnnouncementDate(item)))}
-          </p>
-          <div class="announcement-content">${escapeHTML(getAnnouncementContent(item))}</div>
-        </article>
-      `).join("");
+      tbody.innerHTML = filtered.map((item, index) => {
+        const title = escapeHTML(item.title || item.subject || "Untitled announcement");
+        const dateStr = escapeHTML(formatDate(getAnnouncementDate(item)));
+        const contentText = escapeHTML(getAnnouncementContent(item));
+        const snippet = contentText.length > 80 ? contentText.substring(0, 80) + "..." : contentText;
+
+        return `
+          <tr>
+            <td class="font-bold-title">${title}</td>
+            <td>${dateStr}</td>
+            <td>
+              <span class="announcement-snippet" title="${contentText}">${snippet}</span>
+            </td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item view-announcement" data-index="${index}">
+                    👁️ View Full Notice
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".view-announcement").forEach(button => {
+        button.addEventListener("click", () => {
+          const item = filtered[button.dataset.index];
+          const fullTitle = item.title || item.subject || "Announcement Details";
+          const fullContent = getAnnouncementContent(item);
+          alert(`--- ${fullTitle} ---\n\n${fullContent}`);
+        });
+      });
     }
 
     async function fetchAnnouncementsData() {
@@ -156,19 +218,18 @@
         return noticesRes;
       }
 
-      // Return initial response error if all attempts fail
       return primaryRes;
     }
 
     async function loadAnnouncements() {
-      const list = document.getElementById("announcementList");
+      const tbody = document.getElementById("announcementsTableBody");
       const refreshButton = document.getElementById("refreshAnnouncements");
 
-      if (list) {
-        list.innerHTML = `
-          <div class="empty-state">
-            <p>Loading real announcements...</p>
-          </div>
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="loading-cell">Loading real announcements...</td>
+          </tr>
         `;
       }
 
@@ -181,7 +242,7 @@
 
       if (refreshButton) {
         refreshButton.disabled = false;
-        refreshButton.textContent = "Refresh";
+        refreshButton.textContent = "↻ Refresh";
       }
 
       if (error) {
@@ -189,16 +250,20 @@
 
         announcements = [];
 
-        if (list) {
-          list.innerHTML = `
-            <div class="empty-state">
-              <h3>Could not load announcements</h3>
-              <p>
-                Check the announcements table columns and your Supabase permissions.
-                No sample records have been added.
-              </p>
-              <p class="error-detail">${escapeHTML(error.message || "")}</p>
-            </div>
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="4">
+                <div class="empty-state">
+                  <h3>Could not load announcements</h3>
+                  <p>
+                    Check the announcements table columns and your Supabase permissions.
+                    No sample records have been added.
+                  </p>
+                  <p class="error-detail">${escapeHTML(error.message || "")}</p>
+                </div>
+              </td>
+            </tr>
           `;
         }
 
@@ -243,7 +308,7 @@
             <h1>School Announcements</h1>
             <p>
               Review school notices and academic updates for
-              Graceland Academy International School of Excellence (GRACAIS).
+              Graceland Academy International School of Excellence (GRACAIS) [Grades 4th - 12th].
             </p>
           </div>
 
@@ -252,7 +317,7 @@
             id="refreshAnnouncements"
             type="button"
           >
-            Refresh
+            ↻ Refresh
           </button>
         </section>
 
@@ -263,48 +328,91 @@
           hidden
         ></div>
 
-        <section class="card">
+        <section class="card portal-card">
           <div class="card-header">
             <div>
-              <h2>Announcements</h2>
+              <h2>Announcements Feed</h2>
               <p>Records are loaded from the connected Supabase database.</p>
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="announcementSearch">Search announcements</label>
-            <input
-              type="search"
-              id="announcementSearch"
-              placeholder="Search by title or announcement content..."
-              autocomplete="off"
-            >
+          <div class="table-toolbar">
+            <div class="search-input-wrapper">
+              <input
+                type="search"
+                id="announcementSearch"
+                placeholder="🔍 Search by title or announcement content..."
+                autocomplete="off"
+              >
+            </div>
           </div>
 
-          <div id="announcementList">
-            <div class="empty-state">
-              <p>Loading announcements...</p>
-            </div>
+          <div class="table-container">
+            <table class="portal-table">
+              <thead>
+                <tr>
+                  <th>Title / Subject</th>
+                  <th>Published Date</th>
+                  <th>Content Preview</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="announcementsTableBody">
+                <tr><td colspan="4" class="loading-cell">Loading announcements...</td></tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
         <style>
+          .portal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #D9E5F0;
+            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+            padding: 24px;
+          }
+
+          .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+
+          .page-heading h1 {
+            color: #063B7A;
+            font-size: 1.5rem;
+            margin: 0;
+          }
+
+          .page-heading p {
+            color: #64748B;
+            margin: 4px 0 0 0;
+            font-size: 0.9rem;
+          }
+
           .announcement-message {
-            padding: 12px 15px;
-            margin: 12px 0;
+            padding: 12px 16px;
+            margin-bottom: 16px;
             border-radius: 8px;
             background: #E0F5FF;
             color: #063B7A;
+            font-weight: 500;
           }
 
           .announcement-message.error {
             background: #FEE2E2;
             color: #991B1B;
+            border: 1px solid #FCA5A5;
           }
 
           .announcement-message.success {
             background: #DCFCE7;
             color: #166534;
+            border: 1px solid #86EFAC;
           }
 
           .error-detail {
@@ -313,29 +421,144 @@
             margin-top: 6px;
           }
 
-          .announcement-card {
-            padding: 18px;
-            margin: 14px 0;
-            border: 1px solid #D8E7F3;
-            border-radius: 10px;
-            background: #FFFFFF;
+          .table-toolbar {
+            margin-bottom: 16px;
           }
 
-          .announcement-card h3 {
+          .table-toolbar input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #D9E5F0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+          }
+
+          .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+          }
+
+          .portal-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+          }
+
+          .portal-table th {
+            background: #F8FAFC;
             color: #063B7A;
-            margin-bottom: 8px;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 2px solid #E2E8F0;
+            white-space: nowrap;
           }
 
-          .announcement-date {
+          .portal-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #E2E8F0;
+            color: #334155;
+            vertical-align: middle;
+          }
+
+          .font-bold-title {
+            font-weight: 600;
+            color: #0F172A;
+          }
+
+          .announcement-snippet {
             color: #64748B;
-            font-size: 0.88rem;
-            margin-bottom: 12px;
+            display: inline-block;
+            max-width: 350px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
 
-          .announcement-content {
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-            line-height: 1.6;
+          /* Dropdown Menu System */
+          .portal-action-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+          }
+
+          .portal-action-btn {
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            color: #0F172A;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .portal-action-btn:hover {
+            background: #E2E8F0;
+          }
+
+          .portal-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            min-width: 160px;
+            z-index: 50;
+            overflow: hidden;
+          }
+
+          .portal-dropdown-menu.show {
+            display: block;
+          }
+
+          .portal-dropdown-item {
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            color: #334155;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s ease;
+          }
+
+          .portal-dropdown-item:hover {
+            background: #F8FAFC;
+            color: #063B7A;
+          }
+
+          .loading-cell {
+            text-align: center;
+            padding: 24px;
+            color: #64748B;
+          }
+
+          .empty-state {
+            text-align: center;
+            padding: 32px 16px;
+          }
+
+          .empty-state h3 {
+            margin: 0;
+            color: #063B7A;
+          }
+
+          .empty-state p {
+            margin: 6px 0 0 0;
+            color: #64748B;
           }
 
           #refreshAnnouncements:disabled {
@@ -362,7 +585,7 @@
       if (app) {
         app.innerHTML = `
           <main class="page-content">
-            <section class="card">
+            <section class="card portal-card">
               <h2>Unable to load Announcements</h2>
               <p>
                 Check the shared portal files, authentication configuration,
