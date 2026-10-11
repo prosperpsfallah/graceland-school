@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,37 +13,43 @@
     .student-page {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 24px;
     }
 
     .welcome-panel {
-      padding: 26px;
-      border-radius: 16px;
+      padding: 28px;
+      border-radius: 14px;
       background: linear-gradient(135deg, #063B7A, #0B5CAD);
       color: white;
       margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.08);
     }
 
     .welcome-panel h1 {
       font-size: clamp(1.5rem, 4vw, 2.2rem);
-      margin-bottom: 10px;
+      margin: 0 0 10px 0;
     }
 
     .welcome-panel p {
       line-height: 1.7;
+      margin: 0;
+      color: #E0F5FF;
     }
 
     .student-label {
       display: inline-block;
       margin-bottom: 12px;
-      padding: 5px 10px;
+      padding: 4px 12px;
       border: 1px solid rgba(255,255,255,.45);
       border-radius: 30px;
-      font-size: .85rem;
+      font-size: .82rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .section-title {
       color: #063B7A;
+      font-size: 1.25rem;
       margin-bottom: 16px;
     }
 
@@ -58,17 +63,18 @@
     .dashboard-card {
       display: block;
       padding: 20px;
-      border: 1px solid #dbe7f0;
-      border-radius: 14px;
+      border: 1px solid #D9E5F0;
+      border-radius: 12px;
       background: white;
       color: #17324d;
       text-decoration: none;
-      box-shadow: 0 4px 14px rgba(3,42,88,.04);
-      transition: transform .15s ease;
+      box-shadow: 0 4px 16px rgba(3,42,88,.04);
+      transition: transform .15s ease, border-color .15s ease;
     }
 
     .dashboard-card:hover {
       transform: translateY(-2px);
+      border-color: #063B7A;
     }
 
     .card-icon {
@@ -76,45 +82,51 @@
       place-items: center;
       width: 44px;
       height: 44px;
-      border-radius: 12px;
+      border-radius: 10px;
       background: #E0F5FF;
       color: #063B7A;
-      font-size: 1.35rem;
+      font-size: 1.25rem;
+      font-weight: bold;
       margin-bottom: 14px;
     }
 
     .dashboard-card h3 {
       color: #063B7A;
-      margin-bottom: 8px;
+      margin: 0 0 6px 0;
+      font-size: 1.05rem;
     }
 
     .dashboard-card p {
       color: #64748b;
-      font-size: .94rem;
+      font-size: .88rem;
       line-height: 1.6;
+      margin: 0;
     }
 
-    .information-panel {
+    .portal-card {
       background: white;
-      border: 1px solid #dbe7f0;
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 20px;
+      border: 1px solid #D9E5F0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
     }
 
-    .information-panel p {
+    .portal-card p {
       color: #526579;
       line-height: 1.7;
+      margin: 0;
     }
 
     .status-note {
-      background: #f0f9ff;
-      border: 1px solid #bae6fd;
-      color: #075985;
+      background: #FFF8E6;
+      border: 1px solid #F4D58D;
+      color: #795716;
       border-radius: 10px;
-      padding: 14px 16px;
+      padding: 14px 18px;
       line-height: 1.6;
-      margin-bottom: 22px;
+      margin-bottom: 24px;
+      font-size: 0.9rem;
     }
 
     .profile-details {
@@ -126,19 +138,22 @@
 
     .detail-item {
       padding: 14px;
-      background: #f4f9fd;
-      border-radius: 9px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
       overflow-wrap: anywhere;
     }
 
     .detail-item small {
       display: block;
       color: #64748b;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
     }
 
     .detail-item strong {
-      color: #063B7A;
+      color: #0F172A;
+      font-size: 0.95rem;
     }
 
     @media (max-width: 850px) {
@@ -149,7 +164,7 @@
 
     @media (max-width: 560px) {
       .student-page {
-        padding: 14px;
+        padding: 16px;
       }
 
       .dashboard-grid,
@@ -233,7 +248,7 @@
               <div>
                 <strong>Student Dashboard</strong>
                 <div style="font-size:13px;color:#64748b;">
-                  GRACAIS Academic Portal
+                  GRACAIS Academic Portal [Grades 4th - 12th]
                 </div>
               </div>
             </header>
@@ -245,15 +260,15 @@
                 <p>
                   Welcome to the Graceland Academy International School of
                   Excellence student portal. Access your academic information
-                  and school updates here.
+                  and official school updates here.
                 </p>
               </section>
 
               <div class="status-note">
-                <strong>Academic information only.</strong>
+                <strong>Academic information system notice:</strong>
                 Grades, attendance, subjects, and schedules will appear when
                 the relevant school records are connected and available to
-                your account.
+                your student account.
               </div>
 
               <section>
@@ -263,43 +278,43 @@
                   <a class="dashboard-card" href="./grades.html">
                     <div class="card-icon" aria-hidden="true">A</div>
                     <h3>My Grades</h3>
-                    <p>View your available grades and academic performance.</p>
+                    <p>View your available grades and academic performance records.</p>
                   </a>
 
                   <a class="dashboard-card" href="./attendance.html">
                     <div class="card-icon" aria-hidden="true">✓</div>
                     <h3>My Attendance</h3>
-                    <p>Review your recorded attendance information.</p>
+                    <p>Review your recorded school attendance history.</p>
                   </a>
 
                   <a class="dashboard-card" href="./subjects.html">
                     <div class="card-icon" aria-hidden="true">▤</div>
                     <h3>My Subjects</h3>
-                    <p>View subjects associated with your class.</p>
+                    <p>View academic subjects associated with your class level.</p>
                   </a>
 
                   <a class="dashboard-card" href="./schedule.html">
                     <div class="card-icon" aria-hidden="true">◷</div>
                     <h3>My Schedule</h3>
-                    <p>Check your class timetable when it is available.</p>
+                    <p>Check your class timetable when published.</p>
                   </a>
 
                   <a class="dashboard-card" href="./announcements.html">
                     <div class="card-icon" aria-hidden="true">◉</div>
                     <h3>Announcements</h3>
-                    <p>Read published school updates and notices.</p>
+                    <p>Read official published school updates and notices.</p>
                   </a>
 
                   <a class="dashboard-card" href="./profile.html">
                     <div class="card-icon" aria-hidden="true">♙</div>
                     <h3>My Profile</h3>
-                    <p>View your school account information.</p>
+                    <p>View your student account details and information.</p>
                   </a>
                 </div>
               </section>
 
-              <section class="information-panel">
-                <h2 class="section-title">My Account</h2>
+              <section class="portal-card">
+                <h2 class="section-title" style="margin-top:0;">My Account</h2>
 
                 <div class="profile-details">
                   <div class="detail-item">
@@ -323,9 +338,8 @@
                   </div>
                 </div>
 
-                <p style="margin-top:16px;">
-                  For corrections to your school records, contact the
-                  appropriate school office.
+                <p style="margin-top:16px; font-size: 0.9rem;">
+                  For corrections to your school records, contact the appropriate school office.
                 </p>
               </section>
             </main>
