@@ -23,6 +23,7 @@
       requireUser
     } from "../assets/layout.js";
     import { supabase } from "../assets/supabase.js";
+
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
@@ -30,41 +31,72 @@
       "registrar"
     ];
     let subjectRecords = [];
+
     function safe(value) {
       return esc(String(value ?? ""));
     }
+
     function getSubjectName(subject) {
       return subject.subject_name
         || subject.name
         || subject.title
         || "—";
     }
+
     function getSubjectId(subject) {
       return subject.subject_id
         || subject.id
         || "—";
     }
+
     function getClassName(subject) {
       return subject.classes?.name
         || subject.class_name
         || subject.class_id
         || "—";
     }
+
     function getAcademicYear(subject) {
       return subject.academic_years?.name
         || subject.academic_year
         || subject.academic_year_id
         || "—";
     }
+
     function getStatus(subject) {
       return subject.status
         || "—";
     }
+
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
     function renderSubjects() {
       const tbody = document.getElementById("subjectRows");
       const status = document.getElementById("subjectStatus");
       const searchInput = document.getElementById("subjectSearch");
       if (!tbody || !status || !searchInput) return;
+
       const query = searchInput.value.trim().toLowerCase();
       const filtered = subjectRecords.filter(subject => {
         const searchable = [
@@ -76,12 +108,14 @@
         ].join(" ").toLowerCase();
         return searchable.includes(query);
       });
+
       status.textContent =
-        `${filtered.length} subject record${filtered.length === 1 ? "" : "s"}`;
+        `${filtered.length} subject record${filtered.length === 1 ? "" : "s"} shown`;
+
       if (!filtered.length) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">
+            <td colspan="6" class="empty-state-cell">
               <div class="empty-state">
                 <h3>${query ? "No matching subjects" : "No subject records found"}</h3>
                 <p>
@@ -95,34 +129,93 @@
         `;
         return;
       }
-      tbody.innerHTML = filtered.map(subject => `
-        <tr>
-          <td>${safe(getSubjectId(subject))}</td>
-          <td>${safe(getSubjectName(subject))}</td>
-          <td>${safe(getClassName(subject))}</td>
-          <td>${safe(getAcademicYear(subject))}</td>
-          <td>${safe(getStatus(subject))}</td>
-        </tr>
-      `).join("");
+
+      tbody.innerHTML = filtered.map((subject, index) => {
+        const subjectIdVal = getSubjectId(subject);
+        const subjectNameVal = getSubjectName(subject);
+        const classNameVal = getClassName(subject);
+        const yearVal = getAcademicYear(subject);
+        const statusVal = getStatus(subject);
+        const isActive = statusVal.toLowerCase() === "active";
+
+        return `
+          <tr>
+            <td style="font-family: monospace;" class="font-bold-title">${safe(subjectIdVal)}</td>
+            <td class="font-bold-title">${safe(subjectNameVal)}</td>
+            <td>${safe(classNameVal)}</td>
+            <td>${safe(yearVal)}</td>
+            <td>
+              <span class="status-badge ${isActive ? "active" : "inactive"}">
+                ${safe(statusVal)}
+              </span>
+            </td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item view-subject" data-index="${index}">
+                    👁️ Inspect Subject
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-subject-id" data-id="${safe(subjectIdVal)}">
+                    📋 Copy Subject ID
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".view-subject").forEach(button => {
+        button.addEventListener("click", () => {
+          const subject = filtered[button.dataset.index];
+          alert(`--- Subject Details ---\nSubject: ${getSubjectName(subject)} (ID: ${getSubjectId(subject)})\nClass: ${getClassName(subject)}\nAcademic Year: ${getAcademicYear(subject)}\nStatus: ${getStatus(subject)}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-subject-id").forEach(button => {
+        button.addEventListener("click", () => {
+          const id = button.dataset.id;
+          if (id && id !== "—") {
+            navigator.clipboard.writeText(id);
+            alert(`Copied Subject ID: ${id}`);
+          } else {
+            alert("No Subject ID available to copy.");
+          }
+        });
+      });
     }
+
     async function loadSubjects() {
       const tbody = document.getElementById("subjectRows");
       const status = document.getElementById("subjectStatus");
       const refreshButton = document.getElementById("refreshSubjects");
       if (!tbody || !status || !refreshButton) return;
+
       refreshButton.disabled = true;
       status.textContent = "Loading subject records...";
       tbody.innerHTML = `
         <tr>
-          <td colspan="5">Loading subject records...</td>
+          <td colspan="6" class="loading-cell">Loading subject records...</td>
         </tr>
       `;
+
       try {
-        // Read existing records only. No sample data is inserted.
         const { data, error } = await supabase
           .from("subjects")
           .select("*");
+
         if (error) throw error;
+
         subjectRecords = data ?? [];
         subjectRecords.sort((a, b) =>
           getSubjectName(a).localeCompare(getSubjectName(b))
@@ -133,14 +226,14 @@
         status.textContent = "Unable to load subjects";
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">
+            <td colspan="6" class="empty-state-cell">
               <div class="empty-state">
                 <h3>Could not load subject records</h3>
                 <p>
                   Check the subjects table, its column names,
                   and the Supabase access policies.
                 </p>
-                <p id="subjectError"></p>
+                <p id="subjectError" style="color: #DC2626; font-size: 13px; margin-top: 6px;"></p>
               </div>
             </td>
           </tr>
@@ -154,6 +247,7 @@
         refreshButton.disabled = false;
       }
     }
+
     async function initSubjectsPage() {
       initLayout(
         "super_admin",
@@ -163,46 +257,51 @@
       setupLogout();
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
+
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
+
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
             <h1>Subject Management</h1>
             <p>
               View academic subjects for Graceland Academy
-              International School of Excellence (GRACAIS).
+              International School of Excellence (GRACAIS) [Grades 4th - 12th].
             </p>
           </div>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="refreshSubjects"
+          >
+            ↻ Refresh Subjects
+          </button>
         </section>
-        <section class="card">
-          <div class="card-header">
+
+        <section class="card portal-card">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
             <div>
               <h2>Academic Subjects</h2>
-              <p>Existing subject records from the connected database.</p>
+              <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.88rem;">Existing subject records from the connected database.</p>
             </div>
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="refreshSubjects"
-            >
-              Refresh
-            </button>
+            <p id="subjectStatus" aria-live="polite" style="font-weight: 600; color: #063B7A; margin: 0;">Preparing subject records...</p>
           </div>
-          <div class="form-group">
-            <label for="subjectSearch">Search subjects</label>
-            <input
-              type="search"
-              id="subjectSearch"
-              placeholder="Search by subject name, ID, class, or year..."
-              autocomplete="off"
-            >
+
+          <div class="table-toolbar" style="margin-bottom: 16px;">
+            <div class="search-input-wrapper">
+              <input
+                type="search"
+                id="subjectSearch"
+                placeholder="🔍 Search by subject name, ID, class, or year..."
+                autocomplete="off"
+                style="width:100%; padding: 10px 14px; border: 1px solid #D9E5F0; border-radius: 8px;"
+              >
+            </div>
           </div>
-          <p id="subjectStatus" aria-live="polite">
-            Preparing subject records...
-          </p>
+
           <div class="table-container">
-            <table>
+            <table class="portal-table">
               <thead>
                 <tr>
                   <th>Subject ID</th>
@@ -210,31 +309,198 @@
                   <th>Class</th>
                   <th>Academic Year</th>
                   <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="subjectRows">
                 <tr>
-                  <td colspan="5">Loading subject records...</td>
+                  <td colspan="6" class="loading-cell">Loading subject records...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
+
+        <style>
+          .portal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #D9E5F0;
+            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+            padding: 24px;
+          }
+
+          .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+
+          .page-heading h1 {
+            color: #063B7A;
+            font-size: 1.5rem;
+            margin: 0;
+          }
+
+          .page-heading p {
+            color: #64748B;
+            margin: 4px 0 0 0;
+            font-size: 0.9rem;
+          }
+
+          .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+          }
+
+          .portal-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.88rem;
+          }
+
+          .portal-table th {
+            background: #F8FAFC;
+            color: #063B7A;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 2px solid #E2E8F0;
+            white-space: nowrap;
+          }
+
+          .portal-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #E2E8F0;
+            color: #334155;
+            vertical-align: middle;
+          }
+
+          .font-bold-title {
+            font-weight: 600;
+            color: #0F172A;
+          }
+
+          .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+          }
+          .status-badge.active {
+            background: #DCFCE7;
+            color: #15803D;
+          }
+          .status-badge.inactive {
+            background: #F1F5F9;
+            color: #64748B;
+          }
+
+          /* Dropdown Menu System */
+          .portal-action-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+          }
+
+          .portal-action-btn {
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            color: #0F172A;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .portal-action-btn:hover {
+            background: #E2E8F0;
+          }
+
+          .portal-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            min-width: 170px;
+            z-index: 50;
+            overflow: hidden;
+          }
+
+          .portal-dropdown-menu.show {
+            display: block;
+          }
+
+          .portal-dropdown-item {
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            color: #334155;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s ease;
+          }
+
+          .portal-dropdown-item:hover {
+            background: #F8FAFC;
+            color: #063B7A;
+          }
+
+          .loading-cell {
+            text-align: center;
+            padding: 24px;
+            color: #64748B;
+          }
+
+          .empty-state-cell {
+            text-align: center;
+            padding: 32px 16px;
+            color: #64748B;
+          }
+
+          #refreshSubjects:disabled {
+            opacity: 0.65;
+            cursor: wait;
+          }
+        </style>
       `;
+
       document
         .getElementById("subjectSearch")
         .addEventListener("input", renderSubjects);
       document
         .getElementById("refreshSubjects")
         .addEventListener("click", loadSubjects);
+
       await loadSubjects();
     }
+
     initSubjectsPage().catch(error => {
       console.error("Subject management page error:", error);
       const pageContent = document.getElementById("pageContent");
       if (pageContent) {
         pageContent.innerHTML = `
-          <section class="card">
+          <section class="card portal-card">
             <h2>Unable to load Subject Management</h2>
             <p>
               Check the shared portal files and authentication configuration.
