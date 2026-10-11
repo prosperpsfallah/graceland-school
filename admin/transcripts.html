@@ -17,6 +17,7 @@
     import { setupLogout, esc } from "../assets/app.js";
     import { initLayout, requireUser } from "../assets/layout.js";
     import { supabase } from "../assets/supabase.js";
+
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
@@ -24,18 +25,45 @@
       "registrar"
     ];
     let transcriptStudents = [];
+
     function safe(value) {
       return esc(String(value ?? ""));
     }
+
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
     function renderTranscripts(records) {
       const tbody = document.getElementById("transcriptsTableBody");
       const count = document.getElementById("transcriptCount");
       if (!tbody || !count) return;
+
       count.textContent = String(records.length);
+
       if (!records.length) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">
+            <td colspan="6" class="empty-state-cell">
               <div class="empty-state">
                 <h3>No matching students found</h3>
                 <p>
@@ -48,22 +76,76 @@
         `;
         return;
       }
-      tbody.innerHTML = records.map(student => {
+
+      tbody.innerHTML = records.map((student, index) => {
+        const studentIdVal = student.student_id || student.id || "—";
         const fullName = [
           student.first_name,
           student.last_name
         ].filter(Boolean).join(" ") || "—";
+        const classNameVal = student.class_name || student.class_id || "—";
+        const yearVal = student.academic_year_name || student.academic_year_id || "—";
+        const statusVal = student.status || "Student record available";
+        const isActive = statusVal.toLowerCase().includes("active") || statusVal.toLowerCase().includes("available");
+
         return `
           <tr>
-            <td>${safe(student.student_id || student.id || "—")}</td>
-            <td>${safe(fullName)}</td>
-            <td>${safe(student.class_name || student.class_id || "—")}</td>
-            <td>${safe(student.academic_year_name || student.academic_year_id || "—")}</td>
-            <td>${safe(student.status || "Student record available")}</td>
+            <td style="font-family: monospace;" class="font-bold-title">${safe(studentIdVal)}</td>
+            <td class="font-bold-title">${safe(fullName)}</td>
+            <td>${safe(classNameVal)}</td>
+            <td>${safe(yearVal)}</td>
+            <td>
+              <span class="status-badge ${isActive ? "active" : "inactive"}">
+                ${safe(statusVal)}
+              </span>
+            </td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item view-transcript" data-index="${index}">
+                    👁️ View Transcript
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-student-id" data-id="${safe(studentIdVal)}">
+                    📋 Copy Student ID
+                  </button>
+                </div>
+              </div>
+            </td>
           </tr>
         `;
       }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".view-transcript").forEach(button => {
+        button.addEventListener("click", () => {
+          const student = records[button.dataset.index];
+          const name = [student.first_name, student.last_name].filter(Boolean).join(" ") || "Student";
+          alert(`--- Academic Transcript Record ---\nStudent: ${name} (${student.student_id || student.id || 'N/A'})\nClass: ${student.class_name || student.class_id || 'N/A'}\nAcademic Year: ${student.academic_year_name || student.academic_year_id || 'N/A'}\nStatus: ${student.status || 'Available'}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-student-id").forEach(button => {
+        button.addEventListener("click", () => {
+          const id = button.dataset.id;
+          if (id && id !== "—") {
+            navigator.clipboard.writeText(id);
+            alert(`Copied Student ID: ${id}`);
+          } else {
+            alert("No Student ID available to copy.");
+          }
+        });
+      });
     }
+
     function filterTranscripts() {
       const search = (
         document.getElementById("transcriptSearch")?.value || ""
@@ -87,31 +169,37 @@
       });
       renderTranscripts(filtered);
     }
+
     async function loadTranscripts() {
       const tbody = document.getElementById("transcriptsTableBody");
       const message = document.getElementById("transcriptMessage");
       const refreshButton = document.getElementById("refreshTranscripts");
       if (refreshButton) refreshButton.disabled = true;
+
       if (tbody) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">Loading student records...</td>
+            <td colspan="6" class="loading-cell">Loading student records...</td>
           </tr>
         `;
       }
+
       if (message) message.textContent = "";
+
       try {
-        // Load actual student records; do not generate demo transcripts.
         const { data, error } = await supabase
           .from("students")
           .select("*")
           .order("last_name", { ascending: true });
+
         if (error) throw error;
+
         transcriptStudents = data || [];
         filterTranscripts();
+
         if (message) {
           message.textContent =
-            "Student records loaded. Transcript grades are not displayed on this listing.";
+            "Student records loaded. Transcript grades are managed securely within portal modules.";
         }
       } catch (error) {
         console.error("Unable to load transcript records:", error);
@@ -119,7 +207,7 @@
         if (tbody) {
           tbody.innerHTML = `
             <tr>
-              <td colspan="5">
+              <td colspan="6" class="empty-state-cell">
                 <div class="empty-state">
                   <h3>Unable to load student records</h3>
                   <p>
@@ -139,6 +227,7 @@
         if (refreshButton) refreshButton.disabled = false;
       }
     }
+
     async function initTranscriptsPage() {
       initLayout(
         "super_admin",
@@ -148,50 +237,53 @@
       setupLogout();
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
+
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
+
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
             <h1>Student Transcripts</h1>
             <p>
               Find student academic records for
-              Graceland Academy International School of Excellence (GRACAIS).
+              Graceland Academy International School of Excellence (GRACAIS) [Grades 4th - 12th].
             </p>
           </div>
+          <button
+            type="button"
+            id="refreshTranscripts"
+            class="btn btn-secondary"
+          >
+            ↻ Refresh Records
+          </button>
         </section>
-        <section class="card">
-          <div class="card-header">
+
+        <section class="card portal-card">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
             <div>
               <h2>Student Records</h2>
-              <p>
-                This listing reads existing student records.
-                It does not create or invent transcript data.
-              </p>
+              <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.88rem;">This listing reads existing student records securely from Supabase.</p>
             </div>
-            <button
-              type="button"
-              id="refreshTranscripts"
-              class="btn btn-primary"
-            >
-              Refresh Records
-            </button>
+            <p style="margin:0; font-weight:600; color:#063B7A;">Total matching students: <strong id="transcriptCount">0</strong></p>
           </div>
-          <div class="form-group">
-            <label for="transcriptSearch">
-              Find a student
-            </label>
-            <input
-              type="search"
-              id="transcriptSearch"
-              placeholder="Enter student ID, name, class, or academic year..."
-              autocomplete="off"
-            >
+
+          <div class="table-toolbar" style="margin-bottom: 16px;">
+            <div class="search-input-wrapper">
+              <input
+                type="search"
+                id="transcriptSearch"
+                placeholder="🔍 Enter student ID, name, class, or academic year..."
+                autocomplete="off"
+                style="width:100%; padding: 10px 14px; border: 1px solid #D9E5F0; border-radius: 8px;"
+              >
+            </div>
           </div>
-          <p>Total matching students: <strong id="transcriptCount">0</strong></p>
-          <p id="transcriptMessage" role="status" aria-live="polite"></p>
+
+          <p id="transcriptMessage" role="status" aria-live="polite" style="margin-top:0; font-size:0.88rem; font-weight:500; color:#063B7A;"></p>
+
           <div class="table-container">
-            <table>
+            <table class="portal-table">
               <thead>
                 <tr>
                   <th>Student ID</th>
@@ -199,31 +291,198 @@
                   <th>Class</th>
                   <th>Academic Year</th>
                   <th>Record Status</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="transcriptsTableBody">
                 <tr>
-                  <td colspan="5">Preparing student records...</td>
+                  <td colspan="6" class="loading-cell">Preparing student records...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
+
+        <style>
+          .portal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #D9E5F0;
+            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+            padding: 24px;
+          }
+
+          .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+
+          .page-heading h1 {
+            color: #063B7A;
+            font-size: 1.5rem;
+            margin: 0;
+          }
+
+          .page-heading p {
+            color: #64748B;
+            margin: 4px 0 0 0;
+            font-size: 0.9rem;
+          }
+
+          .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+          }
+
+          .portal-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.88rem;
+          }
+
+          .portal-table th {
+            background: #F8FAFC;
+            color: #063B7A;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 2px solid #E2E8F0;
+            white-space: nowrap;
+          }
+
+          .portal-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #E2E8F0;
+            color: #334155;
+            vertical-align: middle;
+          }
+
+          .font-bold-title {
+            font-weight: 600;
+            color: #0F172A;
+          }
+
+          .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+          }
+          .status-badge.active {
+            background: #DCFCE7;
+            color: #15803D;
+          }
+          .status-badge.inactive {
+            background: #F1F5F9;
+            color: #64748B;
+          }
+
+          /* Dropdown Menu System */
+          .portal-action-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+          }
+
+          .portal-action-btn {
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            color: #0F172A;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .portal-action-btn:hover {
+            background: #E2E8F0;
+          }
+
+          .portal-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            min-width: 170px;
+            z-index: 50;
+            overflow: hidden;
+          }
+
+          .portal-dropdown-menu.show {
+            display: block;
+          }
+
+          .portal-dropdown-item {
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            color: #334155;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s ease;
+          }
+
+          .portal-dropdown-item:hover {
+            background: #F8FAFC;
+            color: #063B7A;
+          }
+
+          .loading-cell {
+            text-align: center;
+            padding: 24px;
+            color: #64748B;
+          }
+
+          .empty-state-cell {
+            text-align: center;
+            padding: 32px 16px;
+            color: #64748B;
+          }
+
+          #refreshTranscripts:disabled {
+            opacity: 0.65;
+            cursor: wait;
+          }
+        </style>
       `;
+
       document
         .getElementById("transcriptSearch")
         ?.addEventListener("input", filterTranscripts);
       document
         .getElementById("refreshTranscripts")
         ?.addEventListener("click", loadTranscripts);
+
       await loadTranscripts();
     }
+
     initTranscriptsPage().catch(error => {
       console.error("Transcripts page error:", error);
       const pageContent = document.getElementById("pageContent");
       if (pageContent) {
         pageContent.innerHTML = `
-          <section class="card">
+          <section class="card portal-card">
             <h2>Unable to open Student Transcripts</h2>
             <p>
               Check the shared portal files, authentication,
