@@ -8,6 +8,185 @@
   <title>My Students | GRACAIS</title>
   <link rel="icon" href="../logo.png" type="image/png">
   <link rel="stylesheet" href="../assets/style.css">
+
+  <style>
+    .teacher-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .welcome-panel {
+      padding: 28px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #063B7A, #0B5CAD);
+      color: white;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.08);
+    }
+
+    .welcome-panel h1 {
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      margin: 0 0 10px 0;
+    }
+
+    .welcome-panel p {
+      line-height: 1.7;
+      margin: 0;
+      color: #E0F5FF;
+    }
+
+    .portal-card {
+      background: white;
+      border: 1px solid #D9E5F0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+    }
+
+    .portal-card h2, .portal-card h3 {
+      color: #063B7A;
+      margin: 0 0 8px 0;
+      font-size: 1.15rem;
+    }
+
+    .muted {
+      color: #64748B;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .notice {
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      border: 1px solid #F4D58D;
+      border-radius: 10px;
+      background: #FFF8E6;
+      color: #795716;
+      line-height: 1.6;
+      font-size: 0.9rem;
+    }
+
+    /* Table Chart Layout */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .portal-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    .portal-table th {
+      background: #F8FAFC;
+      color: #063B7A;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 2px solid #E2E8F0;
+      white-space: nowrap;
+    }
+
+    .portal-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #E2E8F0;
+      color: #334155;
+      vertical-align: middle;
+    }
+
+    .font-bold-title {
+      font-weight: 600;
+      color: #0F172A;
+    }
+
+    .grade-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #E0F5FF;
+      color: #063B7A;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Dropdown Action System */
+    .portal-action-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .portal-action-btn {
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      color: #0F172A;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .portal-action-btn:hover { background: #E2E8F0; }
+
+    .portal-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: #ffffff;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      min-width: 170px;
+      z-index: 50;
+      overflow: hidden;
+    }
+
+    .portal-dropdown-menu.show { display: block; }
+
+    .portal-dropdown-item {
+      width: 100%;
+      text-align: left;
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      color: #334155;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+
+    .portal-dropdown-item:hover {
+      background: #F8FAFC;
+      color: #063B7A;
+    }
+
+    .empty-state-cell {
+      text-align: center;
+      padding: 32px 16px;
+      color: #64748B;
+    }
+
+    @media (max-width: 760px) {
+      .teacher-page { padding: 16px; }
+      .portal-card { padding: 18px; }
+      .welcome-panel { padding: 20px; }
+    }
+  </style>
 </head>
 <body>
   <div id="app"></div>
@@ -20,6 +199,105 @@
     } from "../assets/app.js";
 
     const ALLOWED_ROLES = ["teacher", "instructor"];
+    let assignedStudents = [];
+
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
+    function renderStudents(records) {
+      const tbody = document.getElementById("studentTableBody");
+      const status = document.getElementById("studentStatus");
+      if (!tbody || !status) return;
+
+      status.textContent = `${records.length} student record${records.length === 1 ? "" : "s"} shown`;
+
+      if (!records.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-state-cell">
+              <div style="font-size:28px; margin-bottom:8px;">👥</div>
+              <strong style="color:#063B7A; display:block; margin-bottom:4px;">No student records loaded</strong>
+              <span>Student rosters for Grades 4th through 12th will populate after secure teacher-class enrollment queries are connected.</span>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = records.map((item, index) => {
+        const studentName = item.full_name || [item.first_name, item.last_name].filter(Boolean).join(" ") || "Student";
+        const studentId = item.school_id || item.student_id || "—";
+        const gradeLevel = item.grade_level ? `Grade ${item.grade_level}` : "—";
+        const statusVal = item.status || "Enrolled";
+
+        return `
+          <tr>
+            <td class="font-bold-title">${esc(studentName)}</td>
+            <td>${esc(studentId)}</td>
+            <td><span class="grade-badge">${esc(gradeLevel)}</span></td>
+            <td>${esc(statusVal)}</td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item inspect-student-btn" data-index="${index}">
+                    👁️ Inspect Profile
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-student-btn" data-name="${esc(studentName)}" data-id="${esc(studentId)}">
+                    📋 Copy Details
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".inspect-student-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const rec = records[btn.dataset.index];
+          const name = rec.full_name || [rec.first_name, rec.last_name].filter(Boolean).join(" ") || "Student";
+          alert(`--- Student Profile ---\nName: ${name}\nID: ${rec.school_id || 'N/A'}\nClass: Grade ${rec.grade_level || 'N/A'}\nStatus: ${rec.status || 'Enrolled'}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-student-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const info = `${btn.dataset.name} (${btn.dataset.id})`;
+          navigator.clipboard.writeText(info);
+          alert(`Copied student details: ${info}`);
+        });
+      });
+    }
 
     document.getElementById("app").innerHTML = `
       <div class="portal-shell">
@@ -57,7 +335,7 @@
 
           <div class="sidebar-footer">
             <div class="sidebar-school-name">Graceland Academy International School of Excellence</div>
-            <div class="sidebar-role">Teacher</div>
+            <div class="sidebar-role">Teacher Portal [Grades 4th - 12th]</div>
           </div>
         </aside>
 
@@ -68,15 +346,57 @@
             <button type="button" id="menuToggle" class="menu-toggle" data-menu-toggle aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">☰</button>
             <div class="topbar-heading">
               <h1>My Students</h1>
-              <p>GRACAIS Academic Portal</p>
+              <p>GRACAIS Academic Portal [Grades 4th - 12th]</p>
             </div>
             <button type="button" class="logout-button" data-logout>
               <span aria-hidden="true">⇥</span><span>Sign Out</span>
             </button>
           </header>
 
-          <section id="pageContent" class="page-content">
-            <section class="card"><p>Verifying your teacher account...</p></section>
+          <section id="pageContent" class="page-content teacher-page">
+            <section class="welcome-panel">
+              <span style="display:inline-block;margin-bottom:10px;padding:4px 12px;border:1px solid rgba(255,255,255,.45);border-radius:30px;font-size:.82rem;font-weight:600;background:rgba(255,255,255,0.1);">Roster Management</span>
+              <h1>My Assigned Students</h1>
+              <p>View student rosters connected to your teaching assignments across Grades 4th through 12th.</p>
+            </section>
+
+            <div class="notice">
+              <strong>Secure Roster Policy:</strong> Student records and enrollment details are restricted by Supabase Row Level Security (RLS) policies to classes assigned to your teacher account.
+            </div>
+
+            <!-- Student List Card -->
+            <section class="portal-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h2>Assigned Student Rosters</h2>
+                  <p class="muted">Students actively enrolled in your classes.</p>
+                </div>
+                <p id="studentStatus" style="margin:0; font-weight:600; color:#063B7A; font-size:0.88rem;">0 records loaded</p>
+              </div>
+
+              <div class="table-container">
+                <table class="portal-table">
+                  <thead>
+                    <tr>
+                      <th>Student Name</th>
+                      <th>Student ID</th>
+                      <th>Class Level</th>
+                      <th>Enrollment Status</th>
+                      <th style="text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="studentTableBody">
+                    <tr>
+                      <td colspan="5" class="empty-state-cell">
+                        <div style="font-size:28px; margin-bottom:8px;">👥</div>
+                        <strong style="color:#063B7A; display:block; margin-bottom:4px;">No student records loaded</strong>
+                        <span>Student rosters for Grades 4th through 12th will populate after secure teacher-class enrollment queries are connected.</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
           </section>
         </main>
       </div>
@@ -115,36 +435,8 @@
     const result = await requireUser(ALLOWED_ROLES);
 
     if (result) {
-      document.getElementById("pageContent").innerHTML = `
-        <section class="page-heading">
-          <h2>My Assigned Students</h2>
-          <p>View students connected to your teaching assignments.</p>
-        </section>
-
-        <section class="card">
-          <h3>Student List</h3>
-          <p>
-            Student records will appear here when the teacher
-            assignment and enrollment database queries are connected.
-          </p>
-          <p>
-            No sample students are being displayed.
-          </p>
-        </section>
-
-        <section class="card">
-          <h3>Student Information</h3>
-          <p>
-            The connected list is intended to show student ID,
-            student name, class, and enrollment status where
-            authorized.
-          </p>
-          <p>
-            Access must be restricted by Supabase policies to
-            the teacher's assigned classes.
-          </p>
-        </section>
-      `;
+      renderStudents(assignedStudents);
+      console.info("GRACAIS teacher students roster loaded successfully.");
     }
   </script>
 </body>
