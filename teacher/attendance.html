@@ -1,425 +1,604 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#063B7A">
-  <meta name="description" content="GRACAIS Teacher Attendance">
-  <title>Attendance | GRACAIS</title>
-  <link rel="icon" href="../logo.png">
+  <meta name="description" content="Student Announcements - GRACAIS E-Portal">
+
+  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="../logo.png">
   <link rel="stylesheet" href="../assets/style.css">
 
+  <title>Announcements | GRACAIS E-Portal</title>
+
   <style>
-    .teacher-page {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #F4F9FD;
+      color: #18324B;
+      font-family: Arial, Helvetica, sans-serif;
     }
 
-    .page-heading {
-      margin-bottom: 22px;
+    .portal { min-height: 100vh; display: flex; }
+
+    .sidebar {
+      width: 250px;
+      flex-shrink: 0;
+      background: #032A58;
+      color: #fff;
+      padding: 24px 16px;
     }
 
-    .page-heading h1 {
-      color: #063B7A;
-      margin-bottom: 8px;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px 24px;
+      border-bottom: 1px solid rgba(255,255,255,.15);
     }
 
-    .panel {
+    .brand img {
+      width: 45px;
+      height: 45px;
+      object-fit: contain;
       background: #fff;
-      border: 1px solid #dbe7f0;
+      border-radius: 8px;
+    }
+
+    .brand strong { display: block; font-size: 13px; line-height: 1.4; }
+    .brand small { display: block; color: #BAE6FD; margin-top: 4px; }
+
+    .nav-title {
+      margin: 24px 10px 10px;
+      font-size: 11px;
+      color: #BAE6FD;
+      letter-spacing: 1px;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 12px 13px;
+      margin: 5px 0;
+      color: #EAF6FF;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      background: #0B5CAD;
+      color: #fff;
+    }
+
+    .main { min-width: 0; flex: 1; }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #DCEAF5;
+      padding: 18px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .topbar h2 { margin: 0; color: #063B7A; font-size: 20px; }
+    .topbar p { margin: 5px 0 0; font-size: 13px; color: #64748B; }
+
+    .logout {
+      border: 0;
+      border-radius: 8px;
+      background: #063B7A;
+      color: #fff;
+      padding: 10px 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .logout:hover { background: #0B5CAD; }
+
+    .content { padding: 28px; max-width: 1200px; margin: 0 auto; }
+
+    .welcome {
+      background: linear-gradient(120deg, #063B7A, #0B5CAD);
+      color: #fff;
       border-radius: 14px;
-      padding: 20px;
-      margin: 20px 0;
-      box-shadow: 0 4px 14px rgba(3, 42, 88, 0.05);
+      padding: 25px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.08);
     }
 
-    .notice {
-      padding: 14px 16px;
-      border: 1px solid #bae6fd;
-      border-radius: 10px;
-      background: #f0f9ff;
-      color: #075985;
-      line-height: 1.6;
-      margin: 16px 0;
+    .welcome h1 { margin: 0 0 9px; font-size: 25px; }
+    .welcome p { margin: 0; line-height: 1.7; color: #E0F5FF; font-size: 14px; }
+
+    .portal-card {
+      background: #fff;
+      border: 1px solid #D9E5F0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
     }
 
-    .attendance-fields {
+    .portal-card h3 { color: #063B7A; margin: 0 0 8px; font-size: 17px; }
+    .muted { color: #64748B; font-size: 13px; line-height: 1.7; }
+
+    .filters {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: 1fr 1fr;
       gap: 16px;
       margin-top: 18px;
     }
 
     .field label {
       display: block;
-      font-weight: 600;
       margin-bottom: 7px;
-      color: #17324d;
+      color: #334155;
+      font-size: 13px;
+      font-weight: bold;
     }
 
-    .field select,
-    .field input {
+    .field select, .field input {
       width: 100%;
       min-height: 44px;
-      padding: 10px;
-      border: 1px solid #cbd5e1;
+      border: 1px solid #CBD5E1;
       border-radius: 8px;
+      padding: 10px 14px;
       background: #fff;
-      font: inherit;
+      color: #18324B;
+      font-size: 14px;
     }
 
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 20px;
+    .field select:focus, .field input:focus {
+      outline: none;
+      border-color: #063B7A;
+      box-shadow: 0 0 0 3px rgba(6, 59, 122, 0.1);
     }
 
-    .action-button {
-      border: 0;
+    /* Table Chart Layout */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #E2E8F0;
       border-radius: 8px;
-      padding: 11px 17px;
-      background: #063B7A;
-      color: #fff;
-      font: inherit;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .action-button.secondary {
-      background: #e0f5ff;
-      color: #063B7A;
-      border: 1px solid #bae6fd;
-    }
-
-    .action-button:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-    }
-
-    .empty-state {
-      border: 1px dashed #b7c9d9;
-      border-radius: 12px;
-      padding: 32px 18px;
-      text-align: center;
-      color: #526579;
-      line-height: 1.7;
       margin-top: 16px;
     }
 
-    .empty-state h2 {
+    .portal-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    .portal-table th {
+      background: #F8FAFC;
       color: #063B7A;
-      margin-bottom: 10px;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 2px solid #E2E8F0;
+      white-space: nowrap;
     }
 
-    .status-message {
-      color: #526579;
-      font-size: .92rem;
-      margin-top: 14px;
-      line-height: 1.6;
+    .portal-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #E2E8F0;
+      color: #334155;
+      vertical-align: middle;
     }
 
-    .print-heading {
+    .font-bold-title {
+      font-weight: 600;
+      color: #0F172A;
+    }
+
+    .category-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #E0F5FF;
+      color: #063B7A;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    /* Dropdown Action System */
+    .portal-action-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .portal-action-btn {
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      color: #0F172A;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .portal-action-btn:hover {
+      background: #E2E8F0;
+    }
+
+    .portal-dropdown-menu {
       display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: #ffffff;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      min-width: 170px;
+      z-index: 50;
+      overflow: hidden;
+    }
+
+    .portal-dropdown-menu.show {
+      display: block;
+    }
+
+    .portal-dropdown-item {
+      width: 100%;
+      text-align: left;
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      color: #334155;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+
+    .portal-dropdown-item:hover {
+      background: #F8FAFC;
+      color: #063B7A;
+    }
+
+    .empty-state-cell {
+      text-align: center;
+      padding: 32px 16px;
+      color: #64748B;
+    }
+
+    .notice {
+      margin-top: 18px;
+      padding: 13px 15px;
+      background: #FFF8E6;
+      border: 1px solid #F4D58D;
+      color: #795716;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .footer { text-align: center; color: #64748B; font-size: 12px; padding: 20px; }
+
+    .menu-button {
+      display: none;
+      background: #E0F5FF;
+      color: #063B7A;
+      border: 0;
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-weight: bold;
+      cursor: pointer;
     }
 
     @media (max-width: 760px) {
-      .teacher-page {
-        padding: 14px;
-      }
-
-      .panel {
-        padding: 15px;
-      }
-
-      .attendance-fields {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media print {
-      body {
-        background: white !important;
-        color: black !important;
-      }
-
-      .sidebar,
-      .topbar,
-      .sidebar-overlay,
-      .no-print,
-      .notice {
-        display: none !important;
-      }
-
-      .portal-shell,
-      .main-area,
-      .teacher-page {
-        display: block !important;
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-      }
-
-      .panel {
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-      }
-
-      .print-heading {
-        display: block !important;
-        text-align: center;
-        margin-bottom: 20px;
-      }
-
-      .empty-state {
-        border: 1px solid #888;
-        color: black;
-      }
+      .portal { display: block; }
+      .sidebar { display: none; width: 100%; }
+      .sidebar.open { display: block; }
+      .topbar { padding: 15px; flex-wrap: wrap; }
+      .topbar h2 { font-size: 17px; }
+      .menu-button { display: inline-block; }
+      .content { padding: 16px; }
+      .welcome { padding: 20px; }
+      .welcome h1 { font-size: 21px; }
+      .portal-card { padding: 18px; }
+      .filters { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 
 <body>
-  <div id="app">
-    <p style="padding:24px;">Checking teacher access…</p>
+  <div class="portal">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="../logo.png" alt="GRACAIS Logo">
+        <div>
+          <strong>GRACAIS</strong>
+          <small>Student E-Portal</small>
+        </div>
+      </div>
+
+      <div class="nav-title">STUDENT MENU</div>
+      <nav>
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="grades.html">My Grades</a>
+        <a class="nav-link" href="attendance.html">My Attendance</a>
+        <a class="nav-link" href="subjects.html">My Subjects</a>
+        <a class="nav-link" href="schedule.html">My Schedule</a>
+        <a class="nav-link active" href="announcements.html">Announcements</a>
+        <a class="nav-link" href="profile.html">My Profile</a>
+        <a class="nav-link" href="password.html">Change Password</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="menu-button" id="menuButton" type="button">☰ Menu</button>
+          <div>
+            <h2>School Announcements</h2>
+            <p>Graceland Academy International School of Excellence [Grades 4th - 12th]</p>
+          </div>
+        </div>
+        <button class="logout" id="logoutButton" type="button">Log Out</button>
+      </header>
+
+      <section class="content">
+        <div class="welcome">
+          <h1 id="welcomeTitle">School Announcements</h1>
+          <p>
+            Stay informed about school activities, academic notices,
+            examination information, timetable updates, and official school communications.
+          </p>
+        </div>
+
+        <!-- Filter Card -->
+        <section class="portal-card">
+          <h3>Find Announcements</h3>
+          <p class="muted">
+            Filter official published notices by category or key phrases.
+          </p>
+
+          <div class="filters">
+            <div class="field">
+              <label for="categoryFilter">Announcement Category</label>
+              <select id="categoryFilter">
+                <option value="">All categories</option>
+                <option value="academic">Academic Notices</option>
+                <option value="examination">Examinations</option>
+                <option value="activities">School Activities</option>
+                <option value="general">General Notices</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="searchInput">Search Announcements</label>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="🔍 Search published notices..."
+                autocomplete="off"
+              >
+            </div>
+          </div>
+
+          <div class="notice">
+            Only verified announcements published by authorized GRACAIS administrative staff appear here.
+          </div>
+        </section>
+
+        <!-- Announcements Table Chart Card -->
+        <section class="portal-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3>Published Notices</h3>
+              <p class="muted" style="margin:4px 0 0 0;">Latest administrative communications synchronized from the database.</p>
+            </div>
+            <p id="announcementStatus" style="margin:0; font-weight:600; color:#063B7A; font-size:0.88rem;">0 notices loaded</p>
+          </div>
+
+          <div class="table-container">
+            <table class="portal-table">
+              <thead>
+                <tr>
+                  <th>Title / Headline</th>
+                  <th>Category</th>
+                  <th>Date Published</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="announcementsTableBody">
+                <tr>
+                  <td colspan="4" class="empty-state-cell">
+                    <div style="font-size:28px; margin-bottom:8px;">📢</div>
+                    <strong style="color:#063B7A; display:block; margin-bottom:4px;">No announcements loaded</strong>
+                    <span>Announcements have not been retrieved from the database yet. Published notices will appear here once connected.</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="footer">
+          GRACAIS E-Portal · Academic Information System
+        </div>
+      </section>
+    </main>
   </div>
 
   <script type="module">
     import {
       requireUser,
-      setupLogout
+      logout
     } from "../assets/app.js";
 
-    const ALLOWED_ROLES = ["teacher", "instructor"];
+    const ALLOWED_ROLES = ["student"];
+    let publishedAnnouncements = [];
 
-    const classes = Array.from(
-      { length: 9 },
-      (_, index) => index + 4
-    );
+    const sidebar = document.getElementById("sidebar");
 
-    function renderPage() {
-      const app = document.getElementById("app");
+    document.getElementById("menuButton").addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+    });
 
-      app.innerHTML = `
-        <div class="portal-shell">
-          <aside class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-              <img
-                src="../logo.png"
-                alt="GRACAIS logo"
-                style="width:48px;height:48px;object-fit:contain;"
-                onerror="this.style.display='none'"
-              >
-              <div>
-                <strong>GRACAIS</strong>
-                <small>Teacher Portal</small>
-              </div>
-            </div>
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      await logout();
+    });
 
-            <nav class="sidebar-nav" aria-label="Teacher navigation">
-              <a href="./dashboard.html">Dashboard</a>
-              <a href="./my-students.html">My Students</a>
-              <a href="./grades.html">Grade Management</a>
-              <a href="./attendance.html" aria-current="page">Attendance</a>
-              <a href="./schedule.html">My Schedule</a>
-              <a href="./announcements.html">Announcements</a>
-              <a href="./password.html">Change Password</a>
-            </nav>
+    function safe(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[char]);
+    }
 
-            <div class="sidebar-footer">
-              <button type="button" id="logoutButton" class="logout-button">
-                Sign Out
-              </button>
-            </div>
-          </aside>
-
-          <div class="main-area">
-            <header class="topbar">
-              <button
-                type="button"
-                id="menuButton"
-                aria-label="Open navigation menu"
-                aria-expanded="false"
-              >☰</button>
-              <div>
-                <strong>Attendance Management</strong>
-                <div id="teacherName" style="font-size:13px;color:#64748b;">
-                  Teacher Portal
-                </div>
-              </div>
-            </header>
-
-            <main class="teacher-page">
-              <div class="print-heading">
-                <h1>GRACAIS</h1>
-                <h2>Student Attendance Sheet</h2>
-                <p>Graceland Academy International School of Excellence</p>
-                <p id="printDetails"></p>
-              </div>
-
-              <section class="page-heading no-print">
-                <h1>Attendance Management</h1>
-                <p>Prepare attendance for your assigned classes.</p>
-              </section>
-
-              <div class="notice no-print">
-                <strong>Secure academic records.</strong>
-                Only assigned classes should be available to a teacher.
-                Student records and attendance saving require the connected
-                database and its access policies. No sample students are used.
-              </div>
-
-              <section class="panel">
-                <h2 class="no-print">Attendance Sheet Setup</h2>
-
-                <div class="attendance-fields no-print">
-                  <div class="field">
-                    <label for="classSelect">Class</label>
-                    <select id="classSelect">
-                      <option value="">Select class</option>
-                      ${classes.map(number =>
-                        `<option value="${number}">Grade ${number}</option>`
-                      ).join("")}
-                    </select>
-                  </div>
-
-                  <div class="field">
-                    <label for="attendanceDate">Date</label>
-                    <input type="date" id="attendanceDate">
-                  </div>
-
-                  <div class="field">
-                    <label for="sessionSelect">Session</label>
-                    <select id="sessionSelect">
-                      <option value="Morning">Morning</option>
-                      <option value="Afternoon">Afternoon</option>
-                      <option value="Full Day">Full Day</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="actions no-print">
-                  <button class="action-button" id="printButton" type="button">
-                    Print Attendance Sheet
-                  </button>
-                  <button
-                    class="action-button secondary"
-                    id="prepareButton"
-                    type="button"
-                  >
-                    Check Sheet Details
-                  </button>
-                </div>
-
-                <p id="statusMessage" class="status-message no-print">
-                  Choose a class and date. Printing creates a blank attendance
-                  sheet; it does not load or save student records.
-                </p>
-
-                <div class="empty-state" id="studentArea">
-                  <h2>No student list loaded</h2>
-                  <p>
-                    The real student list will appear here after the secure
-                    teacher-class and enrollment queries are connected.
-                  </p>
-                  <p>
-                    Attendance cannot be marked or submitted from this page yet.
-                  </p>
-                </div>
-              </section>
-            </main>
-          </div>
-
-          <div id="sidebarOverlay" class="sidebar-overlay"></div>
-        </div>
-      `;
-
-      const menuButton = document.getElementById("menuButton");
-      const sidebar = document.getElementById("sidebar");
-      const overlay = document.getElementById("sidebarOverlay");
-
-      function closeMenu() {
-        sidebar?.classList.remove("open");
-        overlay?.classList.remove("show");
-        menuButton?.setAttribute("aria-expanded", "false");
-      }
-
-      menuButton?.addEventListener("click", () => {
-        const open = sidebar.classList.toggle("open");
-        overlay.classList.toggle("show", open);
-        menuButton.setAttribute("aria-expanded", String(open));
-      });
-
-      overlay?.addEventListener("click", closeMenu);
-
-      document.addEventListener("keydown", event => {
-        if (event.key === "Escape") closeMenu();
-      });
-
-      const classSelect = document.getElementById("classSelect");
-      const dateInput = document.getElementById("attendanceDate");
-      const sessionSelect = document.getElementById("sessionSelect");
-      const statusMessage = document.getElementById("statusMessage");
-
-      function getDetails() {
-        if (!classSelect.value || !dateInput.value) {
-          statusMessage.textContent =
-            "Please select a class and date first.";
-          return null;
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
         }
-
-        return {
-          className: "Grade " + classSelect.value,
-          date: dateInput.value,
-          session: sessionSelect.value
-        };
-      }
-
-      document.getElementById("prepareButton").addEventListener("click", () => {
-        const details = getDetails();
-        if (!details) return;
-
-        document.getElementById("printDetails").textContent =
-          `${details.className} | Date: ${details.date} | Session: ${details.session}`;
-
-        statusMessage.textContent =
-          "Details prepared. The student list is not connected, so the printed sheet will be blank for manual completion.";
       });
 
-      document.getElementById("printButton").addEventListener("click", () => {
-        const details = getDetails();
-        if (!details) return;
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
 
-        document.getElementById("printDetails").textContent =
-          `${details.className} | Date: ${details.date} | Session: ${details.session}`;
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
 
-        window.print();
+    function renderAnnouncements() {
+      const tbody = document.getElementById("announcementsTableBody");
+      const status = document.getElementById("announcementStatus");
+      const category = document.getElementById("categoryFilter").value.toLowerCase();
+      const term = document.getElementById("searchInput").value.trim().toLowerCase();
+
+      if (!tbody || !status) return;
+
+      const filtered = publishedAnnouncements.filter(item => {
+        const itemCategory = (item.category || item.type || "general").toLowerCase();
+        const title = (item.title || item.headline || "").toLowerCase();
+        const content = (item.content || item.body || item.message || "").toLowerCase();
+
+        const matchesCat = !category || itemCategory === category;
+        const matchesTerm = !term || title.includes(term) || content.includes(term);
+
+        return matchesCat && matchesTerm;
+      });
+
+      status.textContent = `${filtered.length} notice${filtered.length === 1 ? "" : "s"} shown`;
+
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="empty-state-cell">
+              <div style="font-size:28px; margin-bottom:8px;">📢</div>
+              <strong style="color:#063B7A; display:block; margin-bottom:4px;">No matching notices</strong>
+              <span>No published announcements match the selected category or search filter.</span>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((item, index) => {
+        const title = item.title || item.headline || "Untitled Announcement";
+        const cat = item.category || item.type || "General";
+        const date = item.created_at || item.date || item.published_at
+          ? new Date(item.created_at || item.date || item.published_at).toLocaleDateString()
+          : "—";
+
+        return `
+          <tr>
+            <td class="font-bold-title">${safe(title)}</td>
+            <td><span class="category-badge">${safe(cat)}</span></td>
+            <td>${safe(date)}</td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item inspect-notice-btn" data-index="${index}">
+                    👁️ Inspect Notice
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-notice-btn" data-title="${safe(title)}" data-date="${safe(date)}">
+                    📋 Copy Summary
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".inspect-notice-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const item = filtered[btn.dataset.index];
+          const title = item.title || item.headline || "Notice Details";
+          const body = item.content || item.body || item.message || "No content body specified.";
+          alert(`--- Announcement ---\nTitle: ${title}\nCategory: ${item.category || item.type || 'General'}\n\nMessage:\n${body}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-notice-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const summary = `GRACAIS Announcement: ${btn.dataset.title} (${btn.dataset.date})`;
+          navigator.clipboard.writeText(summary);
+          alert(`Copied summary: ${summary}`);
+        });
       });
     }
 
-    setupLogout();
+    async function initializeAnnouncementsPage() {
+      const result = await requireUser(ALLOWED_ROLES);
 
-    const result = await requireUser(ALLOWED_ROLES);
-
-    if (result) {
-      renderPage();
+      if (!result) return;
 
       const profile = result.profile || {};
       const fullName = [
-        profile.first_name,
-        profile.last_name
+        profile.first_name || "",
+        profile.last_name || ""
       ].filter(Boolean).join(" ");
 
-      document.getElementById("teacherName").textContent =
-        fullName || "Authorized Teacher";
+      if (fullName) {
+        document.getElementById("welcomeTitle").textContent =
+          "Announcements for " + fullName;
+      }
 
-      setupLogout();
+      document.getElementById("categoryFilter").addEventListener("change", renderAnnouncements);
+      document.getElementById("searchInput").addEventListener("input", renderAnnouncements);
     }
+
+    initializeAnnouncementsPage();
   </script>
 </body>
 </html>
