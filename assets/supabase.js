@@ -1,42 +1,37 @@
-// ============================================
-// GRACAIS E-PORTAL
-// SUPABASE CONNECTION
-// ============================================
 
 import { createClient } from
   "https://esm.sh/@supabase/supabase-js@2";
 
 // ============================================
-// EXISTING SUPABASE PROJECT
+// GRACAIS E-PORTAL — SUPABASE CONNECTION
 // ============================================
 
 const SUPABASE_URL =
-  "https://zrrfiieqnjeizwmxkffp.supabase.co";
+  "https://vmqxzylwaeowgoqhyaxm.supabase.co";
 
-// IMPORTANT:
-// Replace the placeholder below with your
-// project's actual publishable/anon key.
-// Never put a service_role or secret key here.
+// Replace this placeholder with your actual
+// publishable key or legacy anon key.
+// Never use a service_role or secret key.
 
 const SUPABASE_ANON_KEY =
-  "PASTE_YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY_HERE";
+  "INSERT_YOUR_ACTUAL_PUBLISHABLE_KEY_HERE";
 
 // ============================================
-// INITIALIZE CONNECTION
+// INITIALIZE SUPABASE
 // ============================================
 
 let supabase = null;
 let supabaseReady = false;
 
-try {
-  const keyIsConfigured =
-    SUPABASE_ANON_KEY.length > 20 &&
-    !SUPABASE_ANON_KEY.includes("PASTE_YOUR_");
+const keyIsConfigured =
+  SUPABASE_ANON_KEY.length > 20 &&
+  !SUPABASE_ANON_KEY.includes("INSERT_YOUR_");
 
-  if (
-    SUPABASE_URL.startsWith("https://") &&
-    keyIsConfigured
-  ) {
+if (
+  SUPABASE_URL.startsWith("https://") &&
+  keyIsConfigured
+) {
+  try {
     supabase = createClient(
       SUPABASE_URL,
       SUPABASE_ANON_KEY
@@ -47,26 +42,16 @@ try {
     console.info(
       "GRACAIS Supabase client initialized."
     );
-  } else {
-    console.warn(
-      "GRACAIS Supabase needs its publishable/anon key."
+  } catch (error) {
+    console.error(
+      "GRACAIS Supabase initialization failed:",
+      error
     );
   }
-} catch (error) {
-  console.error(
-    "GRACAIS Supabase initialization failed:",
-    error
+} else {
+  console.warn(
+    "GRACAIS Supabase URL or publishable key is not configured."
   );
-
-  supabase = null;
-  supabaseReady = false;
 }
 
-// ============================================
-// EXPORT FOR PORTAL FILES
-// ============================================
-
-export {
-  supabase,
-  supabaseReady
-};
+export { supabase, supabaseReady };
