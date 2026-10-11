@@ -6,123 +6,207 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS E-Portal System Settings">
   <title>System Settings | GRACAIS E-Portal</title>
-  <link rel="icon" href="../logo.png" type="image/png">
+  <link
+    rel="icon"
+    href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png"
+    type="image/png"
+  >
+  <link
+    rel="apple-touch-icon"
+    href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png"
+  >
+  <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
   <div id="portalLayout"></div>
-
   <script type="module">
     import {
       initLayout,
       requireUser
     } from "../assets/layout.js";
-
     import {
-      setupLogout
+      setupLogout,
+      esc
     } from "../assets/app.js";
-
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration"
     ];
-
-    initLayout(
-      "super_admin",
-      "settings.html",
-      "System Settings"
-    );
-
-    setupLogout();
-
-    const user = await requireUser(ALLOWED_ROLES);
-
-    if (user) {
-      document.getElementById("pageContent").innerHTML = `
-        <section class="page-heading">
-          <h2>Portal Configuration</h2>
-          <p>
-            Review the school identity and academic settings
-            used by the GRACAIS E-Portal.
-          </p>
-        </section>
-
+    const SCHOOL_NAME =
+      "Graceland Academy International School of Excellence";
+    const SCHOOL_ABBREVIATION = "GRACAIS";
+    function showSettingsError(message) {
+      const pageContent = document.getElementById("pageContent");
+      if (!pageContent) return;
+      pageContent.innerHTML = `
         <section class="card">
-          <h3>School Information</h3>
-
+          <h2>Unable to load System Settings</h2>
+          <p>${esc(message)}</p>
+        </section>
+      `;
+    }
+    async function initSettingsPage() {
+      initLayout(
+        "super_admin",
+        "settings.html",
+        "System Settings"
+      );
+      setupLogout();
+      const user = await requireUser(ALLOWED_ROLES);
+      if (!user) return;
+      const pageContent = document.getElementById("pageContent");
+      if (!pageContent) {
+        throw new Error("The shared portal layout did not create pageContent.");
+      }
+      pageContent.innerHTML = `
+        <section class="page-heading">
+          <div>
+            <h1>System Settings</h1>
+            <p>
+              Manage and review the configuration of the
+              GRACAIS E-Portal.
+            </p>
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h2>School Information</h2>
+              <p>Official identity of the school.</p>
+            </div>
+          </div>
           <div class="form-group">
             <label for="schoolName">Official School Name</label>
             <input
               id="schoolName"
               type="text"
-              value="Graceland Academy International School of Excellence"
+              value="${esc(SCHOOL_NAME)}"
               readonly
             >
           </div>
-
           <div class="form-group">
-            <label for="schoolAbbreviation">Abbreviation</label>
+            <label for="schoolAbbreviation">School Abbreviation</label>
             <input
               id="schoolAbbreviation"
               type="text"
-              value="GRACAIS"
+              value="${esc(SCHOOL_ABBREVIATION)}"
               readonly
             >
           </div>
-
           <p>
-            These values are displayed for reference.
-            Editing and saving school information will be
-            implemented through the secured settings system.
+            These are the official school details displayed
+            throughout the portal. They cannot be changed
+            from this reference section.
           </p>
         </section>
-
         <section class="card">
-          <h3>Academic Configuration</h3>
-          <ul>
-            <li>Manage academic years.</li>
-            <li>Maintain the school's class structure.</li>
-            <li>Configure academic grading periods.</li>
-            <li>Apply the approved grading rules.</li>
-          </ul>
+          <div class="card-header">
+            <div>
+              <h2>Academic Configuration</h2>
+              <p>Open the existing pages to manage academic records.</p>
+            </div>
+          </div>
+          <div class="settings-links">
+            <a class="btn btn-primary" href="academic-years.html">
+              Academic Years
+            </a>
+            <a class="btn btn-primary" href="classes.html">
+              Classes and Grade Levels
+            </a>
+            <a class="btn btn-primary" href="grades.html">
+              Grade Records
+            </a>
+            <a class="btn btn-primary" href="schedule.html">
+              Academic Schedule
+            </a>
+          </div>
           <p>
-            Academic records must be preserved across school
-            years. Changes will require database integration
-            and appropriate permissions.
+            Keep historical academic records available across
+            school years. Changes must follow the school's
+            approved academic rules.
           </p>
         </section>
-
         <section class="card">
-          <h3>Security and Access</h3>
+          <div class="card-header">
+            <div>
+              <h2>Security and Access</h2>
+              <p>Protect student information and administrative access.</p>
+            </div>
+          </div>
           <ul>
-            <li>Use authorized user accounts only.</li>
+            <li>Allow access only to authorized user accounts.</li>
             <li>Restrict pages according to assigned roles.</li>
-            <li>Protect student academic records.</li>
-            <li>Record important administrative actions.</li>
+            <li>Protect student grades, attendance, and records.</li>
+            <li>Use Supabase authentication and database policies.</li>
+            <li>Maintain audit records of important administrative actions.</li>
           </ul>
           <p>
-            Security settings must be enforced by Supabase
-            authentication and database access policies,
-            not just by the page interface.
+            These security controls must be enforced by the
+            authentication system and database policies.
+            Hiding a page or button alone does not provide security.
           </p>
+          <div class="settings-links">
+            <a class="btn btn-primary" href="users.html">
+              Manage Users
+            </a>
+            <a class="btn btn-primary" href="audit-logs.html">
+              View Audit Logs
+            </a>
+          </div>
         </section>
-
         <section class="card">
-          <h3>Portal Features</h3>
+          <div class="card-header">
+            <div>
+              <h2>Academic Portal Features</h2>
+              <p>Information supported by the GRACAIS E-Portal.</p>
+            </div>
+          </div>
+          <ul>
+            <li>Student academic records</li>
+            <li>Grades and transcripts</li>
+            <li>Attendance records</li>
+            <li>Class and teacher assignments</li>
+            <li>Academic schedules</li>
+            <li>Announcements and school documents</li>
+          </ul>
           <p>
-            GRACAIS E-Portal is an academic information system
-            for student records, grades, attendance, schedules,
-            announcements, transcripts, and school documents.
-          </p>
-          <p>
-            Financial transactions, school-fee collection,
-            payment gateways, receipts, and invoicing are
-            not part of this portal.
+            This is an academic information system.
+            School-fee collection, payments, financial transactions,
+            invoicing, and receipts are not part of the portal.
           </p>
         </section>
+        <style>
+          .settings-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 18px 0;
+          }
+          .settings-links a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+          }
+          .card ul {
+            padding-left: 22px;
+            margin: 14px 0;
+          }
+          .card li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+          }
+        </style>
       `;
     }
+    initSettingsPage().catch(error => {
+      console.error("System Settings error:", error);
+      showSettingsError(
+        error?.message || "Please check the shared portal files and authentication."
+      );
+    });
   </script>
 </body>
 </html>
