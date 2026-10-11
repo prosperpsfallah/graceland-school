@@ -23,6 +23,7 @@
       requireUser
     } from "../assets/layout.js";
     import { supabase } from "../assets/supabase.js";
+
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
@@ -30,14 +31,17 @@
       "registrar"
     ];
     let assignmentRecords = [];
+
     function safe(value) {
       return esc(String(value ?? ""));
     }
+
     function teacherId(record) {
       return record.teachers?.teacher_id
         || record.teacher_id
         || "—";
     }
+
     function teacherName(record) {
       const teacher = record.teachers;
       if (teacher) {
@@ -49,12 +53,14 @@
       }
       return record.teacher_name || "—";
     }
+
     function className(record) {
       return record.classes?.name
         || record.class_name
         || record.class_id
         || "—";
     }
+
     function subjectName(record) {
       return record.subjects?.name
         || record.subjects?.subject_name
@@ -62,17 +68,43 @@
         || record.subject_id
         || "—";
     }
+
     function academicYear(record) {
       return record.academic_years?.name
         || record.academic_year
         || record.academic_year_id
         || "—";
     }
+
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
     function renderAssignments() {
       const tbody = document.getElementById("assignmentRows");
       const status = document.getElementById("assignmentStatus");
       const searchInput = document.getElementById("assignmentSearch");
       if (!tbody || !status || !searchInput) return;
+
       const query = searchInput.value.trim().toLowerCase();
       const filtered = assignmentRecords.filter(record => {
         const searchable = [
@@ -84,12 +116,14 @@
         ].join(" ").toLowerCase();
         return searchable.includes(query);
       });
+
       status.textContent =
-        `${filtered.length} assignment record${filtered.length === 1 ? "" : "s"}`;
+        `${filtered.length} assignment record${filtered.length === 1 ? "" : "s"} shown`;
+
       if (!filtered.length) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">
+            <td colspan="6" class="empty-state-cell">
               <div class="empty-state">
                 <h3>${query ? "No matching assignments" : "No teacher assignments found"}</h3>
                 <p>
@@ -103,35 +137,82 @@
         `;
         return;
       }
-      tbody.innerHTML = filtered.map(record => `
-        <tr>
-          <td>${safe(teacherId(record))}</td>
-          <td>${safe(teacherName(record))}</td>
-          <td>${safe(className(record))}</td>
-          <td>${safe(subjectName(record))}</td>
-          <td>${safe(academicYear(record))}</td>
-        </tr>
-      `).join("");
+
+      tbody.innerHTML = filtered.map((record, index) => {
+        const idVal = teacherId(record);
+        const nameVal = teacherName(record);
+        const classVal = className(record);
+        const subjectVal = subjectName(record);
+        const yearVal = academicYear(record);
+
+        return `
+          <tr>
+            <td style="font-family: monospace;" class="font-bold-title">${safe(idVal)}</td>
+            <td class="font-bold-title">${safe(nameVal)}</td>
+            <td>${safe(classVal)}</td>
+            <td>${safe(subjectVal)}</td>
+            <td>${safe(yearVal)}</td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item view-assignment" data-index="${index}">
+                    👁️ Inspect Assignment
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-teacher-id" data-id="${safe(idVal)}">
+                    📋 Copy Teacher ID
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".view-assignment").forEach(button => {
+        button.addEventListener("click", () => {
+          const record = filtered[button.dataset.index];
+          alert(`--- Teacher Assignment Details ---\nTeacher: ${teacherName(record)} (${teacherId(record)})\nClass: ${className(record)}\nSubject: ${subjectName(record)}\nAcademic Year: ${academicYear(record)}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-teacher-id").forEach(button => {
+        button.addEventListener("click", () => {
+          const id = button.dataset.id;
+          if (id && id !== "—") {
+            navigator.clipboard.writeText(id);
+            alert(`Copied Teacher ID: ${id}`);
+          } else {
+            alert("No Teacher ID available to copy.");
+          }
+        });
+      });
     }
+
     async function loadAssignments() {
       const tbody = document.getElementById("assignmentRows");
       const status = document.getElementById("assignmentStatus");
       const refreshButton = document.getElementById("refreshAssignments");
       if (!tbody || !status || !refreshButton) return;
+
       refreshButton.disabled = true;
       status.textContent = "Loading teacher assignments...";
       tbody.innerHTML = `
         <tr>
-          <td colspan="5">Loading teacher assignments...</td>
+          <td colspan="6" class="loading-cell">Loading teacher assignments...</td>
         </tr>
       `;
+
       try {
-        /*
-          Reads existing assignments only.
-          This query assumes teacher_assignments has Supabase
-          foreign keys to teachers, classes, subjects, and
-          academic_years. Adjust relation names if your schema differs.
-        */
         const { data, error } = await supabase
           .from("teacher_assignments")
           .select(`
@@ -151,7 +232,9 @@
               name
             )
           `);
+
         if (error) throw error;
+
         assignmentRecords = data ?? [];
         assignmentRecords.sort((a, b) =>
           teacherName(a).localeCompare(teacherName(b))
@@ -162,14 +245,14 @@
         status.textContent = "Unable to load assignments";
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">
+            <td colspan="6" class="empty-state-cell">
               <div class="empty-state">
                 <h3>Could not load teacher assignments</h3>
                 <p>
                   Check the teacher_assignments table, its
                   foreign-key relationships, and Supabase access policies.
                 </p>
-                <p id="assignmentError"></p>
+                <p id="assignmentError" style="color: #DC2626; font-size: 13px; margin-top: 6px;"></p>
               </div>
             </td>
           </tr>
@@ -183,6 +266,7 @@
         refreshButton.disabled = false;
       }
     }
+
     async function initTeacherAssignmentsPage() {
       initLayout(
         "super_admin",
@@ -192,6 +276,241 @@
       setupLogout();
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
+
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
-      pageContent.innerHTML
+
+      pageContent.innerHTML = `
+        <section class="page-heading">
+          <div>
+            <h1>Teacher Assignments</h1>
+            <p>
+              Review subject and class allocations for teaching staff
+              at Graceland Academy International School of Excellence (GRACAIS) [Grades 4th - 12th].
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="refreshAssignments"
+          >
+            ↻ Refresh Assignments
+          </button>
+        </section>
+
+        <section class="card portal-card">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+            <div>
+              <h2>Faculty Allocation Records</h2>
+              <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.88rem;">Existing teacher assignments retrieved from the database.</p>
+            </div>
+            <p id="assignmentStatus" aria-live="polite" style="font-weight: 600; color: #063B7A; margin: 0;">Preparing teacher assignments...</p>
+          </div>
+
+          <div class="table-toolbar" style="margin-bottom: 16px;">
+            <div class="search-input-wrapper">
+              <input
+                type="search"
+                id="assignmentSearch"
+                placeholder="🔍 Search by teacher ID, name, class, subject, or academic year..."
+                autocomplete="off"
+                style="width:100%; padding: 10px 14px; border: 1px solid #D9E5F0; border-radius: 8px;"
+              >
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="portal-table">
+              <thead>
+                <tr>
+                  <th>Teacher ID</th>
+                  <th>Teacher Name</th>
+                  <th>Class</th>
+                  <th>Subject</th>
+                  <th>Academic Year</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="assignmentRows">
+                <tr>
+                  <td colspan="6" class="loading-cell">Loading teacher assignments...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <style>
+          .portal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #D9E5F0;
+            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+            padding: 24px;
+          }
+
+          .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+
+          .page-heading h1 {
+            color: #063B7A;
+            font-size: 1.5rem;
+            margin: 0;
+          }
+
+          .page-heading p {
+            color: #64748B;
+            margin: 4px 0 0 0;
+            font-size: 0.9rem;
+          }
+
+          .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+          }
+
+          .portal-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.88rem;
+          }
+
+          .portal-table th {
+            background: #F8FAFC;
+            color: #063B7A;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 2px solid #E2E8F0;
+            white-space: nowrap;
+          }
+
+          .portal-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #E2E8F0;
+            color: #334155;
+            vertical-align: middle;
+          }
+
+          .font-bold-title {
+            font-weight: 600;
+            color: #0F172A;
+          }
+
+          /* Dropdown Menu System */
+          .portal-action-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+          }
+
+          .portal-action-btn {
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            color: #0F172A;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .portal-action-btn:hover {
+            background: #E2E8F0;
+          }
+
+          .portal-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            min-width: 170px;
+            z-index: 50;
+            overflow: hidden;
+          }
+
+          .portal-dropdown-menu.show {
+            display: block;
+          }
+
+          .portal-dropdown-item {
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            color: #334155;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s ease;
+          }
+
+          .portal-dropdown-item:hover {
+            background: #F8FAFC;
+            color: #063B7A;
+          }
+
+          .loading-cell {
+            text-align: center;
+            padding: 24px;
+            color: #64748B;
+          }
+
+          .empty-state-cell {
+            text-align: center;
+            padding: 32px 16px;
+            color: #64748B;
+          }
+
+          #refreshAssignments:disabled {
+            opacity: 0.65;
+            cursor: wait;
+          }
+        </style>
+      `;
+
+      document
+        .getElementById("assignmentSearch")
+        .addEventListener("input", renderAssignments);
+      document
+        .getElementById("refreshAssignments")
+        .addEventListener("click", loadAssignments);
+
+      await loadAssignments();
+    }
+
+    initTeacherAssignmentsPage().catch(error => {
+      console.error("Teacher assignments page error:", error);
+      const pageContent = document.getElementById("pageContent");
+      if (pageContent) {
+        pageContent.innerHTML = `
+          <section class="card portal-card">
+            <h2>Unable to load Teacher Assignments</h2>
+            <p>
+              Check the shared portal files and authentication configuration.
+            </p>
+          </section>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
