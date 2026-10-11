@@ -23,6 +23,7 @@
       requireUser
     } from "../assets/layout.js";
     import { supabase } from "../assets/supabase.js";
+
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
@@ -30,9 +31,11 @@
       "registrar"
     ];
     let enrollmentRecords = [];
+
     function safe(value) {
       return esc(String(value ?? ""));
     }
+
     function getStudentName(record) {
       const student = record.students;
       if (student) {
@@ -42,35 +45,41 @@
         ].filter(Boolean).join(" ");
         if (name) return name;
       }
-      return record.student_name || "—";
+      return record.student_name || record.full_name || "—";
     }
+
     function getStudentId(record) {
       return record.students?.student_id
         || record.student_id
         || "—";
     }
+
     function getClassName(record) {
       return record.classes?.name
         || record.class_name
         || record.class_id
         || "—";
     }
+
     function getAcademicYear(record) {
       return record.academic_years?.name
         || record.academic_year
         || record.academic_year_id
         || "—";
     }
+
     function getEnrollmentStatus(record) {
       return record.status
         || record.enrollment_status
-        || "—";
+        || "Active";
     }
+
     function renderEnrollments() {
       const tbody = document.getElementById("enrollmentRows");
       const status = document.getElementById("enrollmentStatus");
       const searchInput = document.getElementById("enrollmentSearch");
       if (!tbody || !status || !searchInput) return;
+
       const query = searchInput.value.trim().toLowerCase();
       const filtered = enrollmentRecords.filter(record => {
         const searchable = [
@@ -82,8 +91,10 @@
         ].join(" ").toLowerCase();
         return searchable.includes(query);
       });
+
       status.textContent =
         `${filtered.length} enrollment record${filtered.length === 1 ? "" : "s"}`;
+
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
@@ -101,6 +112,7 @@
         `;
         return;
       }
+
       tbody.innerHTML = filtered.map(record => `
         <tr>
           <td>${safe(getStudentId(record))}</td>
@@ -111,11 +123,70 @@
         </tr>
       `).join("");
     }
+
+    async function fetchEnrollmentsData() {
+      // 1. Primary table query with relational joins
+      const primaryRelational = await supabase
+        .from("enrollments")
+        .select(`
+          *,
+          students (
+            student_id,
+            first_name,
+            last_name
+          ),
+          classes (
+            name
+          ),
+          academic_years (
+            name
+          )
+        `);
+
+      if (!primaryRelational.error) {
+        return primaryRelational;
+      }
+
+      console.warn("Relational enrollments query failed, trying direct select...", primaryRelational.error);
+
+      // 2. Direct query from enrollments
+      const primaryDirect = await supabase
+        .from("enrollments")
+        .select("*");
+
+      if (!primaryDirect.error) {
+        return primaryDirect;
+      }
+
+      console.warn("enrollments table query failed, trying student_enrollments fallback...", primaryDirect.error);
+
+      // 3. Fallback table: student_enrollments
+      const studentEnrollments = await supabase
+        .from("student_enrollments")
+        .select("*");
+
+      if (!studentEnrollments.error) {
+        return studentEnrollments;
+      }
+
+      // 4. Fallback table: class_enrollments
+      const classEnrollments = await supabase
+        .from("class_enrollments")
+        .select("*");
+
+      if (!classEnrollments.error) {
+        return classEnrollments;
+      }
+
+      return primaryRelational;
+    }
+
     async function loadEnrollments() {
       const tbody = document.getElementById("enrollmentRows");
       const status = document.getElementById("enrollmentStatus");
       const refreshButton = document.getElementById("refreshEnrollments");
       if (!tbody || !status || !refreshButton) return;
+
       refreshButton.disabled = true;
       status.textContent = "Loading enrollment records...";
       tbody.innerHTML = `
@@ -123,30 +194,12 @@
           <td colspan="5">Loading enrollment records...</td>
         </tr>
       `;
+
       try {
-        /*
-          Reads existing enrollment data only.
-          The relation names below assume foreign keys
-          from enrollments to students, classes, and
-          academic_years are configured in Supabase.
-        */
-        const { data, error } = await supabase
-          .from("enrollments")
-          .select(`
-            *,
-            students (
-              student_id,
-              first_name,
-              last_name
-            ),
-            classes (
-              name
-            ),
-            academic_years (
-              name
-            )
-          `);
+        const { data, error } = await fetchEnrollmentsData();
+
         if (error) throw error;
+
         enrollmentRecords = data ?? [];
         enrollmentRecords.sort((a, b) =>
           getStudentName(a).localeCompare(getStudentName(b))
@@ -164,7 +217,7 @@
                   Check the enrollments table, its foreign-key
                   relationships, and the Supabase access policies.
                 </p>
-                <p id="enrollmentError"></p>
+                <p id="enrollmentError" style="color: #DC2626; font-size: 13px; margin-top: 6px;"></p>
               </div>
             </td>
           </tr>
@@ -178,6 +231,7 @@
         refreshButton.disabled = false;
       }
     }
+
     async function initEnrollmentPage() {
       initLayout(
         "super_admin",
@@ -187,8 +241,10 @@
       setupLogout();
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
+
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
+
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
@@ -247,14 +303,17 @@
           </div>
         </section>
       `;
+
       document
         .getElementById("enrollmentSearch")
         .addEventListener("input", renderEnrollments);
       document
         .getElementById("refreshEnrollments")
         .addEventListener("click", loadEnrollments);
+
       await loadEnrollments();
     }
+
     initEnrollmentPage().catch(error => {
       console.error("Enrollment page error:", error);
       const pageContent = document.getElementById("pageContent");
