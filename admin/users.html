@@ -6,50 +6,209 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS E-Portal User Management">
   <title>User Management | GRACAIS E-Portal</title>
-  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
+  <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
   <div id="portalLayout"></div>
   <script type="module">
-    import {
-      initLayout,
-      requireUser
-    } from "../assets/layout.js";
-    import {
-      setupLogout
-    } from "../assets/app.js";
+    import { initLayout, requireUser } from "../assets/layout.js";
+    import { setupLogout, esc } from "../assets/app.js";
+    import { supabase } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration"
     ];
-    initLayout(
-      "super_admin",
-      "users.html",
-      "User Management"
-    );
-    setupLogout();
-    const user = await requireUser(ALLOWED_ROLES);
-    if (user) {
-      document.getElementById("pageContent").innerHTML = `
+    let allUsers = [];
+    function safe(value) {
+      return esc(String(value ?? ""));
+    }
+    function displayRole(role) {
+      const labels = {
+        super_admin: "Super Administrator",
+        principal: "Principal",
+        administration: "Administration",
+        registrar: "Registrar",
+        teacher: "Teacher / Instructor",
+        instructor: "Teacher / Instructor",
+        student: "Student"
+      };
+      return labels[role] || role || "—";
+    }
+    function renderUsers(users) {
+      const tbody = document.getElementById("usersTableBody");
+      const count = document.getElementById("userCount");
+      if (!tbody || !count) return;
+      count.textContent = String(users.length);
+      if (!users.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>No matching user profiles</h3>
+                <p>
+                  No existing user profiles match your search.
+                  This page does not create sample accounts.
+                </p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      tbody.innerHTML = users.map(user => {
+        const fullName = [
+          user.first_name,
+          user.last_name
+        ].filter(Boolean).join(" ") || "—";
+        return `
+          <tr>
+            <td>${safe(user.school_id || "—")}</td>
+            <td>${safe(fullName)}</td>
+            <td>${safe(displayRole(user.role))}</td>
+            <td>${safe(user.status || "—")}</td>
+            <td>${safe(user.id || "—")}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+    function filterUsers() {
+      const term = (
+        document.getElementById("userSearch")?.value || ""
+      ).trim().toLowerCase();
+      const filtered = allUsers.filter(user => {
+        const searchable = [
+          user.school_id,
+          user.first_name,
+          user.last_name,
+          user.role,
+          displayRole(user.role),
+          user.status,
+          user.id
+        ].filter(Boolean).join(" ").toLowerCase();
+        return searchable.includes(term);
+      });
+      renderUsers(filtered);
+    }
+    async function loadUsers() {
+      const tbody = document.getElementById("usersTableBody");
+      const message = document.getElementById("userMessage");
+      const refreshButton = document.getElementById("refreshUsers");
+      if (refreshButton) refreshButton.disabled = true;
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">Loading portal user profiles...</td>
+          </tr>
+        `;
+      }
+      if (message) message.textContent = "";
+      try {
+        const { data, error } = await supabase
+          .from("user_profiles")
+          .select("id, school_id, first_name, last_name, role, status")
+          .order("last_name", { ascending: true });
+        if (error) throw error;
+        allUsers = data || [];
+        filterUsers();
+        if (message) {
+          message.textContent = "User profiles loaded from Supabase.";
+        }
+      } catch (error) {
+        console.error("Unable to load user profiles:", error);
+        allUsers = [];
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5">
+                <div class="empty-state">
+                  <h3>Unable to load user profiles</h3>
+                  <p>
+                    Check the user_profiles table, its columns,
+                    and Supabase Row Level Security (RLS) policies.
+                  </p>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+        if (message) {
+          message.textContent =
+            error.message || "A database error occurred.";
+        }
+      } finally {
+        if (refreshButton) refreshButton.disabled = false;
+      }
+    }
+    async function initUsersPage() {
+      initLayout("super_admin", "users.html", "User Management");
+      setupLogout();
+      const auth = await requireUser(ALLOWED_ROLES);
+      if (!auth) return;
+      const pageContent = document.getElementById("pageContent");
+      if (!pageContent) return;
+      pageContent.innerHTML = `
         <section class="page-heading">
-          <h2>Portal User Accounts</h2>
-          <p>
-            Review authorized accounts and manage access
-            according to each user's assigned role.
-          </p>
+          <div>
+            <h1>Portal User Management</h1>
+            <p>
+              Review existing user profiles and their assigned
+              access roles in Graceland Academy International
+              School of Excellence (GRACAIS).
+            </p>
+          </div>
         </section>
         <section class="card">
-          <h3>Registered Portal Users</h3>
-          <p>
-            No user records are displayed yet.
-            Actual accounts will appear after the database
-            connection and user-listing functions are completed.
-          </p>
+          <div class="card-header">
+            <div>
+              <h2>Registered Portal Users</h2>
+              <p>
+                This list displays existing profiles only.
+              </p>
+            </div>
+            <button
+              type="button"
+              id="refreshUsers"
+              class="btn btn-primary"
+            >
+              Refresh Users
+            </button>
+          </div>
+          <div class="form-group">
+            <label for="userSearch">Search user profiles</label>
+            <input
+              type="search"
+              id="userSearch"
+              placeholder="Search by school ID, name, role, or status..."
+              autocomplete="off"
+            >
+          </div>
+          <p>Total matching profiles: <strong id="userCount">0</strong></p>
+          <p id="userMessage" role="status" aria-live="polite"></p>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>School ID</th>
+                  <th>Full Name</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Profile ID</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr>
+                  <td colspan="5">Preparing user profiles...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
         <section class="card">
-          <h3>Available Account Roles</h3>
+          <h2>Available Account Roles</h2>
           <ul>
             <li>Super Administrator</li>
             <li>Principal</li>
@@ -58,21 +217,35 @@
             <li>Teacher / Instructor</li>
             <li>Student</li>
           </ul>
-        </section>
-        <section class="card">
-          <h3>Account Management</h3>
           <p>
-            Account creation, role changes, account activation,
-            and access restrictions will be connected to the
-            secured authentication system during integration.
-          </p>
-          <p>
-            No accounts can be created or modified from this
-            page until those functions are implemented.
+            Role labels shown here are descriptions, not controls
+            for changing account permissions.
           </p>
         </section>
       `;
+      document
+        .getElementById("userSearch")
+        ?.addEventListener("input", filterUsers);
+      document
+        .getElementById("refreshUsers")
+        ?.addEventListener("click", loadUsers);
+      await loadUsers();
     }
+    initUsersPage().catch(error => {
+      console.error("User management page error:", error);
+      const pageContent = document.getElementById("pageContent");
+      if (pageContent) {
+        pageContent.innerHTML = `
+          <section class="card">
+            <h2>Unable to open User Management</h2>
+            <p>
+              Check the shared portal files, authentication,
+              and database configuration.
+            </p>
+          </section>
+        `;
+      }
+    });
   </script>
 </body>
 </html>
