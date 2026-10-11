@@ -6,90 +6,231 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Teacher Assignments">
   <title>Teacher Assignments | GRACAIS E-Portal</title>
-
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
-
 <body>
-  <div id="app">
-    <main class="page-content">
-      <p>Loading teacher assignments...</p>
-    </main>
-  </div>
-
+  <div id="portalLayout"></div>
   <script type="module">
     import {
-      requireUser,
-      setupLogout
+      setupLogout,
+      esc
     } from "../assets/app.js";
-
     import {
-      initLayout
+      initLayout,
+      requireUser
     } from "../assets/layout.js";
-
+    import { supabase } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
-
+    let assignmentRecords = [];
+    function safe(value) {
+      return esc(String(value ?? ""));
+    }
+    function teacherId(record) {
+      return record.teachers?.teacher_id
+        || record.teacher_id
+        || "—";
+    }
+    function teacherName(record) {
+      const teacher = record.teachers;
+      if (teacher) {
+        const name = [
+          teacher.first_name,
+          teacher.last_name
+        ].filter(Boolean).join(" ");
+        if (name) return name;
+      }
+      return record.teacher_name || "—";
+    }
+    function className(record) {
+      return record.classes?.name
+        || record.class_name
+        || record.class_id
+        || "—";
+    }
+    function subjectName(record) {
+      return record.subjects?.name
+        || record.subjects?.subject_name
+        || record.subject_name
+        || record.subject_id
+        || "—";
+    }
+    function academicYear(record) {
+      return record.academic_years?.name
+        || record.academic_year
+        || record.academic_year_id
+        || "—";
+    }
+    function renderAssignments() {
+      const tbody = document.getElementById("assignmentRows");
+      const status = document.getElementById("assignmentStatus");
+      const searchInput = document.getElementById("assignmentSearch");
+      if (!tbody || !status || !searchInput) return;
+      const query = searchInput.value.trim().toLowerCase();
+      const filtered = assignmentRecords.filter(record => {
+        const searchable = [
+          teacherId(record),
+          teacherName(record),
+          className(record),
+          subjectName(record),
+          academicYear(record)
+        ].join(" ").toLowerCase();
+        return searchable.includes(query);
+      });
+      status.textContent =
+        `${filtered.length} assignment record${filtered.length === 1 ? "" : "s"}`;
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>${query ? "No matching assignments" : "No teacher assignments found"}</h3>
+                <p>
+                  ${query
+                    ? "Try another teacher ID, name, class, subject, or academic year."
+                    : "Existing teacher assignments will appear here when available in the database."}
+                </p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      tbody.innerHTML = filtered.map(record => `
+        <tr>
+          <td>${safe(teacherId(record))}</td>
+          <td>${safe(teacherName(record))}</td>
+          <td>${safe(className(record))}</td>
+          <td>${safe(subjectName(record))}</td>
+          <td>${safe(academicYear(record))}</td>
+        </tr>
+      `).join("");
+    }
+    async function loadAssignments() {
+      const tbody = document.getElementById("assignmentRows");
+      const status = document.getElementById("assignmentStatus");
+      const refreshButton = document.getElementById("refreshAssignments");
+      if (!tbody || !status || !refreshButton) return;
+      refreshButton.disabled = true;
+      status.textContent = "Loading teacher assignments...";
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5">Loading teacher assignments...</td>
+        </tr>
+      `;
+      try {
+        /*
+          Reads existing assignments only.
+          This query assumes teacher_assignments has Supabase
+          foreign keys to teachers, classes, subjects, and
+          academic_years. Adjust relation names if your schema differs.
+        */
+        const { data, error } = await supabase
+          .from("teacher_assignments")
+          .select(`
+            *,
+            teachers (
+              teacher_id,
+              first_name,
+              last_name
+            ),
+            classes (
+              name
+            ),
+            subjects (
+              name,
+              subject_name
+            ),
+            academic_years (
+              name
+            )
+          `);
+        if (error) throw error;
+        assignmentRecords = data ?? [];
+        assignmentRecords.sort((a, b) =>
+          teacherName(a).localeCompare(teacherName(b))
+        );
+        renderAssignments();
+      } catch (error) {
+        console.error("Teacher assignments loading error:", error);
+        status.textContent = "Unable to load assignments";
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>Could not load teacher assignments</h3>
+                <p>
+                  Check the teacher_assignments table, its
+                  foreign-key relationships, and Supabase access policies.
+                </p>
+                <p id="assignmentError"></p>
+              </div>
+            </td>
+          </tr>
+        `;
+        const errorElement = document.getElementById("assignmentError");
+        if (errorElement) {
+          errorElement.textContent =
+            error?.message || "An unexpected database error occurred.";
+        }
+      } finally {
+        refreshButton.disabled = false;
+      }
+    }
     async function initTeacherAssignmentsPage() {
       initLayout(
         "super_admin",
         "teacher-assignments.html",
         "Teacher Assignments"
       );
-
       setupLogout();
-
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
-
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
-
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
             <h1>Teacher Assignments</h1>
             <p>
-              Review which teachers are assigned to classes
-              and subjects at GRACAIS.
+              Review the classes and subjects assigned
+              to teachers at GRACAIS.
             </p>
           </div>
         </section>
-
         <section class="card">
           <div class="card-header">
             <div>
               <h2>Assignment Records</h2>
-              <p>
-                Assignment records will be loaded from the
-                connected database.
-              </p>
+              <p>Existing assignments from the school database.</p>
             </div>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="refreshAssignments"
+            >
+              Refresh
+            </button>
           </div>
-
           <div class="form-group">
-            <label for="assignmentSearch">
-              Search assignments
-            </label>
+            <label for="assignmentSearch">Search assignments</label>
             <input
               type="search"
               id="assignmentSearch"
-              placeholder="Search by teacher, class, or subject..."
+              placeholder="Search by teacher, class, subject, or year..."
               autocomplete="off"
-              disabled
             >
-            <small>
-              Search will be enabled after database integration.
-            </small>
           </div>
-
+          <p id="assignmentStatus" aria-live="polite">
+            Preparing assignment records...
+          </p>
           <div class="table-container">
             <table>
               <thead>
@@ -101,41 +242,34 @@
                   <th>Academic Year</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="assignmentRows">
                 <tr>
-                  <td colspan="5">
-                    <div class="empty-state">
-                      <h3>No assignment records loaded</h3>
-                      <p>
-                        Real teacher assignments will appear
-                        after the database is connected.
-                        No demo assignments are being created.
-                      </p>
-                    </div>
-                  </td>
+                  <td colspan="5">Loading teacher assignments...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
       `;
+      document
+        .getElementById("assignmentSearch")
+        .addEventListener("input", renderAssignments);
+      document
+        .getElementById("refreshAssignments")
+        .addEventListener("click", loadAssignments);
+      await loadAssignments();
     }
-
     initTeacherAssignmentsPage().catch(error => {
-      console.error("Teacher assignments error:", error);
-
-      const app = document.getElementById("app");
-      if (app) {
-        app.innerHTML = `
-          <main class="page-content">
-            <section class="card">
-              <h2>Unable to load Teacher Assignments</h2>
-              <p>
-                Check the shared portal files and
-                authentication configuration.
-              </p>
-            </section>
-          </main>
+      console.error("Teacher assignments page error:", error);
+      const pageContent = document.getElementById("pageContent");
+      if (pageContent) {
+        pageContent.innerHTML = `
+          <section class="card">
+            <h2>Unable to load Teacher Assignments</h2>
+            <p>
+              Check the shared portal files and authentication configuration.
+            </p>
+          </section>
         `;
       }
     });
