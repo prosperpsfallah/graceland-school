@@ -6,71 +6,115 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Class Management">
   <title>Classes | GRACAIS E-Portal</title>
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
-  <div id="app">
-    <main class="page-content">
-      <p>Loading class records...</p>
-    </main>
-  </div>
+  <div id="portalLayout"></div>
   <script type="module">
-    import { requireUser, setupLogout } from "../assets/app.js";
+    import { requireUser } from "../assets/layout.js";
     import { initLayout } from "../assets/layout.js";
+    import { setupLogout } from "../assets/app.js";
+    import { supabase } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
-    async function initClassesPage() {
-      initLayout(
-        "super_admin",
-        "classes.html",
-        "Class Management"
-      );
-      setupLogout();
-      const auth = await requireUser(ALLOWED_ROLES);
-      if (!auth) return;
+    initLayout("super_admin", "classes.html", "Class Management");
+    setupLogout();
+    const auth = await requireUser(ALLOWED_ROLES);
+    if (auth) {
       const pageContent = document.getElementById("pageContent");
-      if (!pageContent) return;
       pageContent.innerHTML = `
         <section class="page-heading">
-          <div>
-            <h1>Class Management</h1>
-            <p>
-              Manage the school classes and grade levels
-              of Graceland Academy International School
-              of Excellence (GRACAIS).
-            </p>
+          <h1>Class Management</h1>
+          <p>
+            Manage class records and grade levels for
+            Graceland Academy International School of Excellence (GRACAIS).
+          </p>
+        </section>
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h2>Add a Class</h2>
+              <p>Create an actual class record in the school database.</p>
+            </div>
           </div>
+          <form id="classForm">
+            <div class="form-group">
+              <label for="className">Class name</label>
+              <input
+                id="className"
+                name="className"
+                type="text"
+                placeholder="e.g. 4th Grade"
+                required
+              >
+            </div>
+            <div class="form-group">
+              <label for="gradeLevel">Grade level</label>
+              <select id="gradeLevel" name="gradeLevel" required>
+                <option value="">Select grade level</option>
+                <option value="Nursery 1">Nursery 1</option>
+                <option value="Nursery 2">Nursery 2</option>
+                <option value="ABC">ABC</option>
+                <option value="1st Grade">1st Grade</option>
+                <option value="2nd Grade">2nd Grade</option>
+                <option value="3rd Grade">3rd Grade</option>
+                <option value="4th Grade">4th Grade</option>
+                <option value="5th Grade">5th Grade</option>
+                <option value="6th Grade">6th Grade</option>
+                <option value="7th Grade">7th Grade</option>
+                <option value="8th Grade">8th Grade</option>
+                <option value="9th Grade">9th Grade</option>
+                <option value="10th Grade">10th Grade</option>
+                <option value="11th Grade">11th Grade</option>
+                <option value="12th Grade">12th Grade</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="academicYear">Academic year</label>
+              <select id="academicYear" name="academicYear" required>
+                <option value="">Loading academic years...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="classStatus">Status</label>
+              <select id="classStatus" name="classStatus" required>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+            <button type="submit" id="saveClass" class="btn btn-primary">
+              Save Class
+            </button>
+            <p id="formMessage" role="status"></p>
+          </form>
         </section>
         <section class="card">
           <div class="card-header">
             <div>
               <h2>School Classes</h2>
-              <p>
-                Class records will be retrieved from the
-                real database after integration.
-              </p>
+              <p>Class records retrieved from Supabase.</p>
             </div>
+            <button type="button" id="refreshClasses" class="btn btn-primary">
+              Refresh
+            </button>
           </div>
           <div class="form-group">
             <label for="classSearch">Search classes</label>
             <input
               type="search"
               id="classSearch"
-              placeholder="Search by class name or grade..."
-              disabled
+              placeholder="Search by class name, grade, or academic year..."
             >
-            <small>
-              Class search will be enabled after database integration.
-            </small>
           </div>
-          <div class="table-container">
+          <p id="tableMessage" role="status">Loading classes...</p>
+          <div class="table-container" style="overflow-x:auto;">
             <table>
               <thead>
                 <tr>
@@ -81,42 +125,159 @@
                   <th>Status</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td colspan="5">
-                    <div class="empty-state">
-                      <h3>No class records loaded</h3>
-                      <p>
-                        Actual classes will appear after the
-                        database is connected. No sample
-                        classes are being added.
-                      </p>
-                    </div>
-                  </td>
-                </tr>
+              <tbody id="classesBody">
+                <tr><td colspan="5">Loading classes...</td></tr>
               </tbody>
             </table>
           </div>
         </section>
       `;
-    }
-    initClassesPage().catch(error => {
-      console.error("Class management error:", error);
-      const app = document.getElementById("app");
-      if (app) {
-        app.innerHTML = `
-          <main class="page-content">
-            <section class="card">
-              <h2>Unable to load Class Management</h2>
-              <p>
-                Check the shared portal files and
-                authentication configuration.
-              </p>
-            </section>
-          </main>
-        `;
+      const form = document.getElementById("classForm");
+      const formMessage = document.getElementById("formMessage");
+      const tableMessage = document.getElementById("tableMessage");
+      const classesBody = document.getElementById("classesBody");
+      const searchInput = document.getElementById("classSearch");
+      const academicYearSelect = document.getElementById("academicYear");
+      const saveButton = document.getElementById("saveClass");
+      let classes = [];
+      let academicYears = [];
+      function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, char => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        })[char]);
       }
-    });
+      async function loadAcademicYears() {
+        const { data, error } = await supabase
+          .from("academic_years")
+          .select("id, name")
+          .order("name", { ascending: false });
+        if (error) {
+          console.error("Academic years error:", error);
+          academicYearSelect.innerHTML =
+            '<option value="">Could not load academic years</option>';
+          formMessage.textContent =
+            "Academic years could not be loaded. Check your academic_years table columns.";
+          return;
+        }
+        academicYears = data || [];
+        academicYearSelect.innerHTML =
+          '<option value="">Select academic year</option>' +
+          academicYears.map(year => `
+            <option value="${escapeHTML(year.id)}">
+              ${escapeHTML(year.name)}
+            </option>
+          `).join("");
+      }
+      function renderClasses() {
+        const term = searchInput.value.trim().toLowerCase();
+        const filtered = classes.filter(item => {
+          const year = academicYears.find(
+            entry => String(entry.id) === String(item.academic_year_id)
+          );
+          return [
+            item.id,
+            item.name,
+            item.grade_level,
+            item.status,
+            year?.name
+          ].some(value =>
+            String(value ?? "").toLowerCase().includes(term)
+          );
+        });
+        if (!filtered.length) {
+          classesBody.innerHTML = `
+            <tr>
+              <td colspan="5">No matching class records found.</td>
+            </tr>
+          `;
+          return;
+        }
+        classesBody.innerHTML = filtered.map(item => {
+          const year = academicYears.find(
+            entry => String(entry.id) === String(item.academic_year_id)
+          );
+          return `
+            <tr>
+              <td>${escapeHTML(item.id)}</td>
+              <td>${escapeHTML(item.name)}</td>
+              <td>${escapeHTML(item.grade_level)}</td>
+              <td>${escapeHTML(year?.name || "—")}</td>
+              <td>${escapeHTML(item.status || "—")}</td>
+            </tr>
+          `;
+        }).join("");
+      }
+      async function loadClasses() {
+        tableMessage.textContent = "Loading classes...";
+        classesBody.innerHTML =
+          '<tr><td colspan="5">Loading classes...</td></tr>';
+        const { data, error } = await supabase
+          .from("classes")
+          .select("id, name, grade_level, academic_year_id, status")
+          .order("name", { ascending: true });
+        if (error) {
+          console.error("Classes loading error:", error);
+          classes = [];
+          classesBody.innerHTML = `
+            <tr>
+              <td colspan="5">
+                Unable to load classes. Check the classes table columns
+                and Supabase access policies.
+              </td>
+            </tr>
+          `;
+          tableMessage.textContent = "Class records could not be loaded.";
+          return;
+        }
+        classes = data || [];
+        tableMessage.textContent = `${classes.length} class record(s) loaded.`;
+        renderClasses();
+      }
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const name = document.getElementById("className").value.trim();
+        const gradeLevel = document.getElementById("gradeLevel").value;
+        const academicYearId = academicYearSelect.value;
+        const status = document.getElementById("classStatus").value;
+        if (!name || !gradeLevel || !academicYearId || !status) {
+          formMessage.textContent = "Please complete all fields.";
+          return;
+        }
+        saveButton.disabled = true;
+        formMessage.textContent = "Saving class...";
+        const { error } = await supabase
+          .from("classes")
+          .insert({
+            name,
+            grade_level: gradeLevel,
+            academic_year_id: academicYearId,
+            status
+          });
+        saveButton.disabled = false;
+        if (error) {
+          console.error("Class save error:", error);
+          formMessage.textContent =
+            "Could not save the class. Check your database columns and insert permissions.";
+          return;
+        }
+        form.reset();
+        document.getElementById("classStatus").value = "active";
+        formMessage.textContent = "Class saved successfully.";
+        await loadClasses();
+      });
+      searchInput.addEventListener("input", renderClasses);
+      document.getElementById("refreshClasses")
+        .addEventListener("click", async () => {
+          await loadAcademicYears();
+          await loadClasses();
+        });
+      await loadAcademicYears();
+      await loadClasses();
+    }
   </script>
 </body>
 </html>
