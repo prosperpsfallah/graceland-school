@@ -17,102 +17,174 @@
     import { setupLogout, esc } from "../assets/app.js";
     import { initLayout, requireUser } from "../assets/layout.js";
     import { supabase } from "../assets/supabase.js";
+
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
+
     initLayout(
       "super_admin",
       "dashboard.html",
       "Administration Dashboard"
     );
+
     setupLogout();
+
     const auth = await requireUser(ALLOWED_ROLES);
     if (auth) {
       const profile = auth.profile || {};
       const content = document.getElementById("pageContent");
+
       if (content) {
         content.innerHTML = `
-          <section class="card">
-            <p style="color:var(--primary-blue);font-weight:700;font-size:12px;letter-spacing:1px;">
-              GRACAIS ADMINISTRATION
+          <!-- Welcome Banner Card -->
+          <section class="card portal-card">
+            <p style="color:#063B7A; font-weight:700; font-size:12px; letter-spacing:1px; text-transform:uppercase; margin:0 0 6px 0;">
+              GRACAIS ADMINISTRATION [GRADES 4TH - 12TH]
             </p>
-            <h2 style="margin-top:10px;color:var(--deep-blue);font-size:26px;">
+            <h2 style="margin:0; color:#063B7A; font-size:26px;">
               Welcome, ${esc(profile.first_name || "Administrator")}
             </h2>
-            <p style="margin-top:8px;color:var(--text-muted);">
+            <p style="margin-top:8px; color:#64748B; font-size:14px; line-height:1.5;">
               Welcome to the administration portal of
               Graceland Academy International School of Excellence.
             </p>
-            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;">
-              <span class="badge">Role: ${esc(profile.role || "Administrator")}</span>
-              <span class="badge badge-success">Account: ${esc(profile.status || "Active")}</span>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;">
+              <span class="status-badge" style="background:#E0F5FF; color:#063B7A;">Role: ${esc(profile.role || "Administrator")}</span>
+              <span class="status-badge active">Account Status: ${esc(profile.status || "Active")}</span>
             </div>
           </section>
-          <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-top:22px;">
-            <article class="card">
-              <p style="color:var(--text-muted);">Students</p>
-              <h2 id="studentCount" style="margin-top:8px;color:var(--deep-blue);">—</h2>
+
+          <!-- Metrics Stats Summary Row -->
+          <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-top:22px;">
+            <article class="card portal-card stat-card">
+              <p style="color:#64748B; font-size:0.85rem; font-weight:600; margin:0;">Students</p>
+              <h2 id="studentCount" style="margin:8px 0 0 0; color:#063B7A; font-size:2rem; font-weight:700;">—</h2>
             </article>
-            <article class="card">
-              <p style="color:var(--text-muted);">Teachers</p>
-              <h2 id="teacherCount" style="margin-top:8px;color:var(--deep-blue);">—</h2>
+            <article class="card portal-card stat-card">
+              <p style="color:#64748B; font-size:0.85rem; font-weight:600; margin:0;">Teachers</p>
+              <h2 id="teacherCount" style="margin:8px 0 0 0; color:#063B7A; font-size:2rem; font-weight:700;">—</h2>
             </article>
-            <article class="card">
-              <p style="color:var(--text-muted);">Classes</p>
-              <h2 id="classCount" style="margin-top:8px;color:var(--deep-blue);">—</h2>
+            <article class="card portal-card stat-card">
+              <p style="color:#64748B; font-size:0.85rem; font-weight:600; margin:0;">Classes</p>
+              <h2 id="classCount" style="margin:8px 0 0 0; color:#063B7A; font-size:2rem; font-weight:700;">—</h2>
             </article>
-            <article class="card">
-              <p style="color:var(--text-muted);">Academic Years</p>
-              <h2 id="yearCount" style="margin-top:8px;color:var(--deep-blue);">—</h2>
+            <article class="card portal-card stat-card">
+              <p style="color:#64748B; font-size:0.85rem; font-weight:600; margin:0;">Academic Years</p>
+              <h2 id="yearCount" style="margin:8px 0 0 0; color:#063B7A; font-size:2rem; font-weight:700;">—</h2>
             </article>
           </section>
-          <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:22px;">
-            <article class="card">
-              <h3 style="color:var(--deep-blue);font-size:17px;">Student Records</h3>
-              <p style="margin-top:8px;color:var(--text-muted);font-size:14px;">
+
+          <!-- Module Navigation Grid -->
+          <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:18px; margin-top:22px;">
+            <article class="card portal-card">
+              <h3 style="color:#063B7A; font-size:17px; margin:0;">Student Records</h3>
+              <p style="margin-top:8px; color:#64748B; font-size:14px; line-height:1.5;">
                 Access student academic records and enrollment information.
               </p>
-              <a href="./students.html" style="display:inline-block;margin-top:16px;color:var(--primary-blue);font-weight:700;text-decoration:none;">View Students →</a>
+              <div style="margin-top:16px;">
+                <a href="./students.html" class="portal-btn-link">View Students →</a>
+              </div>
             </article>
-            <article class="card">
-              <h3 style="color:var(--deep-blue);font-size:17px;">Teachers and Classes</h3>
-              <p style="margin-top:8px;color:var(--text-muted);font-size:14px;">
+
+            <article class="card portal-card">
+              <h3 style="color:#063B7A; font-size:17px; margin:0;">Teachers and Classes</h3>
+              <p style="margin-top:8px; color:#64748B; font-size:14px; line-height:1.5;">
                 Manage teacher information and school class records.
               </p>
-              <a href="./teachers.html" style="display:inline-block;margin-top:16px;color:var(--primary-blue);font-weight:700;text-decoration:none;">View Teachers →</a>
-              <br>
-              <a href="./classes.html" style="display:inline-block;margin-top:12px;color:var(--primary-blue);font-weight:700;text-decoration:none;">View Classes →</a>
+              <div style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
+                <a href="./teachers.html" class="portal-btn-link">View Teachers →</a>
+                <a href="./classes.html" class="portal-btn-link">View Classes →</a>
+              </div>
             </article>
-            <article class="card">
-              <h3 style="color:var(--deep-blue);font-size:17px;">Academic Years</h3>
-              <p style="margin-top:8px;color:var(--text-muted);font-size:14px;">
+
+            <article class="card portal-card">
+              <h3 style="color:#063B7A; font-size:17px; margin:0;">Academic Years</h3>
+              <p style="margin-top:8px; color:#64748B; font-size:14px; line-height:1.5;">
                 Manage the academic years used for school records.
               </p>
-              <a href="./academic-years.html" style="display:inline-block;margin-top:16px;color:var(--primary-blue);font-weight:700;text-decoration:none;">View Academic Years →</a>
+              <div style="margin-top:16px;">
+                <a href="./academic-years.html" class="portal-btn-link">View Academic Years →</a>
+              </div>
             </article>
-            <article class="card">
-              <h3 style="color:var(--deep-blue);font-size:17px;">Grades and Attendance</h3>
-              <p style="margin-top:8px;color:var(--text-muted);font-size:14px;">
+
+            <article class="card portal-card">
+              <h3 style="color:#063B7A; font-size:17px; margin:0;">Grades and Attendance</h3>
+              <p style="margin-top:8px; color:#64748B; font-size:14px; line-height:1.5;">
                 Review academic performance and attendance records.
               </p>
-              <a href="./grades.html" style="display:inline-block;margin-top:16px;color:var(--primary-blue);font-weight:700;text-decoration:none;">View Grades →</a>
-              <br>
-              <a href="./attendance.html" style="display:inline-block;margin-top:12px;color:var(--primary-blue);font-weight:700;text-decoration:none;">View Attendance →</a>
+              <div style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
+                <a href="./grades.html" class="portal-btn-link">View Grades →</a>
+                <a href="./attendance.html" class="portal-btn-link">View Attendance →</a>
+              </div>
             </article>
           </section>
-          <section class="card" style="margin-top:22px;">
-            <h3>Database Status</h3>
-            <p id="dashboardMessage" role="status" style="margin-top:8px;color:var(--text-muted);">
-              Loading school statistics...
-            </p>
-            <button type="button" id="refreshDashboard" class="btn btn-primary" style="margin-top:12px;">
-              Refresh Statistics
-            </button>
+
+          <!-- Database Status Card -->
+          <section class="card portal-card" style="margin-top:22px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+              <div>
+                <h3 style="color:#063B7A; margin:0;">Database Connection Status</h3>
+                <p id="dashboardMessage" role="status" style="margin-top:4px; color:#64748B; font-size:0.9rem;">
+                  Loading school statistics...
+                </p>
+              </div>
+              <button type="button" id="refreshDashboard" class="btn btn-secondary">
+                ↻ Refresh Statistics
+              </button>
+            </div>
           </section>
+
+          <style>
+            .portal-card {
+              background: #ffffff;
+              border-radius: 12px;
+              border: 1px solid #D9E5F0;
+              box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+              padding: 24px;
+            }
+
+            .stat-card {
+              border-left: 4px solid #063B7A;
+            }
+
+            .status-badge {
+              display: inline-flex;
+              align-items: center;
+              padding: 5px 12px;
+              border-radius: 12px;
+              font-size: 0.8rem;
+              font-weight: 600;
+            }
+
+            .status-badge.active {
+              background: #DCFCE7;
+              color: #15803D;
+            }
+
+            .portal-btn-link {
+              display: inline-block;
+              color: #063B7A;
+              font-weight: 600;
+              font-size: 0.88rem;
+              text-decoration: none;
+              padding: 6px 12px;
+              background: #F1F5F9;
+              border: 1px solid #CBD5E1;
+              border-radius: 6px;
+              transition: all 0.2s ease;
+            }
+
+            .portal-btn-link:hover {
+              background: #E0F5FF;
+              border-color: #063B7A;
+            }
+          </style>
         `;
+
         async function getCount(table) {
           const { count, error } = await supabase
             .from(table)
@@ -123,15 +195,18 @@
           }
           return count ?? 0;
         }
+
         async function loadStatistics() {
           const message = document.getElementById("dashboardMessage");
           message.textContent = "Loading school statistics...";
+
           const [students, teachers, classes, years] = await Promise.all([
             getCount("students"),
             getCount("teachers"),
             getCount("classes"),
             getCount("academic_years")
           ]);
+
           document.getElementById("studentCount").textContent =
             students === null ? "—" : students;
           document.getElementById("teacherCount").textContent =
@@ -140,14 +215,18 @@
             classes === null ? "—" : classes;
           document.getElementById("yearCount").textContent =
             years === null ? "—" : years;
+
           const failed = [students, teachers, classes, years]
             .some(value => value === null);
+
           message.textContent = failed
-            ? "Some statistics could not load. Check the table permissions and database configuration."
-            : "School statistics loaded successfully.";
+            ? "Some statistics could not load. Check table permissions and database configuration."
+            : "✓ All school statistics synchronized successfully from Supabase.";
         }
+
         document.getElementById("refreshDashboard")
           .addEventListener("click", loadStatistics);
+
         await loadStatistics();
       }
     }
