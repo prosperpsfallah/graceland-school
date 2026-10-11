@@ -17,15 +17,18 @@
     import { initLayout, requireUser } from "../assets/layout.js";
     import { setupLogout, esc } from "../assets/app.js";
     import { supabase } from "../assets/supabase.js";
+
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration"
     ];
     let allUsers = [];
+
     function safe(value) {
       return esc(String(value ?? ""));
     }
+
     function displayRole(role) {
       const labels = {
         super_admin: "Super Administrator",
@@ -38,15 +41,41 @@
       };
       return labels[role] || role || "—";
     }
+
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
     function renderUsers(users) {
       const tbody = document.getElementById("usersTableBody");
       const count = document.getElementById("userCount");
       if (!tbody || !count) return;
+
       count.textContent = String(users.length);
+
       if (!users.length) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">
+            <td colspan="6" class="empty-state-cell">
               <div class="empty-state">
                 <h3>No matching user profiles</h3>
                 <p>
@@ -59,22 +88,76 @@
         `;
         return;
       }
-      tbody.innerHTML = users.map(user => {
+
+      tbody.innerHTML = users.map((user, index) => {
+        const schoolIdVal = user.school_id || "—";
         const fullName = [
           user.first_name,
           user.last_name
         ].filter(Boolean).join(" ") || "—";
+        const roleLabel = displayRole(user.role);
+        const statusVal = user.status || "—";
+        const profileIdVal = user.id || "—";
+        const isActive = statusVal.toLowerCase() === "active";
+
         return `
           <tr>
-            <td>${safe(user.school_id || "—")}</td>
-            <td>${safe(fullName)}</td>
-            <td>${safe(displayRole(user.role))}</td>
-            <td>${safe(user.status || "—")}</td>
-            <td>${safe(user.id || "—")}</td>
+            <td style="font-family: monospace;" class="font-bold-title">${safe(schoolIdVal)}</td>
+            <td class="font-bold-title">${safe(fullName)}</td>
+            <td><span class="role-badge">${safe(roleLabel)}</span></td>
+            <td>
+              <span class="status-badge ${isActive ? "active" : "inactive"}">
+                ${safe(statusVal)}
+              </span>
+            </td>
+            <td style="font-family: monospace; font-size: 0.8rem; color: #64748B;">${safe(profileIdVal)}</td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item view-user" data-index="${index}">
+                    👁️ View Details
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-profile-id" data-id="${safe(profileIdVal)}">
+                    📋 Copy Profile ID
+                  </button>
+                </div>
+              </div>
+            </td>
           </tr>
         `;
       }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".view-user").forEach(button => {
+        button.addEventListener("click", () => {
+          const user = users[button.dataset.index];
+          const name = [user.first_name, user.last_name].filter(Boolean).join(" ") || "User";
+          alert(`--- Portal User Profile ---\nName: ${name}\nSchool ID: ${user.school_id || 'N/A'}\nRole: ${displayRole(user.role)}\nStatus: ${user.status || 'N/A'}\nProfile UUID: ${user.id || 'N/A'}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-profile-id").forEach(button => {
+        button.addEventListener("click", () => {
+          const id = button.dataset.id;
+          if (id && id !== "—") {
+            navigator.clipboard.writeText(id);
+            alert(`Copied Profile ID: ${id}`);
+          } else {
+            alert("No Profile ID available to copy.");
+          }
+        });
+      });
     }
+
     function filterUsers() {
       const term = (
         document.getElementById("userSearch")?.value || ""
@@ -93,29 +176,36 @@
       });
       renderUsers(filtered);
     }
+
     async function loadUsers() {
       const tbody = document.getElementById("usersTableBody");
       const message = document.getElementById("userMessage");
       const refreshButton = document.getElementById("refreshUsers");
       if (refreshButton) refreshButton.disabled = true;
+
       if (tbody) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">Loading portal user profiles...</td>
+            <td colspan="6" class="loading-cell">Loading portal user profiles...</td>
           </tr>
         `;
       }
+
       if (message) message.textContent = "";
+
       try {
         const { data, error } = await supabase
           .from("user_profiles")
           .select("id, school_id, first_name, last_name, role, status")
           .order("last_name", { ascending: true });
+
         if (error) throw error;
+
         allUsers = data || [];
         filterUsers();
+
         if (message) {
-          message.textContent = "User profiles loaded from Supabase.";
+          message.textContent = "User profiles loaded successfully from Supabase.";
         }
       } catch (error) {
         console.error("Unable to load user profiles:", error);
@@ -123,7 +213,7 @@
         if (tbody) {
           tbody.innerHTML = `
             <tr>
-              <td colspan="5">
+              <td colspan="6" class="empty-state-cell">
                 <div class="empty-state">
                   <h3>Unable to load user profiles</h3>
                   <p>
@@ -143,100 +233,334 @@
         if (refreshButton) refreshButton.disabled = false;
       }
     }
+
     async function initUsersPage() {
       initLayout("super_admin", "users.html", "User Management");
       setupLogout();
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
+
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
+
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
             <h1>Portal User Management</h1>
             <p>
-              Review existing user profiles and their assigned
-              access roles in Graceland Academy International
-              School of Excellence (GRACAIS).
+              Review existing user profiles and their assigned access roles in Graceland Academy International
+              School of Excellence (GRACAIS) [Grades 4th - 12th].
             </p>
           </div>
+          <button
+            type="button"
+            id="refreshUsers"
+            class="btn btn-secondary"
+          >
+            ↻ Refresh Users
+          </button>
         </section>
-        <section class="card">
-          <div class="card-header">
-            <div>
-              <h2>Registered Portal Users</h2>
-              <p>
-                This list displays existing profiles only.
-              </p>
+
+        <div class="portal-grid">
+          <!-- Users Table Card -->
+          <section class="card portal-card">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+              <div>
+                <h2>Registered Portal Users</h2>
+                <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.88rem;">This list displays existing user accounts and staff profiles.</p>
+              </div>
+              <p style="margin:0; font-weight:600; color:#063B7A;">Total matching profiles: <strong id="userCount">0</strong></p>
             </div>
-            <button
-              type="button"
-              id="refreshUsers"
-              class="btn btn-primary"
-            >
-              Refresh Users
-            </button>
-          </div>
-          <div class="form-group">
-            <label for="userSearch">Search user profiles</label>
-            <input
-              type="search"
-              id="userSearch"
-              placeholder="Search by school ID, name, role, or status..."
-              autocomplete="off"
-            >
-          </div>
-          <p>Total matching profiles: <strong id="userCount">0</strong></p>
-          <p id="userMessage" role="status" aria-live="polite"></p>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>School ID</th>
-                  <th>Full Name</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Profile ID</th>
-                </tr>
-              </thead>
-              <tbody id="usersTableBody">
-                <tr>
-                  <td colspan="5">Preparing user profiles...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-        <section class="card">
-          <h2>Available Account Roles</h2>
-          <ul>
-            <li>Super Administrator</li>
-            <li>Principal</li>
-            <li>Administration</li>
-            <li>Registrar</li>
-            <li>Teacher / Instructor</li>
-            <li>Student</li>
-          </ul>
-          <p>
-            Role labels shown here are descriptions, not controls
-            for changing account permissions.
-          </p>
-        </section>
+
+            <div class="table-toolbar" style="margin-bottom: 16px;">
+              <div class="search-input-wrapper">
+                <input
+                  type="search"
+                  id="userSearch"
+                  placeholder="🔍 Search by school ID, name, role, or status..."
+                  autocomplete="off"
+                  style="width:100%; padding: 10px 14px; border: 1px solid #D9E5F0; border-radius: 8px;"
+                >
+              </div>
+            </div>
+
+            <p id="userMessage" role="status" aria-live="polite" style="margin-top:0; font-size:0.88rem; font-weight:500; color:#063B7A;"></p>
+
+            <div class="table-container">
+              <table class="portal-table">
+                <thead>
+                  <tr>
+                    <th>School ID</th>
+                    <th>Full Name</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Profile ID</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  <tr>
+                    <td colspan="6" class="loading-cell">Preparing user profiles...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Roles Info Table Card -->
+          <section class="card portal-card">
+            <div class="card-header" style="margin-bottom:16px;">
+              <div>
+                <h2>Available Account Roles</h2>
+                <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.88rem;">Overview of role definitions across the portal environment.</p>
+              </div>
+            </div>
+            
+            <div class="table-container">
+              <table class="portal-table">
+                <thead>
+                  <tr>
+                    <th>Role Title</th>
+                    <th>Access Scope</th>
+                    <th>System Enforcement</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="font-bold-title">Super Administrator</td>
+                    <td>Full access to settings, logs, and database management</td>
+                    <td><span class="status-badge active">Active</span></td>
+                  </tr>
+                  <tr>
+                    <td class="font-bold-title">Principal</td>
+                    <td>Executive administrative access to all school modules</td>
+                    <td><span class="status-badge active">Active</span></td>
+                  </tr>
+                  <tr>
+                    <td class="font-bold-title">Administration</td>
+                    <td>General operational access to academic records & logistics</td>
+                    <td><span class="status-badge active">Active</span></td>
+                  </tr>
+                  <tr>
+                    <td class="font-bold-title">Registrar</td>
+                    <td>Student enrollment, transcripts, and record verification</td>
+                    <td><span class="status-badge active">Active</span></td>
+                  </tr>
+                  <tr>
+                    <td class="font-bold-title">Teacher / Instructor</td>
+                    <td>Class grading, attendance logging, and timetable inspection</td>
+                    <td><span class="status-badge active">Active</span></td>
+                  </tr>
+                  <tr>
+                    <td class="font-bold-title">Student</td>
+                    <td>Personal grade view, timetable access, and document retrieval</td>
+                    <td><span class="status-badge active">Active</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p style="margin-top: 14px; font-size: 0.88rem; color: #64748B;">
+              Role labels shown here are reference descriptions. Actual access rights are controlled by Supabase RLS security policies.
+            </p>
+          </section>
+        </div>
+
+        <style>
+          .portal-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+          }
+
+          .portal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #D9E5F0;
+            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+            padding: 24px;
+          }
+
+          .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+
+          .page-heading h1 {
+            color: #063B7A;
+            font-size: 1.5rem;
+            margin: 0;
+          }
+
+          .page-heading p {
+            color: #64748B;
+            margin: 4px 0 0 0;
+            font-size: 0.9rem;
+          }
+
+          .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+          }
+
+          .portal-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.88rem;
+          }
+
+          .portal-table th {
+            background: #F8FAFC;
+            color: #063B7A;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 2px solid #E2E8F0;
+            white-space: nowrap;
+          }
+
+          .portal-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #E2E8F0;
+            color: #334155;
+            vertical-align: middle;
+          }
+
+          .font-bold-title {
+            font-weight: 600;
+            color: #0F172A;
+          }
+
+          .role-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: #E0F5FF;
+            color: #063B7A;
+            font-size: 0.8rem;
+            font-weight: 600;
+          }
+
+          .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+          }
+          .status-badge.active {
+            background: #DCFCE7;
+            color: #15803D;
+          }
+          .status-badge.inactive {
+            background: #F1F5F9;
+            color: #64748B;
+          }
+
+          /* Dropdown Menu System */
+          .portal-action-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+          }
+
+          .portal-action-btn {
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            color: #0F172A;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .portal-action-btn:hover {
+            background: #E2E8F0;
+          }
+
+          .portal-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            min-width: 160px;
+            z-index: 50;
+            overflow: hidden;
+          }
+
+          .portal-dropdown-menu.show {
+            display: block;
+          }
+
+          .portal-dropdown-item {
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            color: #334155;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s ease;
+          }
+
+          .portal-dropdown-item:hover {
+            background: #F8FAFC;
+            color: #063B7A;
+          }
+
+          .loading-cell {
+            text-align: center;
+            padding: 24px;
+            color: #64748B;
+          }
+
+          .empty-state-cell {
+            text-align: center;
+            padding: 32px 16px;
+            color: #64748B;
+          }
+
+          #refreshUsers:disabled {
+            opacity: 0.65;
+            cursor: wait;
+          }
+        </style>
       `;
+
       document
         .getElementById("userSearch")
         ?.addEventListener("input", filterUsers);
       document
         .getElementById("refreshUsers")
         ?.addEventListener("click", loadUsers);
+
       await loadUsers();
     }
+
     initUsersPage().catch(error => {
       console.error("User management page error:", error);
-      const pageContents = document.getElementById("pageContent");
+      const pageContent = document.getElementById("pageContent");
       if (pageContent) {
         pageContent.innerHTML = `
-          <section class="card">
+          <section class="card portal-card">
             <h2>Unable to open User Management</h2>
             <p>
               Check the shared portal files, authentication,
