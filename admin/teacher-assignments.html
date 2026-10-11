@@ -145,8 +145,7 @@
               name
             ),
             subjects (
-              name,
-              subject_name
+              name
             ),
             academic_years (
               name
@@ -195,84 +194,4 @@
       if (!auth) return;
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
-      pageContent.innerHTML = `
-        <section class="page-heading">
-          <div>
-            <h1>Teacher Assignments</h1>
-            <p>
-              Review the classes and subjects assigned
-              to teachers at GRACAIS.
-            </p>
-          </div>
-        </section>
-        <section class="card">
-          <div class="card-header">
-            <div>
-              <h2>Assignment Records</h2>
-              <p>Existing assignments from the school database.</p>
-            </div>
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="refreshAssignments"
-            >
-              Refresh
-            </button>
-          </div>
-          <div class="form-group">
-            <label for="assignmentSearch">Search assignments</label>
-            <input
-              type="search"
-              id="assignmentSearch"
-              placeholder="Search by teacher, class, subject, or year..."
-              autocomplete="off"
-            >
-          </div>
-          <p id="assignmentStatus" aria-live="polite">
-            Preparing assignment records...
-          </p>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Teacher ID</th>
-                  <th>Teacher Name</th>
-                  <th>Class</th>
-                  <th>Subject</th>
-                  <th>Academic Year</th>
-                </tr>
-              </thead>
-              <tbody id="assignmentRows">
-                <tr>
-                  <td colspan="5">Loading teacher assignments...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      `;
-      document
-        .getElementById("assignmentSearch")
-        .addEventListener("input", renderAssignments);
-      document
-        .getElementById("refreshAssignments")
-        .addEventListener("click", loadAssignments);
-      await loadAssignments();
-    }
-    initTeacherAssignmentsPage().catch(error => {
-      console.error("Teacher assignments page error:", error);
-      const pageContent = document.getElementById("pageContent");
-      if (pageContent) {
-        pageContent.innerHTML = `
-          <section class="card">
-            <h2>Unable to load Teacher Assignments</h2>
-            <p>
-              Check the shared portal files and authentication configuration.
-            </p>
-          </section>
-        `;
-      }
-    });
-  </script>
-</body>
-</html>
+      pageContent.innerHTML
