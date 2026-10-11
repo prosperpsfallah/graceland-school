@@ -6,92 +6,190 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Student Transcripts">
   <title>Transcripts | GRACAIS E-Portal</title>
-
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
-
 <body>
-  <div id="app">
-    <main class="page-content">
-      <p>Loading student transcripts...</p>
-    </main>
-  </div>
-
+  <div id="portalLayout"></div>
   <script type="module">
-    import {
-      requireUser,
-      setupLogout
-    } from "../assets/app.js";
-
-    import {
-      initLayout
-    } from "../assets/layout.js";
-
+    import { setupLogout, esc } from "../assets/app.js";
+    import { initLayout, requireUser } from "../assets/layout.js";
+    import { supabase } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
-
+    let transcriptStudents = [];
+    function safe(value) {
+      return esc(String(value ?? ""));
+    }
+    function renderTranscripts(records) {
+      const tbody = document.getElementById("transcriptsTableBody");
+      const count = document.getElementById("transcriptCount");
+      if (!tbody || !count) return;
+      count.textContent = String(records.length);
+      if (!records.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>No matching students found</h3>
+                <p>
+                  Student transcript listings will appear here
+                  when matching student records exist.
+                </p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      tbody.innerHTML = records.map(student => {
+        const fullName = [
+          student.first_name,
+          student.last_name
+        ].filter(Boolean).join(" ") || "—";
+        return `
+          <tr>
+            <td>${safe(student.student_id || student.id || "—")}</td>
+            <td>${safe(fullName)}</td>
+            <td>${safe(student.class_name || student.class_id || "—")}</td>
+            <td>${safe(student.academic_year_name || student.academic_year_id || "—")}</td>
+            <td>${safe(student.status || "Student record available")}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+    function filterTranscripts() {
+      const search = (
+        document.getElementById("transcriptSearch")?.value || ""
+      ).trim().toLowerCase();
+      const filtered = transcriptStudents.filter(student => {
+        const name = [
+          student.first_name,
+          student.last_name
+        ].filter(Boolean).join(" ");
+        const searchable = [
+          student.student_id,
+          student.id,
+          name,
+          student.class_name,
+          student.class_id,
+          student.academic_year_name,
+          student.academic_year_id,
+          student.status
+        ].filter(Boolean).join(" ").toLowerCase();
+        return searchable.includes(search);
+      });
+      renderTranscripts(filtered);
+    }
+    async function loadTranscripts() {
+      const tbody = document.getElementById("transcriptsTableBody");
+      const message = document.getElementById("transcriptMessage");
+      const refreshButton = document.getElementById("refreshTranscripts");
+      if (refreshButton) refreshButton.disabled = true;
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">Loading student records...</td>
+          </tr>
+        `;
+      }
+      if (message) message.textContent = "";
+      try {
+        // Load actual student records; do not generate demo transcripts.
+        const { data, error } = await supabase
+          .from("students")
+          .select("*")
+          .order("last_name", { ascending: true });
+        if (error) throw error;
+        transcriptStudents = data || [];
+        filterTranscripts();
+        if (message) {
+          message.textContent =
+            "Student records loaded. Transcript grades are not displayed on this listing.";
+        }
+      } catch (error) {
+        console.error("Unable to load transcript records:", error);
+        transcriptStudents = [];
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5">
+                <div class="empty-state">
+                  <h3>Unable to load student records</h3>
+                  <p>
+                    Check the students table, column names,
+                    and Supabase access policies.
+                  </p>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+        if (message) {
+          message.textContent =
+            error.message || "A database error occurred.";
+        }
+      } finally {
+        if (refreshButton) refreshButton.disabled = false;
+      }
+    }
     async function initTranscriptsPage() {
       initLayout(
         "super_admin",
         "transcripts.html",
         "Student Transcripts"
       );
-
       setupLogout();
-
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
-
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
-
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
             <h1>Student Transcripts</h1>
             <p>
-              Review academic histories and transcript records
-              for Graceland Academy International School
-              of Excellence (GRACAIS).
+              Find student academic records for
+              Graceland Academy International School of Excellence (GRACAIS).
             </p>
           </div>
         </section>
-
         <section class="card">
           <div class="card-header">
             <div>
-              <h2>Transcript Records</h2>
+              <h2>Student Records</h2>
               <p>
-                Transcript information will be retrieved from
-                the real database after integration.
+                This listing reads existing student records.
+                It does not create or invent transcript data.
               </p>
             </div>
+            <button
+              type="button"
+              id="refreshTranscripts"
+              class="btn btn-primary"
+            >
+              Refresh Records
+            </button>
           </div>
-
           <div class="form-group">
             <label for="transcriptSearch">
-              Find a student's transcript
+              Find a student
             </label>
             <input
               type="search"
               id="transcriptSearch"
-              placeholder="Enter student ID or name..."
+              placeholder="Enter student ID, name, class, or academic year..."
               autocomplete="off"
-              disabled
             >
-            <small>
-              Transcript search will be enabled after
-              database integration.
-            </small>
           </div>
-
+          <p>Total matching students: <strong id="transcriptCount">0</strong></p>
+          <p id="transcriptMessage" role="status" aria-live="polite"></p>
           <div class="table-container">
             <table>
               <thead>
@@ -100,45 +198,38 @@
                   <th>Student Name</th>
                   <th>Class</th>
                   <th>Academic Year</th>
-                  <th>Transcript Status</th>
+                  <th>Record Status</th>
                 </tr>
               </thead>
-
-              <tbody>
+              <tbody id="transcriptsTableBody">
                 <tr>
-                  <td colspan="5">
-                    <div class="empty-state">
-                      <h3>No transcript records loaded</h3>
-                      <p>
-                        Actual academic records will appear
-                        after the database is connected.
-                        No sample transcripts are being created.
-                      </p>
-                    </div>
-                  </td>
+                  <td colspan="5">Preparing student records...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
       `;
+      document
+        .getElementById("transcriptSearch")
+        ?.addEventListener("input", filterTranscripts);
+      document
+        .getElementById("refreshTranscripts")
+        ?.addEventListener("click", loadTranscripts);
+      await loadTranscripts();
     }
-
     initTranscriptsPage().catch(error => {
       console.error("Transcripts page error:", error);
-
-      const app = document.getElementById("app");
-      if (app) {
-        app.innerHTML = `
-          <main class="page-content">
-            <section class="card">
-              <h2>Unable to load Student Transcripts</h2>
-              <p>
-                Check the shared portal files and
-                authentication configuration.
-              </p>
-            </section>
-          </main>
+      const pageContent = document.getElementById("pageContent");
+      if (pageContent) {
+        pageContent.innerHTML = `
+          <section class="card">
+            <h2>Unable to open Student Transcripts</h2>
+            <p>
+              Check the shared portal files, authentication,
+              and database configuration.
+            </p>
+          </section>
         `;
       }
     });
