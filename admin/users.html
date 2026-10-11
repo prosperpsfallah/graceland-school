@@ -233,7 +233,7 @@
     }
     initUsersPage().catch(error => {
       console.error("User management page error:", error);
-      const pageContent = document.getElementById("pageContent");
+      const pageContents = document.getElementById("pageContent");
       if (pageContent) {
         pageContent.innerHTML = `
           <section class="card">
