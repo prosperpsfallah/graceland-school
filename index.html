@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,14 +26,14 @@
         <p class="school-name">
           Graceland Academy International School of Excellence
         </p>
-        <p class="portal-label">
-          ACADEMIC MANAGEMENT PORTAL
-        </p>
+        <p class="portal-label">ACADEMIC MANAGEMENT PORTAL</p>
       </header>
+
       <div class="login-heading">
         <h2>Welcome Back</h2>
         <p>Sign in to access your school portal.</p>
       </div>
+
       <form id="loginForm">
         <div class="form-group">
           <label for="email">Email Address</label>
@@ -45,6 +46,7 @@
             required
           >
         </div>
+
         <div class="form-group">
           <label for="password">Password</label>
           <input
@@ -56,11 +58,19 @@
             required
           >
         </div>
-        <p id="loginMessage" class="login-message" role="alert"></p>
+
+        <p
+          id="loginMessage"
+          class="login-message"
+          role="alert"
+          aria-live="polite"
+        ></p>
+
         <button type="submit" id="loginButton" class="login-button">
           Sign In
         </button>
       </form>
+
       <footer class="login-footer">
         <p>
           &copy; <span id="currentYear"></span>
@@ -69,10 +79,134 @@
       </footer>
     </section>
   </main>
+
   <script>
     document.getElementById("currentYear").textContent =
       new Date().getFullYear();
   </script>
-  <!-- Authentication will be connected in a later stage. -->
+
+  <script type="module">
+    import { supabase, supabaseReady } from "./supabase.js";
+
+    const form = document.getElementById("loginForm");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const message = document.getElementById("loginMessage");
+    const button = document.getElementById("loginButton");
+
+    const ROLE_DESTINATIONS = {
+      super_admin: "./admin/dashboard.html",
+      principal: "./admin/dashboard.html",
+      administration: "./admin/dashboard.html",
+      registrar: "./admin/dashboard.html",
+      teacher: "./teacher/dashboard.html",
+      instructor: "./teacher/dashboard.html",
+      student: "./students/dashboard.html"
+    };
+
+    function showMessage(text) {
+      message.textContent = text;
+    }
+
+    function normalizeRole(role) {
+      return String(role || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[\s-]+/g, "_");
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      showMessage("");
+
+      if (!supabaseReady || !supabase) {
+        showMessage(
+          "The Supabase connection is not configured. Check supabase.js."
+        );
+        return;
+      }
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      button.disabled = true;
+      button.textContent = "Signing In...";
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          showMessage(
+            error.message || "Sign-in failed. Check your credentials."
+          );
+          return;
+        }
+
+        if (!data.user) {
+          showMessage("Sign-in did not return a user account.");
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from("user_profiles")
+          .select("role, status")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error("Profile lookup failed:", profileError);
+          await supabase.auth.signOut();
+          showMessage(
+            "Your account signed in, but its school profile could not be loaded. Please check the user_profiles table and its access policies."
+          );
+          return;
+        }
+
+        if (!profile) {
+          await supabase.auth.signOut();
+          showMessage(
+            "Your account has no school profile yet. Contact the school administrator."
+          );
+          return;
+        }
+
+        const status = String(profile.status || "")
+          .trim()
+          .toLowerCase();
+
+        if (status && !["active", "approved"].includes(status)) {
+          await supabase.auth.signOut();
+          showMessage(
+            "Your school account is not active yet. Contact the school administrator."
+          );
+          return;
+        }
+
+        const role = normalizeRole(profile.role);
+        const destination = ROLE_DESTINATIONS[role];
+
+        if (!destination) {
+          await supabase.auth.signOut();
+          showMessage(
+            "Your account has an unrecognized school role. Contact the administrator."
+          );
+          return;
+        }
+
+        window.location.replace(destination);
+      } catch (error) {
+        console.error("Login error:", error);
+        showMessage(
+          "Unable to complete sign-in. Check your connection and try again."
+        );
+      } finally {
+        button.disabled = false;
+        button.textContent = "Sign In";
+      }
+    });
+  </script>
 </body>
 </html>
