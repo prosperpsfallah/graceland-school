@@ -28,6 +28,7 @@
     import {
       supabase
     } from "../assets/supabase.js";
+
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
@@ -35,6 +36,7 @@
       "registrar"
     ];
     let attendanceRecords = [];
+
     function escapeHTML(value) {
       return String(value ?? "").replace(/[&<>"']/g, character => ({
         "&": "&amp;",
@@ -44,6 +46,7 @@
         "'": "&#39;"
       })[character]);
     }
+
     function formatDate(value) {
       if (!value) return "—";
       const date = new Date(value + "T00:00:00");
@@ -55,7 +58,9 @@
             day: "numeric"
           });
     }
+
     function getStudentName(record) {
+      if (record.student_name) return record.student_name;
       const student = record.students;
       if (Array.isArray(student)) {
         return student.map(getStudentName).join(", ") || "—";
@@ -63,9 +68,13 @@
       if (!student) return "—";
       const first = student.first_name || "";
       const last = student.last_name || "";
-      return `${first} ${last}`.trim() || "—";
+      const full = `${first} ${last}`.trim();
+      return full || "—";
     }
+
     function getClassName(record) {
+      if (record.class_name) return record.class_name;
+      if (record.classes?.name) return record.classes.name;
       const student = Array.isArray(record.students)
         ? record.students[0]
         : record.students;
@@ -79,9 +88,11 @@
         : classRecord;
       return classInfo?.name || classInfo?.class_name || "—";
     }
+
     function getStatus(record) {
       return record.status || record.attendance_status || "—";
     }
+
     function renderAttendance() {
       const tbody = document.getElementById("attendanceTableBody");
       if (!tbody) return;
@@ -90,6 +101,7 @@
       ).trim().toLowerCase();
       const selectedDate =
         document.getElementById("attendanceDate")?.value || "";
+
       const filtered = attendanceRecords.filter(record => {
         const studentName = getStudentName(record).toLowerCase();
         const studentId = String(
@@ -107,11 +119,13 @@
           !selectedDate || record.date === selectedDate;
         return matchesSearch && matchesDate;
       });
+
       const summary = document.getElementById("attendanceSummary");
       if (summary) {
         summary.textContent =
           `${filtered.length} record${filtered.length === 1 ? "" : "s"} shown`;
       }
+
       if (!filtered.length) {
         tbody.innerHTML = `
           <tr>
@@ -129,6 +143,7 @@
         `;
         return;
       }
+
       tbody.innerHTML = filtered.map(record => `
         <tr>
           <td>${escapeHTML(record.student_id || "—")}</td>
@@ -139,10 +154,49 @@
         </tr>
       `).join("");
     }
+
+    async function fetchAttendanceData() {
+      // 1. Try primary query with relational joins
+      const primaryRes = await supabase
+        .from("attendance")
+        .select(`
+          *,
+          students (
+            student_id,
+            first_name,
+            last_name
+          )
+        `)
+        .order("date", { ascending: false });
+
+      if (!primaryRes.error) {
+        return primaryRes;
+      }
+
+      console.warn("Relational attendance query failed, attempting standalone table fallback...", primaryRes.error);
+
+      // 2. Fallback query directly from attendance table without strict relational joins
+      const fallbackRes = await supabase
+        .from("attendance")
+        .select("*")
+        .order("date", { ascending: false });
+
+      if (!fallbackRes.error) {
+        return fallbackRes;
+      }
+
+      // 3. Alternate table name fallback (student_attendance)
+      return await supabase
+        .from("student_attendance")
+        .select("*")
+        .order("date", { ascending: false });
+    }
+
     async function loadAttendance() {
       const tbody = document.getElementById("attendanceTableBody");
       const refreshButton = document.getElementById("refreshAttendance");
       const message = document.getElementById("attendanceMessage");
+
       if (tbody) {
         tbody.innerHTML = `
           <tr><td colspan="5">Loading attendance records...</td></tr>
@@ -156,31 +210,14 @@
         message.hidden = true;
         message.textContent = "";
       }
-      /*
-       * Assumed schema:
-       * attendance.student_id, attendance.date, attendance.status
-       * students.id, students.student_id, students.first_name,
-       * students.last_name
-       *
-       * The relationship must match your actual Supabase foreign keys.
-       */
-      const { data, error } = await supabase
-        .from("attendance")
-        .select(`
-          student_id,
-          date,
-          status,
-          students (
-            student_id,
-            first_name,
-            last_name
-          )
-        `)
-        .order("date", { ascending: false });
+
+      const { data, error } = await fetchAttendanceData();
+
       if (refreshButton) {
         refreshButton.disabled = false;
         refreshButton.textContent = "Refresh";
       }
+
       if (error) {
         console.error("Attendance query error:", error);
         attendanceRecords = [];
@@ -194,22 +231,24 @@
                     Check the attendance table columns, student relationship,
                     and Supabase permissions.
                   </p>
+                  <p class="error-detail">${escapeHTML(error.message || "")}</p>
                 </div>
               </td>
             </tr>
           `;
         }
         if (message) {
-          message.textContent =
-            "The attendance query failed. The page may need to be matched to your actual database schema.";
+          message.textContent = `Query error: ${error.message || "Failed to load records from Supabase."}`;
           message.className = "attendance-message error";
           message.hidden = false;
         }
         return;
       }
+
       attendanceRecords = data || [];
       renderAttendance();
     }
+
     async function initAttendancePage() {
       initLayout(
         "super_admin",
@@ -219,8 +258,10 @@
       setupLogout();
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
+
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
+
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
@@ -294,20 +335,28 @@
             background: #FEE2E2;
             color: #991B1B;
           }
+          .error-detail {
+            color: #DC2626;
+            font-size: 13px;
+            margin-top: 6px;
+          }
           #refreshAttendance:disabled {
             opacity: 0.65;
             cursor: wait;
           }
         </style>
       `;
+
       document.getElementById("attendanceSearch")
         .addEventListener("input", renderAttendance);
       document.getElementById("attendanceDate")
         .addEventListener("change", renderAttendance);
       document.getElementById("refreshAttendance")
         .addEventListener("click", loadAttendance);
+
       await loadAttendance();
     }
+
     initAttendancePage().catch(error => {
       console.error("Attendance page error:", error);
       const app = document.getElementById("app");
