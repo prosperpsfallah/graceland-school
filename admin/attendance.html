@@ -6,100 +6,265 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Student Attendance">
   <title>Attendance | GRACAIS E-Portal</title>
-
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
-
 <body>
   <div id="app">
     <main class="page-content">
       <p>Loading attendance records...</p>
     </main>
   </div>
-
   <script type="module">
     import {
       requireUser,
       setupLogout
     } from "../assets/app.js";
-
     import {
       initLayout
     } from "../assets/layout.js";
-
+    import {
+      supabase
+    } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
-
+    let attendanceRecords = [];
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[character]);
+    }
+    function formatDate(value) {
+      if (!value) return "—";
+      const date = new Date(value + "T00:00:00");
+      return Number.isNaN(date.getTime())
+        ? escapeHTML(value)
+        : date.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+          });
+    }
+    function getStudentName(record) {
+      const student = record.students;
+      if (Array.isArray(student)) {
+        return student.map(getStudentName).join(", ") || "—";
+      }
+      if (!student) return "—";
+      const first = student.first_name || "";
+      const last = student.last_name || "";
+      return `${first} ${last}`.trim() || "—";
+    }
+    function getClassName(record) {
+      const student = Array.isArray(record.students)
+        ? record.students[0]
+        : record.students;
+      const enrollment = student?.enrollments;
+      const enrollmentRecord = Array.isArray(enrollment)
+        ? enrollment[0]
+        : enrollment;
+      const classRecord = enrollmentRecord?.classes;
+      const classInfo = Array.isArray(classRecord)
+        ? classRecord[0]
+        : classRecord;
+      return classInfo?.name || classInfo?.class_name || "—";
+    }
+    function getStatus(record) {
+      return record.status || record.attendance_status || "—";
+    }
+    function renderAttendance() {
+      const tbody = document.getElementById("attendanceTableBody");
+      if (!tbody) return;
+      const searchTerm = (
+        document.getElementById("attendanceSearch")?.value || ""
+      ).trim().toLowerCase();
+      const selectedDate =
+        document.getElementById("attendanceDate")?.value || "";
+      const filtered = attendanceRecords.filter(record => {
+        const studentName = getStudentName(record).toLowerCase();
+        const studentId = String(
+          record.student_id || record.students?.student_id || ""
+        ).toLowerCase();
+        const className = getClassName(record).toLowerCase();
+        const status = String(getStatus(record)).toLowerCase();
+        const matchesSearch = [
+          studentName,
+          studentId,
+          className,
+          status
+        ].some(value => value.includes(searchTerm));
+        const matchesDate =
+          !selectedDate || record.date === selectedDate;
+        return matchesSearch && matchesDate;
+      });
+      const summary = document.getElementById("attendanceSummary");
+      if (summary) {
+        summary.textContent =
+          `${filtered.length} record${filtered.length === 1 ? "" : "s"} shown`;
+      }
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>No attendance records found</h3>
+                <p>
+                  ${attendanceRecords.length
+                    ? "Try changing the search term or date."
+                    : "Real attendance records will appear here when they exist in the database."}
+                </p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      tbody.innerHTML = filtered.map(record => `
+        <tr>
+          <td>${escapeHTML(record.student_id || "—")}</td>
+          <td>${escapeHTML(getStudentName(record))}</td>
+          <td>${escapeHTML(getClassName(record))}</td>
+          <td>${escapeHTML(formatDate(record.date))}</td>
+          <td>${escapeHTML(getStatus(record))}</td>
+        </tr>
+      `).join("");
+    }
+    async function loadAttendance() {
+      const tbody = document.getElementById("attendanceTableBody");
+      const refreshButton = document.getElementById("refreshAttendance");
+      const message = document.getElementById("attendanceMessage");
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr><td colspan="5">Loading attendance records...</td></tr>
+        `;
+      }
+      if (refreshButton) {
+        refreshButton.disabled = true;
+        refreshButton.textContent = "Loading...";
+      }
+      if (message) {
+        message.hidden = true;
+        message.textContent = "";
+      }
+      /*
+       * Assumed schema:
+       * attendance.student_id, attendance.date, attendance.status
+       * students.id, students.student_id, students.first_name,
+       * students.last_name
+       *
+       * The relationship must match your actual Supabase foreign keys.
+       */
+      const { data, error } = await supabase
+        .from("attendance")
+        .select(`
+          student_id,
+          date,
+          status,
+          students (
+            student_id,
+            first_name,
+            last_name
+          )
+        `)
+        .order("date", { ascending: false });
+      if (refreshButton) {
+        refreshButton.disabled = false;
+        refreshButton.textContent = "Refresh";
+      }
+      if (error) {
+        console.error("Attendance query error:", error);
+        attendanceRecords = [];
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5">
+                <div class="empty-state">
+                  <h3>Unable to load attendance</h3>
+                  <p>
+                    Check the attendance table columns, student relationship,
+                    and Supabase permissions.
+                  </p>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+        if (message) {
+          message.textContent =
+            "The attendance query failed. The page may need to be matched to your actual database schema.";
+          message.className = "attendance-message error";
+          message.hidden = false;
+        }
+        return;
+      }
+      attendanceRecords = data || [];
+      renderAttendance();
+    }
     async function initAttendancePage() {
       initLayout(
         "super_admin",
         "attendance.html",
         "Student Attendance"
       );
-
       setupLogout();
-
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
-
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
-
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
             <h1>Student Attendance</h1>
             <p>
-              Review student attendance records for
-              Graceland Academy International School
-              of Excellence (GRACAIS).
+              Review attendance records for Graceland Academy
+              International School of Excellence (GRACAIS).
             </p>
           </div>
+          <button
+            class="btn btn-secondary"
+            id="refreshAttendance"
+            type="button"
+          >
+            Refresh
+          </button>
         </section>
-
+        <div
+          id="attendanceMessage"
+          class="attendance-message"
+          role="status"
+          hidden
+        ></div>
         <section class="card">
           <div class="card-header">
             <div>
               <h2>Attendance Records</h2>
-              <p>
-                Attendance records will be retrieved from
-                the real school database after integration.
-              </p>
+              <p>View real records from the school database.</p>
             </div>
+            <p id="attendanceSummary">Loading...</p>
           </div>
-
           <div class="form-group">
-            <label for="attendanceDate">Attendance date</label>
-            <input
-              type="date"
-              id="attendanceDate"
-              disabled
-            >
-            <small>
-              Date filtering will be enabled after database integration.
-            </small>
+            <label for="attendanceDate">Filter by attendance date</label>
+            <input type="date" id="attendanceDate">
           </div>
-
           <div class="form-group">
-            <label for="attendanceSearch">
-              Search attendance records
-            </label>
+            <label for="attendanceSearch">Search attendance records</label>
             <input
               type="search"
               id="attendanceSearch"
-              placeholder="Search by student ID or name..."
+              placeholder="Search student ID, name, class, or status..."
               autocomplete="off"
-              disabled
             >
           </div>
-
           <div class="table-container">
             <table>
               <thead>
@@ -111,30 +276,40 @@
                   <th>Attendance Status</th>
                 </tr>
               </thead>
-
-              <tbody>
-                <tr>
-                  <td colspan="5">
-                    <div class="empty-state">
-                      <h3>No attendance records loaded</h3>
-                      <p>
-                        Real attendance records will appear
-                        after database integration. No sample
-                        attendance is being created.
-                      </p>
-                    </div>
-                  </td>
-                </tr>
+              <tbody id="attendanceTableBody">
+                <tr><td colspan="5">Loading attendance records...</td></tr>
               </tbody>
             </table>
           </div>
         </section>
+        <style>
+          .attendance-message {
+            padding: 12px 15px;
+            margin: 12px 0;
+            border-radius: 8px;
+            background: #E0F5FF;
+            color: #063B7A;
+          }
+          .attendance-message.error {
+            background: #FEE2E2;
+            color: #991B1B;
+          }
+          #refreshAttendance:disabled {
+            opacity: 0.65;
+            cursor: wait;
+          }
+        </style>
       `;
+      document.getElementById("attendanceSearch")
+        .addEventListener("input", renderAttendance);
+      document.getElementById("attendanceDate")
+        .addEventListener("change", renderAttendance);
+      document.getElementById("refreshAttendance")
+        .addEventListener("click", loadAttendance);
+      await loadAttendance();
     }
-
     initAttendancePage().catch(error => {
       console.error("Attendance page error:", error);
-
       const app = document.getElementById("app");
       if (app) {
         app.innerHTML = `
@@ -142,8 +317,8 @@
             <section class="card">
               <h2>Unable to load Attendance</h2>
               <p>
-                Check the shared portal files and
-                authentication configuration.
+                Check the shared portal files, login configuration,
+                and Supabase connection.
               </p>
             </section>
           </main>
