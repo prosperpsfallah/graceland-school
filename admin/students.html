@@ -23,6 +23,7 @@
       requireUser
     } from "../assets/layout.js";
     import { supabase } from "../assets/supabase.js";
+
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
@@ -30,24 +31,52 @@
       "registrar"
     ];
     let students = [];
+
     function safe(value) {
       return esc(String(value ?? ""));
     }
+
     function studentClass(student) {
       return student.classes?.name
         || student.class_name
         || "—";
     }
+
     function studentStatus(student) {
       return student.status
         || student.enrollment_status
         || "—";
     }
+
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
     function renderStudents() {
       const tbody = document.getElementById("studentRows");
       const status = document.getElementById("studentStatus");
       const searchInput = document.getElementById("studentSearch");
       if (!tbody || !status || !searchInput) return;
+
       const query = searchInput.value.trim().toLowerCase();
       const filtered = students.filter(student => {
         const searchable = [
@@ -59,12 +88,14 @@
         ].filter(Boolean).join(" ").toLowerCase();
         return searchable.includes(query);
       });
+
       status.textContent =
-        `${filtered.length} student record${filtered.length === 1 ? "" : "s"}`;
+        `${filtered.length} student record${filtered.length === 1 ? "" : "s"} shown`;
+
       if (!filtered.length) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">
+            <td colspan="6" class="empty-state-cell">
               <div class="empty-state">
                 <h3>${query ? "No matching students" : "No student records found"}</h3>
                 <p>
@@ -78,39 +109,94 @@
         `;
         return;
       }
-      tbody.innerHTML = filtered.map(student => `
-        <tr>
-          <td>${safe(student.student_id || "—")}</td>
-          <td>${safe(student.first_name || "—")}</td>
-          <td>${safe(student.last_name || "—")}</td>
-          <td>${safe(studentClass(student))}</td>
-          <td>${safe(studentStatus(student))}</td>
-        </tr>
-      `).join("");
+
+      tbody.innerHTML = filtered.map((student, index) => {
+        const studentIdVal = student.student_id || "—";
+        const firstNameVal = student.first_name || "—";
+        const lastNameVal = student.last_name || "—";
+        const classVal = studentClass(student);
+        const statusVal = studentStatus(student);
+        const isActive = statusVal.toLowerCase() === "active";
+
+        return `
+          <tr>
+            <td style="font-family: monospace;" class="font-bold-title">${safe(studentIdVal)}</td>
+            <td>${safe(firstNameVal)}</td>
+            <td>${safe(lastNameVal)}</td>
+            <td>${safe(classVal)}</td>
+            <td>
+              <span class="status-badge ${isActive ? "active" : "inactive"}">
+                ${safe(statusVal)}
+              </span>
+            </td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item view-student" data-index="${index}">
+                    👁️ View Profile
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-student-id" data-id="${safe(studentIdVal)}">
+                    📋 Copy Student ID
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".view-student").forEach(button => {
+        button.addEventListener("click", () => {
+          const student = filtered[button.dataset.index];
+          alert(`--- Student Profile ---\nID: ${student.student_id || 'N/A'}\nName: ${student.first_name || ''} ${student.last_name || ''}\nClass: ${studentClass(student)}\nStatus: ${studentStatus(student)}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-student-id").forEach(button => {
+        button.addEventListener("click", () => {
+          const id = button.dataset.id;
+          if (id && id !== "—") {
+            navigator.clipboard.writeText(id);
+            alert(`Copied Student ID: ${id}`);
+          } else {
+            alert("No Student ID available to copy.");
+          }
+        });
+      });
     }
+
     async function loadStudents() {
       const tbody = document.getElementById("studentRows");
       const status = document.getElementById("studentStatus");
       const refreshButton = document.getElementById("refreshStudents");
       if (!tbody || !status || !refreshButton) return;
+
       refreshButton.disabled = true;
       status.textContent = "Loading student records...";
       tbody.innerHTML = `
         <tr>
-          <td colspan="5">Loading student records...</td>
+          <td colspan="6" class="loading-cell">Loading student records...</td>
         </tr>
       `;
+
       try {
-        /*
-          Read existing student records only.
-          The classes relationship is optional in the display:
-          if it is not configured, class names may be unavailable.
-        */
         const { data, error } = await supabase
           .from("students")
           .select("*")
           .order("last_name", { ascending: true });
+
         if (error) throw error;
+
         students = data ?? [];
         renderStudents();
       } catch (error) {
@@ -118,7 +204,7 @@
         status.textContent = "Unable to load student records";
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">
+            <td colspan="6" class="empty-state-cell">
               <div class="empty-state">
                 <h3>Could not load student records</h3>
                 <p>
@@ -126,7 +212,7 @@
                   that your Supabase access policies allow
                   authorized staff to read it.
                 </p>
-                <p id="studentError"></p>
+                <p id="studentError" style="color: #DC2626; font-size: 13px; margin-top: 6px;"></p>
               </div>
             </td>
           </tr>
@@ -140,6 +226,7 @@
         refreshButton.disabled = false;
       }
     }
+
     async function initStudentsPage() {
       initLayout(
         "super_admin",
@@ -149,46 +236,51 @@
       setupLogout();
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
+
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
+
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
             <h1>Student Records</h1>
             <p>
               View student academic records for Graceland
-              Academy International School of Excellence.
+              Academy International School of Excellence (GRACAIS) [Grades 4th - 12th].
             </p>
           </div>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="refreshStudents"
+          >
+            ↻ Refresh Records
+          </button>
         </section>
-        <section class="card">
-          <div class="card-header">
+
+        <section class="card portal-card">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
             <div>
-              <h2>Students</h2>
-              <p>Student records retrieved from the connected database.</p>
+              <h2>Students List</h2>
+              <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.88rem;">Student records retrieved from the connected database.</p>
             </div>
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="refreshStudents"
-            >
-              Refresh
-            </button>
+            <p id="studentStatus" aria-live="polite" style="font-weight: 600; color: #063B7A; margin: 0;">Preparing student records...</p>
           </div>
-          <div class="form-group">
-            <label for="studentSearch">Search student records</label>
-            <input
-              type="search"
-              id="studentSearch"
-              placeholder="Search by student ID or name..."
-              autocomplete="off"
-            >
+
+          <div class="table-toolbar" style="margin-bottom: 16px;">
+            <div class="search-input-wrapper">
+              <input
+                type="search"
+                id="studentSearch"
+                placeholder="🔍 Search by student ID, first name, last name, or class..."
+                autocomplete="off"
+                style="width:100%; padding: 10px 14px; border: 1px solid #D9E5F0; border-radius: 8px;"
+              >
+            </div>
           </div>
-          <p id="studentStatus" aria-live="polite">
-            Preparing student records...
-          </p>
+
           <div class="table-container">
-            <table>
+            <table class="portal-table">
               <thead>
                 <tr>
                   <th>Student ID</th>
@@ -196,31 +288,198 @@
                   <th>Last Name</th>
                   <th>Class</th>
                   <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="studentRows">
                 <tr>
-                  <td colspan="5">Loading student records...</td>
+                  <td colspan="6" class="loading-cell">Loading student records...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
+
+        <style>
+          .portal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #D9E5F0;
+            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+            padding: 24px;
+          }
+
+          .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+
+          .page-heading h1 {
+            color: #063B7A;
+            font-size: 1.5rem;
+            margin: 0;
+          }
+
+          .page-heading p {
+            color: #64748B;
+            margin: 4px 0 0 0;
+            font-size: 0.9rem;
+          }
+
+          .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+          }
+
+          .portal-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.88rem;
+          }
+
+          .portal-table th {
+            background: #F8FAFC;
+            color: #063B7A;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 2px solid #E2E8F0;
+            white-space: nowrap;
+          }
+
+          .portal-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #E2E8F0;
+            color: #334155;
+            vertical-align: middle;
+          }
+
+          .font-bold-title {
+            font-weight: 600;
+            color: #0F172A;
+          }
+
+          .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+          }
+          .status-badge.active {
+            background: #DCFCE7;
+            color: #15803D;
+          }
+          .status-badge.inactive {
+            background: #F1F5F9;
+            color: #64748B;
+          }
+
+          /* Dropdown Menu System */
+          .portal-action-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+          }
+
+          .portal-action-btn {
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            color: #0F172A;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .portal-action-btn:hover {
+            background: #E2E8F0;
+          }
+
+          .portal-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            min-width: 160px;
+            z-index: 50;
+            overflow: hidden;
+          }
+
+          .portal-dropdown-menu.show {
+            display: block;
+          }
+
+          .portal-dropdown-item {
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            color: #334155;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s ease;
+          }
+
+          .portal-dropdown-item:hover {
+            background: #F8FAFC;
+            color: #063B7A;
+          }
+
+          .loading-cell {
+            text-align: center;
+            padding: 24px;
+            color: #64748B;
+          }
+
+          .empty-state-cell {
+            text-align: center;
+            padding: 32px 16px;
+            color: #64748B;
+          }
+
+          #refreshStudents:disabled {
+            opacity: 0.65;
+            cursor: wait;
+          }
+        </style>
       `;
+
       document
         .getElementById("studentSearch")
         .addEventListener("input", renderStudents);
       document
         .getElementById("refreshStudents")
         .addEventListener("click", loadStudents);
+
       await loadStudents();
     }
+
     initStudentsPage().catch(error => {
       console.error("Students page error:", error);
       const pageContent = document.getElementById("pageContent");
       if (pageContent) {
         pageContent.innerHTML = `
-          <section class="card">
+          <section class="card portal-card">
             <h2>Unable to load Student Records</h2>
             <p>
               Check the shared portal files and authentication configuration.
