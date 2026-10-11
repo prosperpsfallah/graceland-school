@@ -7,8 +7,8 @@
   <meta name="description" content="GRACAIS School Announcements">
   <title>Announcements | GRACAIS E-Portal</title>
 
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -30,12 +30,149 @@
       initLayout
     } from "../assets/layout.js";
 
+    import {
+      supabase
+    } from "../assets/supabase.js";
+
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
+
+    let announcements = [];
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[character]);
+    }
+
+    function showMessage(message, type = "info") {
+      const element = document.getElementById("announcementMessage");
+      if (!element) return;
+
+      element.textContent = message;
+      element.className = `announcement-message ${type}`;
+      element.hidden = false;
+    }
+
+    function formatDate(value) {
+      if (!value) return "Date not available";
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return escapeHTML(value);
+      }
+
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function renderAnnouncements() {
+      const list = document.getElementById("announcementList");
+      const search = document.getElementById("announcementSearch");
+
+      if (!list) return;
+
+      const term = (search?.value || "").trim().toLowerCase();
+
+      const filtered = announcements.filter(item => {
+        const title = String(item.title || "").toLowerCase();
+        const content = String(item.content || "").toLowerCase();
+
+        return title.includes(term) || content.includes(term);
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <h3>${announcements.length ? "No matching announcements" : "No announcements available"}</h3>
+            <p>
+              ${announcements.length
+                ? "Try another search term."
+                : "School announcements will appear here when they are added to the database."}
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = filtered.map(item => `
+        <article class="announcement-card">
+          <h3>${escapeHTML(item.title || "Untitled announcement")}</h3>
+          <p class="announcement-date">
+            ${escapeHTML(formatDate(item.created_at))}
+          </p>
+          <div class="announcement-content">${escapeHTML(item.content || "")}</div>
+        </article>
+      `).join("");
+    }
+
+    async function loadAnnouncements() {
+      const list = document.getElementById("announcementList");
+      const refreshButton = document.getElementById("refreshAnnouncements");
+
+      if (list) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <p>Loading real announcements...</p>
+          </div>
+        `;
+      }
+
+      if (refreshButton) {
+        refreshButton.disabled = true;
+        refreshButton.textContent = "Loading...";
+      }
+
+      const { data, error } = await supabase
+        .from("announcements")
+        .select("id, title, content, created_at")
+        .order("created_at", { ascending: false });
+
+      if (refreshButton) {
+        refreshButton.disabled = false;
+        refreshButton.textContent = "Refresh";
+      }
+
+      if (error) {
+        console.error("Load announcements error:", error);
+
+        announcements = [];
+
+        if (list) {
+          list.innerHTML = `
+            <div class="empty-state">
+              <h3>Could not load announcements</h3>
+              <p>
+                Check the announcements table columns and your Supabase permissions.
+                No sample records have been added.
+              </p>
+            </div>
+          `;
+        }
+
+        showMessage(
+          "Database error while loading announcements. Check the browser console and Supabase table structure.",
+          "error"
+        );
+
+        return;
+      }
+
+      announcements = data || [];
+      renderAnnouncements();
+    }
 
     async function initAnnouncementsPage() {
       initLayout(
@@ -57,66 +194,125 @@
           <div>
             <h1>School Announcements</h1>
             <p>
-              Review school notices and academic updates
-              for Graceland Academy International School
-              of Excellence (GRACAIS).
+              Review school notices and academic updates for
+              Graceland Academy International School of Excellence (GRACAIS).
             </p>
           </div>
+
+          <button
+            class="btn btn-secondary"
+            id="refreshAnnouncements"
+            type="button"
+          >
+            Refresh
+          </button>
         </section>
+
+        <div
+          id="announcementMessage"
+          class="announcement-message"
+          role="status"
+          hidden
+        ></div>
 
         <section class="card">
           <div class="card-header">
             <div>
               <h2>Announcements</h2>
-              <p>
-                Published announcements will be loaded from
-                the connected database.
-              </p>
+              <p>Records are loaded from the connected Supabase database.</p>
             </div>
           </div>
 
           <div class="form-group">
-            <label for="announcementSearch">
-              Search announcements
-            </label>
+            <label for="announcementSearch">Search announcements</label>
             <input
               type="search"
               id="announcementSearch"
-              placeholder="Search by announcement title..."
+              placeholder="Search by title or announcement content..."
               autocomplete="off"
-              disabled
             >
-            <small>
-              Search will be enabled after database integration.
-            </small>
           </div>
 
           <div id="announcementList">
             <div class="empty-state">
-              <h3>No announcements loaded</h3>
-              <p>
-                Actual school notices will appear here after
-                database integration. No demo announcements
-                are being created.
-              </p>
+              <p>Loading announcements...</p>
             </div>
           </div>
         </section>
+
+        <style>
+          .announcement-message {
+            padding: 12px 15px;
+            margin: 12px 0;
+            border-radius: 8px;
+            background: #E0F5FF;
+            color: #063B7A;
+          }
+
+          .announcement-message.error {
+            background: #FEE2E2;
+            color: #991B1B;
+          }
+
+          .announcement-message.success {
+            background: #DCFCE7;
+            color: #166534;
+          }
+
+          .announcement-card {
+            padding: 18px;
+            margin: 14px 0;
+            border: 1px solid #D8E7F3;
+            border-radius: 10px;
+            background: #FFFFFF;
+          }
+
+          .announcement-card h3 {
+            color: #063B7A;
+            margin-bottom: 8px;
+          }
+
+          .announcement-date {
+            color: #64748B;
+            font-size: 0.88rem;
+            margin-bottom: 12px;
+          }
+
+          .announcement-content {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            line-height: 1.6;
+          }
+
+          #refreshAnnouncements:disabled {
+            opacity: 0.65;
+            cursor: wait;
+          }
+        </style>
       `;
+
+      document.getElementById("announcementSearch")
+        .addEventListener("input", renderAnnouncements);
+
+      document.getElementById("refreshAnnouncements")
+        .addEventListener("click", loadAnnouncements);
+
+      await loadAnnouncements();
     }
 
     initAnnouncementsPage().catch(error => {
       console.error("Announcements page error:", error);
 
       const app = document.getElementById("app");
+
       if (app) {
         app.innerHTML = `
           <main class="page-content">
             <section class="card">
               <h2>Unable to load Announcements</h2>
               <p>
-                Check the shared portal files and
-                authentication configuration.
+                Check the shared portal files, authentication configuration,
+                and Supabase connection.
               </p>
             </section>
           </main>
