@@ -7,28 +7,27 @@
   <meta name="description" content="GRACAIS Academic Schedule">
   <title>Schedule | GRACAIS E-Portal</title>
 
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
 
 <body>
-  <div id="app">
-    <main class="page-content">
-      <p>Loading academic schedule...</p>
-    </main>
-  </div>
+  <div id="portalLayout"></div>
 
   <script type="module">
     import {
-      requireUser,
-      setupLogout
+      setupLogout,
+      esc
     } from "../assets/app.js";
 
     import {
-      initLayout
+      initLayout,
+      requireUser
     } from "../assets/layout.js";
+
+    import { supabase } from "../assets/supabase.js";
 
     const ALLOWED_ROLES = [
       "super_admin",
@@ -36,6 +35,184 @@
       "administration",
       "registrar"
     ];
+
+    let scheduleRecords = [];
+
+    function escapeHTML(value) {
+      return esc(String(value ?? ""));
+    }
+
+    function displayValue(value) {
+      return value === null || value === undefined || value === ""
+        ? "—"
+        : escapeHTML(value);
+    }
+
+    function formatTime(value) {
+      if (!value) return "—";
+
+      const match = String(value).match(/^(\d{2}):(\d{2})/);
+
+      if (!match) return escapeHTML(value);
+
+      let hour = Number(match[1]);
+      const minute = match[2];
+      const suffix = hour >= 12 ? "PM" : "AM";
+
+      hour = hour % 12 || 12;
+
+      return `${hour}:${minute} ${suffix}`;
+    }
+
+    function renderSchedule(records) {
+      const tbody = document.getElementById("scheduleRows");
+      const status = document.getElementById("scheduleStatus");
+
+      if (!tbody || !status) return;
+
+      const query = document
+        .getElementById("scheduleSearch")
+        .value
+        .trim()
+        .toLowerCase();
+
+      const filtered = records.filter(record => {
+        const searchable = [
+          record.day,
+          record.day_of_week,
+          record.class_name,
+          record.subject_name,
+          record.teacher_name,
+          record.start_time,
+          record.end_time,
+          record.room
+        ].filter(Boolean).join(" ").toLowerCase();
+
+        return searchable.includes(query);
+      });
+
+      status.textContent =
+        `${filtered.length} schedule record${filtered.length === 1 ? "" : "s"}`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <h3>${query ? "No matching schedules" : "No schedule records found"}</h3>
+                <p>
+                  ${query
+                    ? "Try another search term."
+                    : "Real timetable records will appear here when available in the database."}
+                </p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(record => {
+        const day = record.day ?? record.day_of_week;
+        const className =
+          record.class_name ??
+          record.classes?.name ??
+          record.class_id;
+
+        const subjectName =
+          record.subject_name ??
+          record.subjects?.name ??
+          record.subject_id;
+
+        const teacherName =
+          record.teacher_name ??
+          (
+            record.teachers
+              ? [
+                  record.teachers.first_name,
+                  record.teachers.last_name
+                ].filter(Boolean).join(" ")
+              : record.teacher_id
+          );
+
+        return `
+          <tr>
+            <td>${displayValue(day)}</td>
+            <td>${displayValue(className)}</td>
+            <td>${displayValue(subjectName)}</td>
+            <td>${displayValue(teacherName)}</td>
+            <td>${formatTime(record.start_time)}</td>
+            <td>${formatTime(record.end_time)}</td>
+            <td>${displayValue(record.room ?? record.room_name)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function loadSchedule() {
+      const tbody = document.getElementById("scheduleRows");
+      const status = document.getElementById("scheduleStatus");
+      const refreshButton = document.getElementById("refreshSchedule");
+
+      if (!tbody || !status) return;
+
+      refreshButton.disabled = true;
+      status.textContent = "Loading timetable...";
+
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7">Loading academic schedule...</td>
+        </tr>
+      `;
+
+      try {
+        /*
+          This query assumes the timetable table is named
+          "schedules". It reads existing records only.
+          No sample records are inserted.
+        */
+        const { data, error } = await supabase
+          .from("schedules")
+          .select("*")
+          .order("day_of_week", { ascending: true })
+          .order("start_time", { ascending: true });
+
+        if (error) throw error;
+
+        scheduleRecords = data ?? [];
+        renderSchedule(scheduleRecords);
+
+      } catch (error) {
+        console.error("Schedule loading error:", error);
+
+        status.textContent = "Unable to load schedule";
+
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <h3>Could not load timetable</h3>
+                <p>
+                  Check that the schedules table exists,
+                  its column names are correct, and your
+                  Supabase permissions allow access.
+                </p>
+                <p id="scheduleError"></p>
+              </div>
+            </td>
+          </tr>
+        `;
+
+        const errorElement = document.getElementById("scheduleError");
+
+        if (errorElement) {
+          errorElement.textContent =
+            error?.message || "An unexpected database error occurred.";
+        }
+      } finally {
+        refreshButton.disabled = false;
+      }
+    }
 
     async function initSchedulePage() {
       initLayout(
@@ -67,28 +244,31 @@
           <div class="card-header">
             <div>
               <h2>Schedule Records</h2>
-              <p>
-                Actual timetable information will be loaded
-                from the connected database.
-              </p>
+              <p>Timetable information from the connected database.</p>
             </div>
+
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="refreshSchedule"
+            >
+              Refresh
+            </button>
           </div>
 
           <div class="form-group">
-            <label for="scheduleSearch">
-              Search schedule
-            </label>
+            <label for="scheduleSearch">Search schedule</label>
             <input
               type="search"
               id="scheduleSearch"
-              placeholder="Search by class, subject, or teacher..."
+              placeholder="Search by day, class, subject, or teacher..."
               autocomplete="off"
-              disabled
             >
-            <small>
-              Schedule search will be enabled after database integration.
-            </small>
           </div>
+
+          <p id="scheduleStatus" aria-live="polite">
+            Preparing schedule...
+          </p>
 
           <div class="table-container">
             <table>
@@ -103,41 +283,40 @@
                   <th>Room</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="scheduleRows">
                 <tr>
-                  <td colspan="7">
-                    <div class="empty-state">
-                      <h3>No schedule records loaded</h3>
-                      <p>
-                        Real timetable records will appear
-                        after database integration. No sample
-                        timetable is being created.
-                      </p>
-                    </div>
-                  </td>
+                  <td colspan="7">Loading academic schedule...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
       `;
+
+      document
+        .getElementById("scheduleSearch")
+        .addEventListener("input", () => {
+          renderSchedule(scheduleRecords);
+        });
+
+      document
+        .getElementById("refreshSchedule")
+        .addEventListener("click", loadSchedule);
+
+      await loadSchedule();
     }
 
     initSchedulePage().catch(error => {
       console.error("Schedule page error:", error);
 
-      const app = document.getElementById("app");
-      if (app) {
-        app.innerHTML = `
-          <main class="page-content">
-            <section class="card">
-              <h2>Unable to load Academic Schedule</h2>
-              <p>
-                Check the shared portal files and
-                authentication configuration.
-              </p>
-            </section>
-          </main>
+      const pageContent = document.getElementById("pageContent");
+
+      if (pageContent) {
+        pageContent.innerHTML = `
+          <section class="card">
+            <h2>Unable to load Academic Schedule</h2>
+            <p>Check the shared portal files and authentication configuration.</p>
+          </section>
         `;
       }
     });
