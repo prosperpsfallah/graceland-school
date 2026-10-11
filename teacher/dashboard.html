@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#063B7A">
-  <meta name="description" content="GRACAIS Teacher Dashboard">
-  <title>Teacher Dashboard | GRACAIS</title>
+  <meta name="description" content="GRACAIS Faculty Portal">
+  <title>Faculty Dashboard | GRACAIS</title>
   <link rel="icon" href="../logo.png" type="image/png">
   <link rel="stylesheet" href="../assets/style.css">
 
@@ -70,6 +70,7 @@
       text-decoration: none;
       box-shadow: 0 4px 16px rgba(3,42,88,.04);
       transition: transform .15s ease, border-color .15s ease;
+      cursor: pointer;
     }
 
     .dashboard-card:hover {
@@ -110,12 +111,6 @@
       padding: 24px;
       margin-bottom: 24px;
       box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
-    }
-
-    .portal-card p {
-      color: #526579;
-      line-height: 1.7;
-      margin: 0;
     }
 
     .status-note {
@@ -172,7 +167,7 @@
               >
               <span class="brand-text">
                 <strong>GRACAIS</strong>
-                <small>Teacher Portal</small>
+                <small id="sidebarPortalTitle">Faculty Portal</small>
               </span>
             </a>
 
@@ -230,7 +225,7 @@
             <div class="sidebar-school-name">
               Graceland Academy International School of Excellence
             </div>
-            <div class="sidebar-role">Teacher Portal [Grades 4th - 12th]</div>
+            <div id="sidebarRoleLabel" class="sidebar-role">Faculty Portal [Grades 4th - 12th]</div>
           </div>
         </aside>
 
@@ -249,7 +244,7 @@
             >☰</button>
 
             <div class="topbar-heading">
-              <h1>Teacher Dashboard</h1>
+              <h1 id="topbarTitle">Faculty Dashboard</h1>
               <p>GRACAIS Academic Portal [Grades 4th - 12th]</p>
             </div>
 
@@ -265,7 +260,7 @@
 
           <section id="pageContent" class="page-content teacher-page">
             <div class="portal-card">
-              <p>Verifying your teacher account...</p>
+              <p>Verifying your faculty account...</p>
             </div>
           </section>
         </main>
@@ -304,7 +299,7 @@
 
     setupLogout();
 
-    // Require a real authenticated teacher account.
+    // Require a real authenticated teacher or instructor account.
     const result = await requireUser(ALLOWED_ROLES);
 
     if (result) {
@@ -313,19 +308,26 @@
         profile.first_name,
         profile.last_name
       ].filter(Boolean).join(" ");
+      
+      const roleName = profile.role === "instructor" ? "Instructor" : "Teacher";
+
+      // Dynamically update titles based on role
+      document.getElementById("sidebarPortalTitle").textContent = `${roleName} Portal`;
+      document.getElementById("sidebarRoleLabel").textContent = `${roleName} Account [Grades 4th - 12th]`;
+      document.getElementById("topbarTitle").textContent = `${roleName} Dashboard`;
 
       document.getElementById("pageContent").innerHTML = `
         <section class="welcome-panel">
-          <span class="teacher-label">Faculty Account</span>
+          <span class="teacher-label">${roleName} Account</span>
           <h1>Welcome${fullName ? ", " + esc(fullName) : ""}!</h1>
           <p>
-            Manage your assigned students, grade records, attendance sheets, and class timetable for Grades 4th through 12th.
+            Manage your assigned student rosters, grade records, daily attendance sheets, and class timetable across Grades 4th through 12th.
           </p>
         </section>
 
         <div class="status-note">
-          <strong>Faculty Workspace Notice:</strong>
-          Assigned student rosters, grade records, and timetable sessions will update dynamically as official school queries synchronize with your account.
+          <strong>${roleName} Workspace Notice:</strong>
+          Assigned student rosters, grade records, and timetable sessions update dynamically as official school queries synchronize with your account.
         </div>
 
         <section>
@@ -365,7 +367,7 @@
             <a class="dashboard-card" href="./password.html">
               <div class="card-icon" aria-hidden="true">◇</div>
               <h3>Change Password</h3>
-              <p>Update your teacher account credentials securely.</p>
+              <p>Update your ${roleName.toLowerCase()} account credentials securely.</p>
             </a>
           </div>
         </section>
@@ -378,7 +380,7 @@
         </section>
       `;
 
-      console.info("GRACAIS teacher account verified.");
+      console.info(`GRACAIS ${roleName.toLowerCase()} account verified.`);
     }
   </script>
 </body>
