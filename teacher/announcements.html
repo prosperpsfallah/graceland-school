@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,72 +13,186 @@
     .teacher-page {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 24px;
     }
 
-    .page-heading {
-      margin-bottom: 22px;
+    .welcome-panel {
+      padding: 28px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #063B7A, #0B5CAD);
+      color: white;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.08);
     }
 
-    .page-heading h1 {
+    .welcome-panel h1 {
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      margin: 0 0 10px 0;
+    }
+
+    .welcome-panel p {
+      line-height: 1.7;
+      margin: 0;
+      color: #E0F5FF;
+    }
+
+    .portal-card {
+      background: #fff;
+      border: 1px solid #D9E5F0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+    }
+
+    .portal-card h2, .portal-card h3 {
       color: #063B7A;
-      margin-bottom: 8px;
+      margin: 0 0 8px 0;
+      font-size: 1.15rem;
+    }
+
+    .muted {
+      color: #64748B;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      margin: 0;
     }
 
     .notice {
-      padding: 14px 16px;
-      margin: 16px 0;
-      border: 1px solid #bae6fd;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      border: 1px solid #F4D58D;
       border-radius: 10px;
-      background: #f0f9ff;
-      color: #075985;
+      background: #FFF8E6;
+      color: #795716;
       line-height: 1.6;
+      font-size: 0.9rem;
     }
 
-    .panel {
-      background: #fff;
-      border: 1px solid #dbe7f0;
-      border-radius: 14px;
-      padding: 20px;
-      margin: 20px 0;
-      box-shadow: 0 4px 14px rgba(3, 42, 88, 0.05);
+    /* Table Chart Layout */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      margin-top: 16px;
     }
 
-    .announcement-list {
-      display: grid;
-      gap: 14px;
-      margin-top: 18px;
+    .portal-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
     }
 
-    .empty-state {
-      border: 1px dashed #b7c9d9;
-      border-radius: 12px;
-      padding: 32px 18px;
-      text-align: center;
-      color: #526579;
-      line-height: 1.7;
-    }
-
-    .empty-state h2 {
+    .portal-table th {
+      background: #F8FAFC;
       color: #063B7A;
-      margin-bottom: 10px;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 2px solid #E2E8F0;
+      white-space: nowrap;
+    }
+
+    .portal-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #E2E8F0;
+      color: #334155;
+      vertical-align: middle;
+    }
+
+    .font-bold-title {
+      font-weight: 600;
+      color: #0F172A;
+    }
+
+    .category-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #E0F5FF;
+      color: #063B7A;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    /* Dropdown Action System */
+    .portal-action-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .portal-action-btn {
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      color: #0F172A;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .portal-action-btn:hover { background: #E2E8F0; }
+
+    .portal-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: #ffffff;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      min-width: 170px;
+      z-index: 50;
+      overflow: hidden;
+    }
+
+    .portal-dropdown-menu.show { display: block; }
+
+    .portal-dropdown-item {
+      width: 100%;
+      text-align: left;
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      color: #334155;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+
+    .portal-dropdown-item:hover {
+      background: #F8FAFC;
+      color: #063B7A;
+    }
+
+    .empty-state-cell {
+      text-align: center;
+      padding: 32px 16px;
+      color: #64748B;
     }
 
     .status-message {
       margin-top: 14px;
-      color: #526579;
-      font-size: .92rem;
+      color: #64748B;
+      font-size: .88rem;
       line-height: 1.6;
     }
 
     @media (max-width: 760px) {
-      .teacher-page {
-        padding: 14px;
-      }
-
-      .panel {
-        padding: 15px;
-      }
+      .teacher-page { padding: 16px; }
+      .portal-card { padding: 18px; }
+      .welcome-panel { padding: 20px; }
     }
   </style>
 </head>
@@ -97,6 +210,106 @@
     } from "../assets/app.js";
 
     const ALLOWED_ROLES = ["teacher", "instructor"];
+    let announcementRecords = [];
+
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
+    function renderAnnouncements(records) {
+      const tbody = document.getElementById("announcementsTableBody");
+      const status = document.getElementById("announcementStatus");
+      if (!tbody || !status) return;
+
+      status.textContent = `${records.length} announcement record${records.length === 1 ? "" : "s"} shown`;
+
+      if (!records.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="empty-state-cell">
+              <div style="font-size:28px; margin-bottom:8px;">📢</div>
+              <strong style="color:#063B7A; display:block; margin-bottom:4px;">No announcements loaded</strong>
+              <span>Published announcements will appear here after the announcements database query is connected.</span>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = records.map((item, index) => {
+        const title = item.title || item.headline || "Untitled Announcement";
+        const cat = item.category || item.type || "General";
+        const date = item.created_at || item.date || item.published_at
+          ? new Date(item.created_at || item.date || item.published_at).toLocaleDateString()
+          : "—";
+
+        return `
+          <tr>
+            <td class="font-bold-title">${esc(title)}</td>
+            <td><span class="category-badge">${esc(cat)}</span></td>
+            <td>${esc(date)}</td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item inspect-notice-btn" data-index="${index}">
+                    👁️ Inspect Notice
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-notice-btn" data-title="${esc(title)}" data-date="${esc(date)}">
+                    📋 Copy Summary
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".inspect-notice-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const item = records[btn.dataset.index];
+          const title = item.title || item.headline || "Notice Details";
+          const body = item.content || item.body || item.message || "No content body specified.";
+          alert(`--- Announcement ---\nTitle: ${title}\nCategory: ${item.category || item.type || 'General'}\n\nMessage:\n${body}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-notice-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const summary = `GRACAIS Faculty Announcement: ${btn.dataset.title} (${btn.dataset.date})`;
+          navigator.clipboard.writeText(summary);
+          alert(`Copied summary: ${summary}`);
+        });
+      });
+    }
 
     function renderPage() {
       const app = document.getElementById("app");
@@ -145,42 +358,53 @@
               <div>
                 <strong>School Announcements</strong>
                 <div id="teacherName" style="font-size:13px;color:#64748b;">
-                  Teacher Portal
+                  Teacher Portal [Grades 4th - 12th]
                 </div>
               </div>
             </header>
 
             <main class="teacher-page">
-              <section class="page-heading">
-                <h1>Announcements</h1>
-                <p>Read important updates from school administration.</p>
+              <section class="welcome-panel">
+                <span style="display:inline-block;margin-bottom:10px;padding:4px 12px;border:1px solid rgba(255,255,255,.45);border-radius:30px;font-size:.82rem;font-weight:600;background:rgba(255,255,255,0.1);">Faculty Bulletin</span>
+                <h1>School Announcements</h1>
+                <p>Read important updates from school administration for Graceland Academy International School of Excellence.</p>
               </section>
 
               <div class="notice">
-                School announcements should be published by authorized
-                school staff and displayed here according to the teacher's
-                access permissions.
+                School announcements are published by authorized administration and displayed according to faculty access permissions.
               </div>
 
-              <section class="panel">
-                <h2>Latest Announcements</h2>
-
-                <div class="announcement-list" id="announcementList">
-                  <div class="empty-state">
-                    <h2>No announcements loaded</h2>
-                    <p>
-                      Published announcements will appear here after the
-                      announcements database query is connected.
-                    </p>
-                    <p>
-                      No sample notices or invented school dates are shown.
-                    </p>
+              <!-- Announcements Table Card -->
+              <section class="portal-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                  <div>
+                    <h2>Latest Announcements</h2>
+                    <p class="muted">Official published faculty and school notices.</p>
                   </div>
+                  <p id="announcementStatus" style="margin:0; font-weight:600; color:#063B7A; font-size:0.88rem;">0 records loaded</p>
                 </div>
 
-                <p class="status-message" id="announcementStatus">
-                  Announcement loading has not yet been connected to Supabase.
-                </p>
+                <div class="table-container">
+                  <table class="portal-table">
+                    <thead>
+                      <tr>
+                        <th>Title / Headline</th>
+                        <th>Category</th>
+                        <th>Date Published</th>
+                        <th style="text-align: right;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="announcementsTableBody">
+                      <tr>
+                        <td colspan="4" class="empty-state-cell">
+                          <div style="font-size:28px; margin-bottom:8px;">📢</div>
+                          <strong style="color:#063B7A; display:block; margin-bottom:4px;">No announcements loaded</strong>
+                          <span>Published announcements will appear here after the announcements database query is connected.</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </section>
             </main>
           </div>
@@ -226,8 +450,9 @@
       ].filter(Boolean).join(" ");
 
       document.getElementById("teacherName").textContent =
-        fullName || "Authorized Teacher";
+        (fullName ? "Teacher: " + fullName : "Authorized Teacher") + " [Grades 4th - 12th]";
 
+      renderAnnouncements(announcementRecords);
       setupLogout();
     }
   </script>
