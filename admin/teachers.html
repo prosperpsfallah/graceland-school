@@ -6,38 +6,131 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Teacher Records">
   <title>Teachers | GRACAIS E-Portal</title>
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
-  <div id="app">
-    <main class="page-content">
-      <p>Loading teacher records...</p>
-    </main>
-  </div>
+  <div id="portalLayout"></div>
   <script type="module">
-    import {
-      requireUser,
-      setupLogout,
-      esc
-    } from "../assets/app.js";
-    import {
-      initLayout
-    } from "../assets/layout.js";
+    import { setupLogout, esc } from "../assets/app.js";
+    import { initLayout, requireUser } from "../assets/layout.js";
+    import { supabase } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
+    let allTeachers = [];
+    function safe(value) {
+      return esc(String(value ?? ""));
+    }
+    function renderTeachers(teachers) {
+      const tbody = document.getElementById("teachersTableBody");
+      const count = document.getElementById("teacherCount");
+      if (!tbody || !count) return;
+      count.textContent = String(teachers.length);
+      if (!teachers.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>No teacher records found</h3>
+                <p>
+                  No matching teacher records were found in the database.
+                  Registered teachers will appear here when available.
+                </p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      tbody.innerHTML = teachers.map(teacher => `
+        <tr>
+          <td>${safe(teacher.teacher_id || teacher.id || "—")}</td>
+          <td>${safe(teacher.first_name || "—")}</td>
+          <td>${safe(teacher.last_name || "—")}</td>
+          <td>${safe(teacher.email || "—")}</td>
+          <td>
+            <span class="status-badge">
+              ${safe(teacher.status || "—")}
+            </span>
+          </td>
+        </tr>
+      `).join("");
+    }
+    function filterTeachers() {
+      const input = document.getElementById("teacherSearch");
+      const term = (input?.value || "").trim().toLowerCase();
+      const filtered = allTeachers.filter(teacher => {
+        const searchable = [
+          teacher.teacher_id,
+          teacher.id,
+          teacher.first_name,
+          teacher.last_name,
+          teacher.email,
+          teacher.status
+        ].filter(Boolean).join(" ").toLowerCase();
+        return searchable.includes(term);
+      });
+      renderTeachers(filtered);
+    }
+    async function loadTeachers() {
+      const tbody = document.getElementById("teachersTableBody");
+      const message = document.getElementById("teacherMessage");
+      const refreshButton = document.getElementById("refreshTeachers");
+      if (refreshButton) refreshButton.disabled = true;
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">Loading teacher records...</td>
+          </tr>
+        `;
+      }
+      if (message) message.textContent = "";
+      try {
+        // Load existing teacher records only. Do not create sample records.
+        const { data, error } = await supabase
+          .from("teachers")
+          .select("*")
+          .order("last_name", { ascending: true });
+        if (error) throw error;
+        allTeachers = data || [];
+        filterTeachers();
+        if (message) {
+          message.textContent = "Teacher records loaded successfully.";
+        }
+      } catch (error) {
+        console.error("Unable to load teachers:", error);
+        allTeachers = [];
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5">
+                <div class="empty-state">
+                  <h3>Unable to load teacher records</h3>
+                  <p>
+                    Check the teachers table, its column names,
+                    and your Supabase access policies.
+                  </p>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+        if (message) {
+          message.textContent =
+            error.message || "A database error occurred.";
+        }
+      } finally {
+        if (refreshButton) refreshButton.disabled = false;
+      }
+    }
     async function initTeachersPage() {
-      initLayout(
-        "super_admin",
-        "teachers.html",
-        "Teacher Records"
-      );
+      initLayout("super_admin", "teachers.html", "Teacher Records");
       setupLogout();
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
@@ -48,9 +141,8 @@
           <div>
             <h1>Teacher Records</h1>
             <p>
-              View and manage teacher information for
-              Graceland Academy International School
-              of Excellence (GRACAIS).
+              View registered teacher information for
+              Graceland Academy International School of Excellence (GRACAIS).
             </p>
           </div>
         </section>
@@ -58,27 +150,23 @@
           <div class="card-header">
             <div>
               <h2>Teachers</h2>
-              <p>
-                Actual teacher records will load from the
-                GRACAIS database after integration.
-              </p>
+              <p>Records are retrieved from the connected database.</p>
             </div>
+            <button type="button" id="refreshTeachers" class="btn btn-primary">
+              Refresh Records
+            </button>
           </div>
           <div class="form-group">
-            <label for="teacherSearch">
-              Search teacher records
-            </label>
+            <label for="teacherSearch">Search teacher records</label>
             <input
               type="search"
               id="teacherSearch"
-              placeholder="Search by teacher ID or name..."
+              placeholder="Search by teacher ID, name, email, or status..."
               autocomplete="off"
-              disabled
             >
-            <small>
-              Search will be enabled after database integration.
-            </small>
           </div>
+          <p>Total teacher records: <strong id="teacherCount">0</strong></p>
+          <p id="teacherMessage" role="status" aria-live="polite"></p>
           <div class="table-container">
             <table>
               <thead>
@@ -90,43 +178,35 @@
                   <th>Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="teachersTableBody">
                 <tr>
-                  <td colspan="5">
-                    <div class="empty-state">
-                      <h3>No records loaded</h3>
-                      <p>
-                        Connect the real database to display
-                        registered teachers. No demo accounts
-                        or sample teacher records are created
-                        by this page.
-                      </p>
-                    </div>
-                  </td>
+                  <td colspan="5">Preparing teacher records...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
       `;
-      console.info(
-        "GRACAIS Teacher Records page initialized."
-      );
+      document
+        .getElementById("teacherSearch")
+        ?.addEventListener("input", filterTeachers);
+      document
+        .getElementById("refreshTeachers")
+        ?.addEventListener("click", loadTeachers);
+      await loadTeachers();
     }
     initTeachersPage().catch(error => {
       console.error("Teacher records page error:", error);
-      const app = document.getElementById("app");
-      if (app) {
-        app.innerHTML = `
-          <main class="page-content">
-            <section class="card">
-              <h2>Unable to load Teacher Records</h2>
-              <p>
-                Check the shared portal files and
-                authentication configuration.
-              </p>
-            </section>
-          </main>
+      const pageContent = document.getElementById("pageContent");
+      if (pageContent) {
+        pageContent.innerHTML = `
+          <section class="card">
+            <h2>Unable to open Teacher Records</h2>
+            <p>
+              Check the shared portal files, authentication configuration,
+              and browser console for the error.
+            </p>
+          </section>
         `;
       }
     });
