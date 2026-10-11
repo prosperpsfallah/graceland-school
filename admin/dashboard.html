@@ -78,6 +78,63 @@
             </article>
           </section>
 
+          <!-- Admin Add User Section -->
+          <section class="card portal-card" style="margin-top:22px;">
+            <h3 style="color: #063B7A; margin-top:0; margin-bottom:16px; font-size:20px;">Add New Portal Member</h3>
+            <form id="addUserForm">
+              <div style="display: flex; gap: 12px; margin-bottom: 12px; flex-wrap:wrap;">
+                <div style="flex: 1; min-width:200px;">
+                  <label style="font-size:13px; font-weight:600; color:#334155;">First Name</label>
+                  <input type="text" id="addFirstName" required placeholder="e.g. Mary" style="width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #CBD5E1; border-radius: 6px; box-sizing:border-box;">
+                </div>
+                <div style="flex: 1; min-width:200px;">
+                  <label style="font-size:13px; font-weight:600; color:#334155;">Last Name</label>
+                  <input type="text" id="addLastName" required placeholder="e.g. Johnson" style="width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #CBD5E1; border-radius: 6px; box-sizing:border-box;">
+                </div>
+              </div>
+
+              <div style="margin-bottom: 12px;">
+                <label style="font-size:13px; font-weight:600; color:#334155;">Email Address</label>
+                <input type="email" id="addEmail" required placeholder="e.g. user@graceland.edu" style="width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #CBD5E1; border-radius: 6px; box-sizing:border-box;">
+              </div>
+
+              <div style="margin-bottom: 12px;">
+                <label style="font-size:13px; font-weight:600; color:#334155;">Temporary Password</label>
+                <input type="password" id="addPassword" required placeholder="At least 6 characters" style="width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #CBD5E1; border-radius: 6px; box-sizing:border-box;">
+              </div>
+
+              <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap:wrap;">
+                <div style="flex: 1; min-width:200px;">
+                  <label style="font-size:13px; font-weight:600; color:#334155;">Role</label>
+                  <select id="addRole" required style="width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #CBD5E1; border-radius: 6px; background:#fff; box-sizing:border-box;">
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher / Instructor</option>
+                    <option value="admin">Administrator</option>
+                  </select>
+                </div>
+
+                <div style="flex: 1; min-width:200px;" id="gradeLevelContainer">
+                  <label style="font-size:13px; font-weight:600; color:#334155;">Grade Level</label>
+                  <select id="addGradeLevel" style="width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #CBD5E1; border-radius: 6px; background:#fff; box-sizing:border-box;">
+                    <option value="4" selected>Grade 4</option>
+                    <option value="5">Grade 5</option>
+                    <option value="6">Grade 6</option>
+                    <option value="7">Grade 7</option>
+                    <option value="8">Grade 8</option>
+                    <option value="9">Grade 9</option>
+                    <option value="10">Grade 10</option>
+                    <option value="11">Grade 11</option>
+                    <option value="12">Grade 12</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" id="submitAddUserBtn" style="width: 100%; padding: 12px; background-color: #063B7A; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size:15px;">
+                Create Account & Provision Profile
+              </button>
+            </form>
+          </section>
+
           <!-- Module Navigation Grid -->
           <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:18px; margin-top:22px;">
             <article class="card portal-card">
@@ -228,6 +285,54 @@
           .addEventListener("click", loadStatistics);
 
         await loadStatistics();
+
+        // Handle Add User Form Submission
+        const addUserForm = document.getElementById("addUserForm");
+        if (addUserForm) {
+          addUserForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const btn = document.getElementById("submitAddUserBtn");
+            btn.disabled = true;
+            btn.innerText = "Creating Account & Provisioning...";
+
+            const firstName = document.getElementById("addFirstName").value.trim();
+            const lastName = document.getElementById("addLastName").value.trim();
+            const email = document.getElementById("addEmail").value.trim();
+            const password = document.getElementById("addPassword").value;
+            const role = document.getElementById("addRole").value;
+            const gradeLevel = document.getElementById("addGradeLevel").value;
+
+            try {
+              const { data, error } = await supabase.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                  data: {
+                    first_name: firstName,
+                    last_name: lastName,
+                    role: role,
+                    grade_level: parseInt(gradeLevel, 10)
+                  }
+                }
+              });
+
+              if (error) {
+                alert("Error creating account: " + error.message);
+              } else if (data.user) {
+                alert(`Success! Account created for ${firstName} ${lastName} (${role.toUpperCase()}). Profile and school ID were automatically generated!`);
+                addUserForm.reset();
+                loadStatistics(); // Refresh counts
+              }
+            } catch (err) {
+              console.error("User creation error:", err);
+              alert("An unexpected error occurred.");
+            } finally {
+              btn.disabled = false;
+              btn.innerText = "Create Account & Provision Profile";
+            }
+          });
+        }
       }
     }
   </script>
