@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS E-Portal Audit Logs">
   <title>Audit Logs | GRACAIS E-Portal</title>
-  <link rel="icon" href="../logo.png" type="image/png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -19,6 +19,9 @@
     import {
       setupLogout
     } from "../assets/app.js";
+    import {
+      supabase
+    } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
@@ -32,7 +35,8 @@
     setupLogout();
     const user = await requireUser(ALLOWED_ROLES);
     if (user) {
-      document.getElementById("pageContent").innerHTML = `
+      const pageContent = document.getElementById("pageContent");
+      pageContent.innerHTML = `
         <section class="page-heading">
           <h2>System Activity History</h2>
           <p>
@@ -41,24 +45,131 @@
           </p>
         </section>
         <section class="card">
-          <h3>Audit Log Records</h3>
-          <p>
-            No activity records are displayed yet.
-            Records will appear after the audit-log database
-            is connected and activity tracking is implemented.
-          </p>
-        </section>
-        <section class="card">
-          <h3>Activities to Track</h3>
-          <ul>
-            <li>Grade creation and changes</li>
-            <li>Grade approval decisions</li>
-            <li>Student and teacher account changes</li>
-            <li>Academic record updates</li>
-            <li>Important account and security events</li>
-          </ul>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+            <h3>Audit Log Records</h3>
+            <button type="button" id="refreshLogs" class="btn btn-primary">
+              Refresh
+            </button>
+          </div>
+          <div style="margin:16px 0;">
+            <input
+              type="search"
+              id="logSearch"
+              placeholder="Search activity, user, or record..."
+              aria-label="Search audit logs"
+              style="width:100%;max-width:480px;"
+            >
+          </div>
+          <p id="logMessage" role="status">Loading audit records...</p>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;min-width:700px;">
+              <thead>
+                <tr>
+                  <th>Date and Time</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Record</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="auditLogsBody">
+                <tr>
+                  <td colspan="5">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
       `;
+      const logsBody = document.getElementById("auditLogsBody");
+      const logMessage = document.getElementById("logMessage");
+      const logSearch = document.getElementById("logSearch");
+      const refreshButton = document.getElementById("refreshLogs");
+      let auditLogs = [];
+      function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, character => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        })[character]);
+      }
+      function formatDate(value) {
+        if (!value) return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+          return String(value);
+        }
+        return date.toLocaleString();
+      }
+      function displayLogs() {
+        const searchTerm = logSearch.value.trim().toLowerCase();
+        const filteredLogs = auditLogs.filter(log => {
+          const searchableText = [
+            log.action,
+            log.user_id,
+            log.record_type,
+            log.record_id,
+            log.details,
+            log.created_at
+          ].map(value => String(value ?? "")).join(" ").toLowerCase();
+          return searchableText.includes(searchTerm);
+        });
+        if (filteredLogs.length === 0) {
+          logsBody.innerHTML = `
+            <tr>
+              <td colspan="5">No matching audit records found.</td>
+            </tr>
+          `;
+          return;
+        }
+        logsBody.innerHTML = filteredLogs.map(log => `
+          <tr>
+            <td>${escapeHTML(formatDate(log.created_at))}</td>
+            <td>${escapeHTML(log.user_id || "—")}</td>
+            <td>${escapeHTML(log.action || "—")}</td>
+            <td>
+              ${escapeHTML(log.record_type || "—")}
+              ${log.record_id ? `<br><small>${escapeHTML(log.record_id)}</small>` : ""}
+            </td>
+            <td>${escapeHTML(log.details || "—")}</td>
+          </tr>
+        `).join("");
+      }
+      async function loadAuditLogs() {
+        logMessage.textContent = "Loading audit records...";
+        logsBody.innerHTML = `
+          <tr><td colspan="5">Loading...</td></tr>
+        `;
+        const { data, error } = await supabase
+          .from("audit_logs")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(500);
+        if (error) {
+          console.error("Unable to load audit logs:", error);
+          auditLogs = [];
+          logsBody.innerHTML = `
+            <tr>
+              <td colspan="5">
+                Could not load audit records. Check the audit_logs
+                table columns and Supabase access policies.
+              </td>
+            </tr>
+          `;
+          logMessage.textContent =
+            "Audit records could not be loaded.";
+          return;
+        }
+        auditLogs = data || [];
+        logMessage.textContent =
+          `${auditLogs.length} audit record(s) loaded.`;
+        displayLogs();
+      }
+      logSearch.addEventListener("input", displayLogs);
+      refreshButton.addEventListener("click", loadAuditLogs);
+      await loadAuditLogs();
     }
   </script>
 </body>
