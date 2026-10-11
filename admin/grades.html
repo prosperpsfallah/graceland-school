@@ -6,141 +6,206 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Academic Grades">
   <title>Grades | GRACAIS E-Portal</title>
-
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
-
 <body>
-  <div id="app">
-    <main class="page-content">
-      <p>Loading academic grades...</p>
-    </main>
-  </div>
-
+  <div id="portalLayout"></div>
   <script type="module">
-    import {
-      requireUser,
-      setupLogout
-    } from "../assets/app.js";
-
-    import {
-      initLayout
-    } from "../assets/layout.js";
-
+    import { initLayout, requireUser } from "../assets/layout.js";
+    import { setupLogout } from "../assets/app.js";
+    import { supabase } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
-
-    async function initGradesPage() {
-      initLayout(
-        "super_admin",
-        "grades.html",
-        "Academic Grades"
-      );
-
-      setupLogout();
-
-      const auth = await requireUser(ALLOWED_ROLES);
-      if (!auth) return;
-
+    initLayout("super_admin", "grades.html", "Academic Grades");
+    setupLogout();
+    const auth = await requireUser(ALLOWED_ROLES);
+    if (auth) {
       const pageContent = document.getElementById("pageContent");
-      if (!pageContent) return;
-
-      pageContent.innerHTML = `
-        <section class="page-heading">
-          <div>
+      if (pageContent) {
+        pageContent.innerHTML = `
+          <section class="page-heading">
             <h1>Academic Grades</h1>
             <p>
-              Review student results and monitor grade records
-              for Graceland Academy International School
-              of Excellence (GRACAIS).
+              Review student results for Graceland Academy
+              International School of Excellence (GRACAIS).
             </p>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-header">
-            <div>
-              <h2>Grade Records</h2>
-              <p>
-                Actual grades will load from the connected
-                database. This page does not create or change grades.
-              </p>
+          </section>
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Grade Records</h2>
+                <p>Read-only view of saved academic results.</p>
+              </div>
+              <button type="button" id="refreshGrades" class="btn btn-primary">
+                Refresh
+              </button>
             </div>
-          </div>
-
-          <div class="form-group">
-            <label for="gradeSearch">Search grade records</label>
-            <input
-              type="search"
-              id="gradeSearch"
-              placeholder="Search by student ID, class, or subject..."
-              autocomplete="off"
-              disabled
-            >
-            <small>
-              Search will be enabled after database integration.
-            </small>
-          </div>
-
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Student ID</th>
-                  <th>Student Name</th>
-                  <th>Class</th>
-                  <th>Subject</th>
-                  <th>Grading Period</th>
-                  <th>Score</th>
-                  <th>Grade</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                <tr>
-                  <td colspan="7">
-                    <div class="empty-state">
-                      <h3>No grade records loaded</h3>
-                      <p>
-                        Student results will appear here after
-                        the real database is connected.
-                        No demo grades are being inserted.
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      `;
-    }
-
-    initGradesPage().catch(error => {
-      console.error("Academic grades error:", error);
-
-      const app = document.getElementById("app");
-      if (app) {
-        app.innerHTML = `
-          <main class="page-content">
-            <section class="card">
-              <h2>Unable to load Academic Grades</h2>
-              <p>
-                Check the shared portal files and
-                authentication configuration.
-              </p>
-            </section>
-          </main>
+            <div class="form-group">
+              <label for="gradeSearch">Search grade records</label>
+              <input
+                type="search"
+                id="gradeSearch"
+                placeholder="Search by student ID, name, class, subject, or period..."
+                autocomplete="off"
+              >
+            </div>
+            <p id="gradesMessage" role="status">Loading grade records...</p>
+            <div class="table-container" style="overflow-x:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student ID</th>
+                    <th>Student Name</th>
+                    <th>Class</th>
+                    <th>Subject</th>
+                    <th>Grading Period</th>
+                    <th>Score</th>
+                    <th>Grade</th>
+                  </tr>
+                </thead>
+                <tbody id="gradesBody">
+                  <tr><td colspan="7">Loading grades...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         `;
+        const gradesBody = document.getElementById("gradesBody");
+        const gradesMessage = document.getElementById("gradesMessage");
+        const gradeSearch = document.getElementById("gradeSearch");
+        let grades = [];
+        function escapeHTML(value) {
+          return String(value ?? "").replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+          })[char]);
+        }
+        function getLetterGrade(score) {
+          if (score === null || score === undefined || score === "") {
+            return "—";
+          }
+          const numericScore = Number(score);
+          if (!Number.isFinite(numericScore)) return "—";
+          if (numericScore >= 90) return "A";
+          if (numericScore >= 80) return "B";
+          if (numericScore >= 70) return "C";
+          if (numericScore >= 60) return "D";
+          return "F";
+        }
+        function renderGrades() {
+          const term = gradeSearch.value.trim().toLowerCase();
+          const filtered = grades.filter(item => {
+            const student = item.students || {};
+            const classRecord = item.classes || {};
+            const values = [
+              student.student_id,
+              student.first_name,
+              student.last_name,
+              item.student_id,
+              classRecord.name,
+              classRecord.grade_level,
+              item.subject,
+              item.grading_period,
+              item.score,
+              item.grade
+            ];
+            return values.some(value =>
+              String(value ?? "").toLowerCase().includes(term)
+            );
+          });
+          if (filtered.length === 0) {
+            gradesBody.innerHTML = `
+              <tr><td colspan="7">No matching grade records found.</td></tr>
+            `;
+            return;
+          }
+          gradesBody.innerHTML = filtered.map(item => {
+            const student = item.students || {};
+            const classRecord = item.classes || {};
+            const studentId =
+              student.student_id || item.student_id || "—";
+            const studentName = [
+              student.first_name,
+              student.last_name
+            ].filter(Boolean).join(" ") || "—";
+            const className =
+              classRecord.name ||
+              classRecord.grade_level ||
+              "—";
+            const score =
+              item.score === null || item.score === undefined
+                ? "—"
+                : escapeHTML(item.score);
+            const grade =
+              item.grade || getLetterGrade(item.score);
+            return `
+              <tr>
+                <td>${escapeHTML(studentId)}</td>
+                <td>${escapeHTML(studentName)}</td>
+                <td>${escapeHTML(className)}</td>
+                <td>${escapeHTML(item.subject || "—")}</td>
+                <td>${escapeHTML(item.grading_period || "—")}</td>
+                <td>${score}</td>
+                <td>${escapeHTML(grade)}</td>
+              </tr>
+            `;
+          }).join("");
+        }
+        async function loadGrades() {
+          gradesMessage.textContent = "Loading grade records...";
+          gradesBody.innerHTML =
+            '<tr><td colspan="7">Loading...</td></tr>';
+          const { data, error } = await supabase
+            .from("grades")
+            .select(`
+              *,
+              students (
+                student_id,
+                first_name,
+                last_name
+              ),
+              classes (
+                name,
+                grade_level
+              )
+            `)
+            .limit(1000);
+          if (error) {
+            console.error("Grade records loading error:", error);
+            grades = [];
+            gradesBody.innerHTML = `
+              <tr>
+                <td colspan="7">
+                  Unable to load grade records. Check the grades table
+                  columns, relationship definitions, and Supabase access policies.
+                </td>
+              </tr>
+            `;
+            gradesMessage.textContent =
+              "Grade records could not be loaded.";
+            return;
+          }
+          grades = data || [];
+          gradesMessage.textContent =
+            `${grades.length} grade record(s) loaded.`;
+          renderGrades();
+        }
+        gradeSearch.addEventListener("input", renderGrades);
+        document.getElementById("refreshGrades")
+          .addEventListener("click", loadGrades);
+        await loadGrades();
       }
-    });
+    }
   </script>
 </body>
 </html>
