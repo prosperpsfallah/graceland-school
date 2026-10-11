@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -97,7 +96,10 @@
       padding: 10px 15px;
       font-weight: bold;
       cursor: pointer;
+      transition: background 0.2s ease;
     }
+
+    .logout:hover { background: #0B5CAD; }
 
     .content { padding: 28px; max-width: 1200px; margin: 0 auto; }
 
@@ -107,28 +109,29 @@
       border-radius: 14px;
       padding: 25px;
       margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.08);
     }
 
     .welcome h1 { margin: 0 0 9px; font-size: 25px; }
     .welcome p { margin: 0; line-height: 1.7; color: #E0F5FF; font-size: 14px; }
 
-    .card {
+    .portal-card {
       background: #fff;
-      border: 1px solid #E0EAF2;
+      border: 1px solid #D9E5F0;
       border-radius: 12px;
-      padding: 22px;
-      margin-bottom: 22px;
-      box-shadow: 0 3px 12px rgba(3,42,88,.04);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
     }
 
-    .card h3 { color: #063B7A; margin: 0 0 8px; font-size: 17px; }
+    .portal-card h3 { color: #063B7A; margin: 0 0 8px; font-size: 17px; }
     .muted { color: #64748B; font-size: 13px; line-height: 1.7; }
 
     .filters {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin-top: 20px;
+      gap: 16px;
+      margin-top: 18px;
     }
 
     .field label {
@@ -139,73 +142,138 @@
       font-weight: bold;
     }
 
-    .field select {
+    .field select, .field input {
       width: 100%;
       min-height: 44px;
       border: 1px solid #CBD5E1;
       border-radius: 8px;
-      padding: 10px;
+      padding: 10px 14px;
       background: #fff;
       color: #18324B;
       font-size: 14px;
     }
 
-    .announcement-list {
-      display: grid;
-      gap: 16px;
-      margin-top: 20px;
+    .field select:focus, .field input:focus {
+      outline: none;
+      border-color: #063B7A;
+      box-shadow: 0 0 0 3px rgba(6, 59, 122, 0.1);
     }
 
-    .announcement {
-      border: 1px solid #E0EAF2;
-      border-left: 4px solid #38BDF8;
-      border-radius: 10px;
-      padding: 18px;
-      background: #fff;
+    /* Table Chart Layout */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      margin-top: 16px;
     }
 
-    .announcement h4 {
+    .portal-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    .portal-table th {
+      background: #F8FAFC;
       color: #063B7A;
-      font-size: 16px;
-      margin: 0 0 10px;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 2px solid #E2E8F0;
+      white-space: nowrap;
     }
 
-    .announcement p {
-      color: #475569;
-      font-size: 14px;
-      line-height: 1.7;
-      margin: 0;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
+    .portal-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #E2E8F0;
+      color: #334155;
+      vertical-align: middle;
     }
 
-    .announcement-meta {
+    .font-bold-title {
+      font-weight: 600;
+      color: #0F172A;
+    }
+
+    .category-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #E0F5FF;
+      color: #063B7A;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    /* Dropdown Action System */
+    .portal-action-wrapper {
+      position: relative;
       display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      color: #64748B;
-      font-size: 12px;
-      margin-top: 14px;
+      justify-content: flex-end;
     }
 
-    .empty {
-      border: 1px dashed #B8D5E8;
-      border-radius: 10px;
-      padding: 30px 18px;
+    .portal-action-btn {
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      color: #0F172A;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .portal-action-btn:hover {
+      background: #E2E8F0;
+    }
+
+    .portal-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: #ffffff;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      min-width: 170px;
+      z-index: 50;
+      overflow: hidden;
+    }
+
+    .portal-dropdown-menu.show {
+      display: block;
+    }
+
+    .portal-dropdown-item {
+      width: 100%;
+      text-align: left;
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      color: #334155;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+
+    .portal-dropdown-item:hover {
+      background: #F8FAFC;
+      color: #063B7A;
+    }
+
+    .empty-state-cell {
       text-align: center;
-      margin-top: 20px;
-      background: #F8FCFF;
-    }
-
-    .empty .symbol { font-size: 32px; margin-bottom: 10px; }
-    .empty h4 { margin: 0 0 8px; color: #063B7A; font-size: 16px; }
-
-    .empty p {
-      margin: 0 auto;
-      max-width: 480px;
+      padding: 32px 16px;
       color: #64748B;
-      line-height: 1.7;
-      font-size: 13px;
     }
 
     .notice {
@@ -229,6 +297,7 @@
       border-radius: 7px;
       padding: 9px 12px;
       font-weight: bold;
+      cursor: pointer;
     }
 
     @media (max-width: 760px) {
@@ -241,7 +310,7 @@
       .content { padding: 16px; }
       .welcome { padding: 20px; }
       .welcome h1 { font-size: 21px; }
-      .card { padding: 17px; }
+      .portal-card { padding: 18px; }
       .filters { grid-template-columns: 1fr; }
     }
   </style>
@@ -277,7 +346,7 @@
           <button class="menu-button" id="menuButton" type="button">☰ Menu</button>
           <div>
             <h2>School Announcements</h2>
-            <p>Graceland Academy International School of Excellence</p>
+            <p>Graceland Academy International School of Excellence [Grades 4th - 12th]</p>
           </div>
         </div>
         <button class="logout" id="logoutButton" type="button">Log Out</button>
@@ -288,14 +357,15 @@
           <h1 id="welcomeTitle">School Announcements</h1>
           <p>
             Stay informed about school activities, academic notices,
-            examination information, timetable updates, and important messages.
+            examination information, timetable updates, and official school communications.
           </p>
         </div>
 
-        <section class="card">
+        <!-- Filter Card -->
+        <section class="portal-card">
           <h3>Find Announcements</h3>
           <p class="muted">
-            Filter the published school notices by category.
+            Filter official published notices by category or key phrases.
           </p>
 
           <div class="filters">
@@ -315,36 +385,48 @@
               <input
                 id="searchInput"
                 type="search"
-                placeholder="Search published notices..."
-                style="width:100%;min-height:44px;border:1px solid #CBD5E1;border-radius:8px;padding:10px;font-size:14px;"
+                placeholder="🔍 Search published notices..."
+                autocomplete="off"
               >
             </div>
           </div>
 
           <div class="notice">
-            Only announcements published by authorized school staff should
-            appear here. The page does not generate sample announcements.
+            Only verified announcements published by authorized GRACAIS administrative staff appear here.
           </div>
         </section>
 
-        <section class="card">
-          <h3>Published Notices</h3>
-          <p class="muted">
-            The latest school announcements will be displayed here.
-          </p>
-
-          <div class="empty" id="emptyState">
-            <div class="symbol">📢</div>
-            <h4>No announcements loaded</h4>
-            <p>
-              Announcements have not been loaded from the school database yet.
-              This does not necessarily mean that the school has no notices.
-              The secure database connection must be completed before published
-              announcements can appear here.
-            </p>
+        <!-- Announcements Table Chart Card -->
+        <section class="portal-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3>Published Notices</h3>
+              <p class="muted" style="margin:4px 0 0 0;">Latest administrative communications synchronized from the database.</p>
+            </div>
+            <p id="announcementStatus" style="margin:0; font-weight:600; color:#063B7A; font-size:0.88rem;">0 notices loaded</p>
           </div>
 
-          <div class="announcement-list" id="announcementList" hidden></div>
+          <div class="table-container">
+            <table class="portal-table">
+              <thead>
+                <tr>
+                  <th>Title / Headline</th>
+                  <th>Category</th>
+                  <th>Date Published</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="announcementsTableBody">
+                <tr>
+                  <td colspan="4" class="empty-state-cell">
+                    <div style="font-size:28px; margin-bottom:8px;">📢</div>
+                    <strong style="color:#063B7A; display:block; margin-bottom:4px;">No announcements loaded</strong>
+                    <span>Announcements have not been retrieved from the database yet. Published notices will appear here once connected.</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <div class="footer">
@@ -361,6 +443,7 @@
     } from "../assets/app.js";
 
     const ALLOWED_ROLES = ["student"];
+    let publishedAnnouncements = [];
 
     const sidebar = document.getElementById("sidebar");
 
@@ -371,6 +454,129 @@
     document.getElementById("logoutButton").addEventListener("click", async () => {
       await logout();
     });
+
+    function safe(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[char]);
+    }
+
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
+    function renderAnnouncements() {
+      const tbody = document.getElementById("announcementsTableBody");
+      const status = document.getElementById("announcementStatus");
+      const category = document.getElementById("categoryFilter").value.toLowerCase();
+      const term = document.getElementById("searchInput").value.trim().toLowerCase();
+
+      if (!tbody || !status) return;
+
+      const filtered = publishedAnnouncements.filter(item => {
+        const itemCategory = (item.category || item.type || "general").toLowerCase();
+        const title = (item.title || item.headline || "").toLowerCase();
+        const content = (item.content || item.body || item.message || "").toLowerCase();
+
+        const matchesCat = !category || itemCategory === category;
+        const matchesTerm = !term || title.includes(term) || content.includes(term);
+
+        return matchesCat && matchesTerm;
+      });
+
+      status.textContent = `${filtered.length} notice${filtered.length === 1 ? "" : "s"} shown`;
+
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="empty-state-cell">
+              <div style="font-size:28px; margin-bottom:8px;">📢</div>
+              <strong style="color:#063B7A; display:block; margin-bottom:4px;">No matching notices</strong>
+              <span>No published announcements match the selected category or search filter.</span>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((item, index) => {
+        const title = item.title || item.headline || "Untitled Announcement";
+        const cat = item.category || item.type || "General";
+        const date = item.created_at || item.date || item.published_at
+          ? new Date(item.created_at || item.date || item.published_at).toLocaleDateString()
+          : "—";
+
+        return `
+          <tr>
+            <td class="font-bold-title">${safe(title)}</td>
+            <td><span class="category-badge">${safe(cat)}</span></td>
+            <td>${safe(date)}</td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item inspect-notice-btn" data-index="${index}">
+                    👁️ Inspect Notice
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-notice-btn" data-title="${safe(title)}" data-date="${safe(date)}">
+                    📋 Copy Summary
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".inspect-notice-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const item = filtered[btn.dataset.index];
+          const title = item.title || item.headline || "Notice Details";
+          const body = item.content || item.body || item.message || "No content body specified.";
+          alert(`--- Announcement ---\nTitle: ${title}\nCategory: ${item.category || item.type || 'General'}\n\nMessage:\n${body}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-notice-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const summary = `GRACAIS Announcement: ${btn.dataset.title} (${btn.dataset.date})`;
+          navigator.clipboard.writeText(summary);
+          alert(`Copied summary: ${summary}`);
+        });
+      });
+    }
 
     async function initializeAnnouncementsPage() {
       const result = await requireUser(ALLOWED_ROLES);
@@ -388,9 +594,8 @@
           "Announcements for " + fullName;
       }
 
-      // Live announcement retrieval and filtering will be connected to
-      // Supabase after confirming the actual announcements table schema.
-      // No fake notices are displayed.
+      document.getElementById("categoryFilter").addEventListener("change", renderAnnouncements);
+      document.getElementById("searchInput").addEventListener("input", renderAnnouncements);
     }
 
     initializeAnnouncementsPage();
