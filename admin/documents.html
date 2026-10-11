@@ -17,6 +17,7 @@
     import { initLayout, requireUser } from "../assets/layout.js";
     import { setupLogout } from "../assets/app.js";
     import { supabase } from "../assets/supabase.js";
+
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
@@ -24,8 +25,10 @@
       "registrar"
     ];
     const BUCKET = "academic-documents";
+
     initLayout("super_admin", "documents.html", "Academic Documents");
     setupLogout();
+
     const auth = await requireUser(ALLOWED_ROLES);
     if (auth) {
       const pageContent = document.getElementById("pageContent");
@@ -119,6 +122,7 @@
             </div>
           </section>
         `;
+
         const form = document.getElementById("documentForm");
         const uploadMessage = document.getElementById("uploadMessage");
         const listMessage = document.getElementById("listMessage");
@@ -126,6 +130,7 @@
         const documentsBody = document.getElementById("documentsBody");
         const searchInput = document.getElementById("documentSearch");
         let documents = [];
+
         function escapeHTML(value) {
           return String(value ?? "").replace(/[&<>"']/g, char => ({
             "&": "&amp;",
@@ -135,6 +140,7 @@
             "'": "&#039;"
           })[char]);
         }
+
         function formatDate(value) {
           if (!value) return "—";
           const date = new Date(value);
@@ -142,23 +148,42 @@
             ? "—"
             : date.toLocaleDateString();
         }
+
+        function getDocName(doc) {
+          return doc.name || doc.title || doc.document_name || doc.file_name || "Untitled Document";
+        }
+
+        function getDocType(doc) {
+          return doc.document_type || doc.type || doc.category || "—";
+        }
+
+        function getDocPath(doc) {
+          return doc.storage_path || doc.file_path || doc.path || doc.url || "";
+        }
+
+        function getDocDate(doc) {
+          return doc.created_at || doc.date_added || doc.updated_at || null;
+        }
+
         function renderDocuments() {
           const term = searchInput.value.trim().toLowerCase();
           const filtered = documents.filter(doc =>
-            [doc.name, doc.document_type]
+            [getDocName(doc), getDocType(doc)]
               .some(value => String(value ?? "").toLowerCase().includes(term))
           );
+
           if (!filtered.length) {
             documentsBody.innerHTML = `
               <tr><td colspan="4">No matching documents found.</td></tr>
             `;
             return;
           }
+
           documentsBody.innerHTML = filtered.map(doc => `
             <tr>
-              <td>${escapeHTML(doc.name)}</td>
-              <td>${escapeHTML(doc.document_type || "—")}</td>
-              <td>${escapeHTML(formatDate(doc.created_at))}</td>
+              <td>${escapeHTML(getDocName(doc))}</td>
+              <td>${escapeHTML(getDocType(doc))}</td>
+              <td>${escapeHTML(formatDate(getDocDate(doc)))}</td>
               <td>
                 <button
                   type="button"
@@ -168,6 +193,7 @@
               </td>
             </tr>
           `).join("");
+
           documentsBody.querySelectorAll("[data-document-id]").forEach(button => {
             button.addEventListener("click", () => {
               const doc = documents.find(
@@ -177,82 +203,147 @@
             });
           });
         }
+
+        async function fetchDocumentsData() {
+          // 1. Primary table query with select("*")
+          let primaryRes = await supabase
+            .from("documents")
+            .select("*");
+
+          if (!primaryRes.error) {
+            return primaryRes;
+          }
+
+          console.warn("Primary documents table query failed, trying fallback tables...", primaryRes.error);
+
+          // 2. Fallback table: academic_documents
+          let fallbackRes = await supabase
+            .from("academic_documents")
+            .select("*");
+
+          if (!fallbackRes.error) {
+            return fallbackRes;
+          }
+
+          // 3. Fallback table: school_documents
+          let schoolDocsRes = await supabase
+            .from("school_documents")
+            .select("*");
+
+          if (!schoolDocsRes.error) {
+            return schoolDocsRes;
+          }
+
+          return primaryRes;
+        }
+
         async function loadDocuments() {
           listMessage.textContent = "Loading documents...";
           documentsBody.innerHTML =
             '<tr><td colspan="4">Loading...</td></tr>';
-          const { data, error } = await supabase
-            .from("documents")
-            .select("id, name, document_type, storage_path, created_at")
-            .order("created_at", { ascending: false });
+
+          const { data, error } = await fetchDocumentsData();
+
           if (error) {
             console.error("Document loading error:", error);
             documents = [];
             documentsBody.innerHTML = `
               <tr>
                 <td colspan="4">
-                  Could not load documents. Check the documents table,
-                  column names, and Supabase access policies.
+                  <div>
+                    <p>Could not load documents. Check the documents table, column names, and Supabase access policies.</p>
+                    <p style="color: #DC2626; font-size: 13px; margin-top: 6px;">Error detail: ${escapeHTML(error.message || "")}</p>
+                  </div>
                 </td>
               </tr>
             `;
             listMessage.textContent = "Document loading failed.";
             return;
           }
+
           documents = data || [];
           listMessage.textContent = `${documents.length} document(s) loaded.`;
           renderDocuments();
         }
+
         async function openDocument(doc) {
-          if (!doc.storage_path) {
-            uploadMessage.textContent =
-              "This document has no storage path recorded.";
+          const path = getDocPath(doc);
+
+          if (!path) {
+            uploadMessage.textContent = "This document has no storage path recorded.";
             return;
           }
+
+          if (path.startsWith("http://") || path.startsWith("https://")) {
+            window.open(path, "_blank", "noopener,noreferrer");
+            return;
+          }
+
+          // Try signed URL first
           const { data, error } = await supabase.storage
             .from(BUCKET)
-            .createSignedUrl(doc.storage_path, 60);
-          if (error || !data?.signedUrl) {
-            console.error("Document access error:", error);
-            uploadMessage.textContent =
-              "Unable to open this document. Check storage permissions.";
+            .createSignedUrl(path, 60);
+
+          if (!error && data?.signedUrl) {
+            window.open(data.signedUrl, "_blank", "noopener,noreferrer");
             return;
           }
-          window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+
+          console.warn("Signed URL failed, attempting public URL...", error);
+
+          // Fallback to public URL if bucket is public
+          const { data: publicData } = supabase.storage
+            .from(BUCKET)
+            .getPublicUrl(path);
+
+          if (publicData?.publicUrl) {
+            window.open(publicData.publicUrl, "_blank", "noopener,noreferrer");
+            return;
+          }
+
+          uploadMessage.textContent = "Unable to open this document. Check storage permissions and path.";
         }
+
         form.addEventListener("submit", async event => {
           event.preventDefault();
           const name = document.getElementById("documentName").value.trim();
           const documentType = document.getElementById("documentType").value;
           const file = document.getElementById("documentFile").files[0];
+
           if (!name || !documentType || !file) {
             uploadMessage.textContent = "Complete all fields and choose a file.";
             return;
           }
+
           if (file.size > 10 * 1024 * 1024) {
             uploadMessage.textContent = "The file exceeds the 10 MB limit.";
             return;
           }
+
           const allowedExtensions = [
             "pdf", "doc", "docx", "xls", "xlsx",
             "ppt", "pptx", "png", "jpg", "jpeg"
           ];
           const extension = file.name.split(".").pop().toLowerCase();
+
           if (!allowedExtensions.includes(extension)) {
             uploadMessage.textContent = "This file type is not allowed.";
             return;
           }
+
           uploadButton.disabled = true;
           uploadMessage.textContent = "Uploading document...";
+
           const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const storagePath =
-            `${crypto.randomUUID()}-${safeFileName}`;
+          const storagePath = `${crypto.randomUUID()}-${safeFileName}`;
+
           const { error: storageError } = await supabase.storage
             .from(BUCKET)
             .upload(storagePath, file, {
               upsert: false,
               contentType: file.type || "application/octet-stream"
             });
+
           if (storageError) {
             console.error("Storage upload error:", storageError);
             uploadButton.disabled = false;
@@ -260,6 +351,7 @@
               "Upload failed. Check that the academic-documents bucket exists and upload permission is configured.";
             return;
           }
+
           const { error: databaseError } = await supabase
             .from("documents")
             .insert({
@@ -267,28 +359,33 @@
               document_type: documentType,
               storage_path: storagePath
             });
+
           if (databaseError) {
             console.error("Document record error:", databaseError);
-            // Remove the uploaded file if its database record could not be saved.
             const { error: cleanupError } = await supabase.storage
               .from(BUCKET)
               .remove([storagePath]);
+
             if (cleanupError) {
               console.error("Storage cleanup error:", cleanupError);
             }
+
             uploadButton.disabled = false;
             uploadMessage.textContent =
-              "The database record could not be saved. Check the documents table columns and insert policy.";
+              `Database save error: ${databaseError.message || "Check the documents table columns and insert policy."}`;
             return;
           }
+
           form.reset();
           uploadButton.disabled = false;
           uploadMessage.textContent = "Document uploaded successfully.";
           await loadDocuments();
         });
+
         searchInput.addEventListener("input", renderDocuments);
         document.getElementById("refreshDocuments")
           .addEventListener("click", loadDocuments);
+
         await loadDocuments();
       }
     }
