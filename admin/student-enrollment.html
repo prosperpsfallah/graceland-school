@@ -6,52 +6,189 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Student Enrollment Records">
   <title>Student Enrollment | GRACAIS E-Portal</title>
-
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
-
 <body>
-  <div id="app">
-    <main class="page-content">
-      <p>Loading enrollment records...</p>
-    </main>
-  </div>
-
+  <div id="portalLayout"></div>
   <script type="module">
     import {
-      requireUser,
-      setupLogout
+      setupLogout,
+      esc
     } from "../assets/app.js";
-
     import {
-      initLayout
+      initLayout,
+      requireUser
     } from "../assets/layout.js";
-
+    import { supabase } from "../assets/supabase.js";
     const ALLOWED_ROLES = [
       "super_admin",
       "principal",
       "administration",
       "registrar"
     ];
-
+    let enrollmentRecords = [];
+    function safe(value) {
+      return esc(String(value ?? ""));
+    }
+    function getStudentName(record) {
+      const student = record.students;
+      if (student) {
+        const name = [
+          student.first_name,
+          student.last_name
+        ].filter(Boolean).join(" ");
+        if (name) return name;
+      }
+      return record.student_name || "—";
+    }
+    function getStudentId(record) {
+      return record.students?.student_id
+        || record.student_id
+        || "—";
+    }
+    function getClassName(record) {
+      return record.classes?.name
+        || record.class_name
+        || record.class_id
+        || "—";
+    }
+    function getAcademicYear(record) {
+      return record.academic_years?.name
+        || record.academic_year
+        || record.academic_year_id
+        || "—";
+    }
+    function getEnrollmentStatus(record) {
+      return record.status
+        || record.enrollment_status
+        || "—";
+    }
+    function renderEnrollments() {
+      const tbody = document.getElementById("enrollmentRows");
+      const status = document.getElementById("enrollmentStatus");
+      const searchInput = document.getElementById("enrollmentSearch");
+      if (!tbody || !status || !searchInput) return;
+      const query = searchInput.value.trim().toLowerCase();
+      const filtered = enrollmentRecords.filter(record => {
+        const searchable = [
+          getStudentId(record),
+          getStudentName(record),
+          getClassName(record),
+          getAcademicYear(record),
+          getEnrollmentStatus(record)
+        ].join(" ").toLowerCase();
+        return searchable.includes(query);
+      });
+      status.textContent =
+        `${filtered.length} enrollment record${filtered.length === 1 ? "" : "s"}`;
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>${query ? "No matching enrollments" : "No enrollment records found"}</h3>
+                <p>
+                  ${query
+                    ? "Try searching with a different student ID, name, class, or academic year."
+                    : "Existing enrollment records will appear here when available in the database."}
+                </p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      tbody.innerHTML = filtered.map(record => `
+        <tr>
+          <td>${safe(getStudentId(record))}</td>
+          <td>${safe(getStudentName(record))}</td>
+          <td>${safe(getClassName(record))}</td>
+          <td>${safe(getAcademicYear(record))}</td>
+          <td>${safe(getEnrollmentStatus(record))}</td>
+        </tr>
+      `).join("");
+    }
+    async function loadEnrollments() {
+      const tbody = document.getElementById("enrollmentRows");
+      const status = document.getElementById("enrollmentStatus");
+      const refreshButton = document.getElementById("refreshEnrollments");
+      if (!tbody || !status || !refreshButton) return;
+      refreshButton.disabled = true;
+      status.textContent = "Loading enrollment records...";
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5">Loading enrollment records...</td>
+        </tr>
+      `;
+      try {
+        /*
+          Reads existing enrollment data only.
+          The relation names below assume foreign keys
+          from enrollments to students, classes, and
+          academic_years are configured in Supabase.
+        */
+        const { data, error } = await supabase
+          .from("enrollments")
+          .select(`
+            *,
+            students (
+              student_id,
+              first_name,
+              last_name
+            ),
+            classes (
+              name
+            ),
+            academic_years (
+              name
+            )
+          `);
+        if (error) throw error;
+        enrollmentRecords = data ?? [];
+        enrollmentRecords.sort((a, b) =>
+          getStudentName(a).localeCompare(getStudentName(b))
+        );
+        renderEnrollments();
+      } catch (error) {
+        console.error("Enrollment loading error:", error);
+        status.textContent = "Unable to load enrollment records";
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <h3>Could not load enrollment records</h3>
+                <p>
+                  Check the enrollments table, its foreign-key
+                  relationships, and the Supabase access policies.
+                </p>
+                <p id="enrollmentError"></p>
+              </div>
+            </td>
+          </tr>
+        `;
+        const errorElement = document.getElementById("enrollmentError");
+        if (errorElement) {
+          errorElement.textContent =
+            error?.message || "An unexpected database error occurred.";
+        }
+      } finally {
+        refreshButton.disabled = false;
+      }
+    }
     async function initEnrollmentPage() {
       initLayout(
         "super_admin",
         "student-enrollment.html",
         "Student Enrollment"
       );
-
       setupLogout();
-
       const auth = await requireUser(ALLOWED_ROLES);
       if (!auth) return;
-
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
-
       pageContent.innerHTML = `
         <section class="page-heading">
           <div>
@@ -62,18 +199,20 @@
             </p>
           </div>
         </section>
-
         <section class="card">
           <div class="card-header">
             <div>
               <h2>Enrollment Records</h2>
-              <p>
-                Existing enrollment records will be loaded
-                from the real school database.
-              </p>
+              <p>Existing enrollment records from the school database.</p>
             </div>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="refreshEnrollments"
+            >
+              Refresh
+            </button>
           </div>
-
           <div class="form-group">
             <label for="enrollmentSearch">
               Search enrollment records
@@ -81,15 +220,13 @@
             <input
               type="search"
               id="enrollmentSearch"
-              placeholder="Search by student ID or name..."
+              placeholder="Search by student ID, name, class, or year..."
               autocomplete="off"
-              disabled
             >
-            <small>
-              Search will be enabled after database integration.
-            </small>
           </div>
-
+          <p id="enrollmentStatus" aria-live="polite">
+            Preparing enrollment records...
+          </p>
           <div class="table-container">
             <table>
               <thead>
@@ -101,41 +238,34 @@
                   <th>Enrollment Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="enrollmentRows">
                 <tr>
-                  <td colspan="5">
-                    <div class="empty-state">
-                      <h3>No enrollment records loaded</h3>
-                      <p>
-                        Actual enrollment records will appear
-                        after database integration. No fake
-                        student records are being created.
-                      </p>
-                    </div>
-                  </td>
+                  <td colspan="5">Loading enrollment records...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
       `;
+      document
+        .getElementById("enrollmentSearch")
+        .addEventListener("input", renderEnrollments);
+      document
+        .getElementById("refreshEnrollments")
+        .addEventListener("click", loadEnrollments);
+      await loadEnrollments();
     }
-
     initEnrollmentPage().catch(error => {
       console.error("Enrollment page error:", error);
-
-      const app = document.getElementById("app");
-      if (app) {
-        app.innerHTML = `
-          <main class="page-content">
-            <section class="card">
-              <h2>Unable to load Enrollment Records</h2>
-              <p>
-                Check the shared portal files and
-                authentication configuration.
-              </p>
-            </section>
-          </main>
+      const pageContent = document.getElementById("pageContent");
+      if (pageContent) {
+        pageContent.innerHTML = `
+          <section class="card">
+            <h2>Unable to load Enrollment Records</h2>
+            <p>
+              Check the shared portal files and authentication configuration.
+            </p>
+          </section>
         `;
       }
     });
