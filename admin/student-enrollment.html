@@ -74,6 +74,29 @@
         || "Active";
     }
 
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
     function renderEnrollments() {
       const tbody = document.getElementById("enrollmentRows");
       const status = document.getElementById("enrollmentStatus");
@@ -93,12 +116,12 @@
       });
 
       status.textContent =
-        `${filtered.length} enrollment record${filtered.length === 1 ? "" : "s"}`;
+        `${filtered.length} enrollment record${filtered.length === 1 ? "" : "s"} shown`;
 
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">
+            <td colspan="6" class="empty-state-cell">
               <div class="empty-state">
                 <h3>${query ? "No matching enrollments" : "No enrollment records found"}</h3>
                 <p>
@@ -113,19 +136,70 @@
         return;
       }
 
-      tbody.innerHTML = filtered.map(record => `
-        <tr>
-          <td>${safe(getStudentId(record))}</td>
-          <td>${safe(getStudentName(record))}</td>
-          <td>${safe(getClassName(record))}</td>
-          <td>${safe(getAcademicYear(record))}</td>
-          <td>${safe(getEnrollmentStatus(record))}</td>
-        </tr>
-      `).join("");
+      tbody.innerHTML = filtered.map((record, index) => {
+        const studentIdVal = getStudentId(record);
+        const studentNameVal = getStudentName(record);
+        const classVal = getClassName(record);
+        const yearVal = getAcademicYear(record);
+        const statusVal = getEnrollmentStatus(record);
+        const isActive = statusVal.toLowerCase() === "active";
+
+        return `
+          <tr>
+            <td style="font-family: monospace;" class="font-bold-title">${safe(studentIdVal)}</td>
+            <td>${safe(studentNameVal)}</td>
+            <td>${safe(classVal)}</td>
+            <td>${safe(yearVal)}</td>
+            <td>
+              <span class="status-badge ${isActive ? "active" : "inactive"}">
+                ${safe(statusVal)}
+              </span>
+            </td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item view-enrollment" data-index="${index}">
+                    👁️ Inspect Enrollment
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-student-id" data-id="${safe(studentIdVal)}">
+                    📋 Copy Student ID
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".view-enrollment").forEach(button => {
+        button.addEventListener("click", () => {
+          const record = filtered[button.dataset.index];
+          alert(`--- Enrollment Record ---\nStudent: ${getStudentName(record)} (${getStudentId(record)})\nClass: ${getClassName(record)}\nAcademic Year: ${getAcademicYear(record)}\nStatus: ${getEnrollmentStatus(record)}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-student-id").forEach(button => {
+        button.addEventListener("click", () => {
+          const id = button.dataset.id;
+          if (id) {
+            navigator.clipboard.writeText(id);
+            alert(`Copied Student ID: ${id}`);
+          }
+        });
+      });
     }
 
     async function fetchEnrollmentsData() {
-      // 1. Primary table query with relational joins
       const primaryRelational = await supabase
         .from("enrollments")
         .select(`
@@ -149,7 +223,6 @@
 
       console.warn("Relational enrollments query failed, trying direct select...", primaryRelational.error);
 
-      // 2. Direct query from enrollments
       const primaryDirect = await supabase
         .from("enrollments")
         .select("*");
@@ -160,7 +233,6 @@
 
       console.warn("enrollments table query failed, trying student_enrollments fallback...", primaryDirect.error);
 
-      // 3. Fallback table: student_enrollments
       const studentEnrollments = await supabase
         .from("student_enrollments")
         .select("*");
@@ -169,7 +241,6 @@
         return studentEnrollments;
       }
 
-      // 4. Fallback table: class_enrollments
       const classEnrollments = await supabase
         .from("class_enrollments")
         .select("*");
@@ -191,7 +262,7 @@
       status.textContent = "Loading enrollment records...";
       tbody.innerHTML = `
         <tr>
-          <td colspan="5">Loading enrollment records...</td>
+          <td colspan="6" class="loading-cell">Loading enrollment records...</td>
         </tr>
       `;
 
@@ -210,7 +281,7 @@
         status.textContent = "Unable to load enrollment records";
         tbody.innerHTML = `
           <tr>
-            <td colspan="5">
+            <td colspan="6" class="empty-state-cell">
               <div class="empty-state">
                 <h3>Could not load enrollment records</h3>
                 <p>
@@ -251,40 +322,41 @@
             <h1>Student Enrollment Records</h1>
             <p>
               Review student enrollment and class placement
-              records for GRACAIS.
+              records for GRACAIS [Grades 4th - 12th].
             </p>
           </div>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="refreshEnrollments"
+          >
+            ↻ Refresh Records
+          </button>
         </section>
-        <section class="card">
-          <div class="card-header">
+
+        <section class="card portal-card">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
             <div>
               <h2>Enrollment Records</h2>
-              <p>Existing enrollment records from the school database.</p>
+              <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.88rem;">Existing enrollment records from the school database.</p>
             </div>
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="refreshEnrollments"
-            >
-              Refresh
-            </button>
+            <p id="enrollmentStatus" aria-live="polite" style="font-weight: 600; color: #063B7A; margin: 0;">Preparing enrollment records...</p>
           </div>
-          <div class="form-group">
-            <label for="enrollmentSearch">
-              Search enrollment records
-            </label>
-            <input
-              type="search"
-              id="enrollmentSearch"
-              placeholder="Search by student ID, name, class, or year..."
-              autocomplete="off"
-            >
+
+          <div class="table-toolbar" style="margin-bottom: 16px;">
+            <div class="search-input-wrapper">
+              <input
+                type="search"
+                id="enrollmentSearch"
+                placeholder="🔍 Search by student ID, name, class, or year..."
+                autocomplete="off"
+                style="width:100%; padding: 10px 14px; border: 1px solid #D9E5F0; border-radius: 8px;"
+              >
+            </div>
           </div>
-          <p id="enrollmentStatus" aria-live="polite">
-            Preparing enrollment records...
-          </p>
+
           <div class="table-container">
-            <table>
+            <table class="portal-table">
               <thead>
                 <tr>
                   <th>Student ID</th>
@@ -292,16 +364,180 @@
                   <th>Class</th>
                   <th>Academic Year</th>
                   <th>Enrollment Status</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="enrollmentRows">
                 <tr>
-                  <td colspan="5">Loading enrollment records...</td>
+                  <td colspan="6" class="loading-cell">Loading enrollment records...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
+
+        <style>
+          .portal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #D9E5F0;
+            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+            padding: 24px;
+          }
+
+          .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+
+          .page-heading h1 {
+            color: #063B7A;
+            font-size: 1.5rem;
+            margin: 0;
+          }
+
+          .page-heading p {
+            color: #64748B;
+            margin: 4px 0 0 0;
+            font-size: 0.9rem;
+          }
+
+          .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+          }
+
+          .portal-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.88rem;
+          }
+
+          .portal-table th {
+            background: #F8FAFC;
+            color: #063B7A;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 2px solid #E2E8F0;
+            white-space: nowrap;
+          }
+
+          .portal-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #E2E8F0;
+            color: #334155;
+            vertical-align: middle;
+          }
+
+          .font-bold-title {
+            font-weight: 600;
+            color: #0F172A;
+          }
+
+          .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+          }
+          .status-badge.active {
+            background: #DCFCE7;
+            color: #15803D;
+          }
+          .status-badge.inactive {
+            background: #F1F5F9;
+            color: #64748B;
+          }
+
+          /* Dropdown Menu System */
+          .portal-action-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+          }
+
+          .portal-action-btn {
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            color: #0F172A;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .portal-action-btn:hover {
+            background: #E2E8F0;
+          }
+
+          .portal-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            min-width: 170px;
+            z-index: 50;
+            overflow: hidden;
+          }
+
+          .portal-dropdown-menu.show {
+            display: block;
+          }
+
+          .portal-dropdown-item {
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            color: #334155;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s ease;
+          }
+
+          .portal-dropdown-item:hover {
+            background: #F8FAFC;
+            color: #063B7A;
+          }
+
+          .loading-cell {
+            text-align: center;
+            padding: 24px;
+            color: #64748B;
+          }
+
+          .empty-state-cell {
+            text-align: center;
+            padding: 32px 16px;
+            color: #64748B;
+          }
+
+          #refreshEnrollments:disabled {
+            opacity: 0.65;
+            cursor: wait;
+          }
+        </style>
       `;
 
       document
@@ -319,7 +555,7 @@
       const pageContent = document.getElementById("pageContent");
       if (pageContent) {
         pageContent.innerHTML = `
-          <section class="card">
+          <section class="card portal-card">
             <h2>Unable to load Enrollment Records</h2>
             <p>
               Check the shared portal files and authentication configuration.
