@@ -64,6 +64,29 @@
       return `${hour}:${minute} ${suffix}`;
     }
 
+    function toggleActionDropdown(button) {
+      const currentDropdown = button.nextElementSibling;
+      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
+      
+      allDropdowns.forEach(menu => {
+        if (menu !== currentDropdown) {
+          menu.classList.remove("show");
+        }
+      });
+
+      if (currentDropdown) {
+        currentDropdown.classList.toggle("show");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".portal-action-wrapper")) {
+        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
+          menu.classList.remove("show");
+        });
+      }
+    });
+
     function renderSchedule(records) {
       const tbody = document.getElementById("scheduleRows");
       const status = document.getElementById("scheduleStatus");
@@ -92,12 +115,12 @@
       });
 
       status.textContent =
-        `${filtered.length} schedule record${filtered.length === 1 ? "" : "s"}`;
+        `${filtered.length} schedule record${filtered.length === 1 ? "" : "s"} shown`;
 
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7">
+            <td colspan="8" class="empty-state-cell">
               <div class="empty-state">
                 <h3>${query ? "No matching schedules" : "No schedule records found"}</h3>
                 <p>
@@ -112,7 +135,7 @@
         return;
       }
 
-      tbody.innerHTML = filtered.map(record => {
+      tbody.innerHTML = filtered.map((record, index) => {
         const day = record.day ?? record.day_of_week;
         const className =
           record.class_name ??
@@ -135,18 +158,63 @@
               : record.teacher_id
           );
 
+        const startTimeFormatted = formatTime(record.start_time);
+        const endTimeFormatted = formatTime(record.end_time);
+
         return `
           <tr>
-            <td>${displayValue(day)}</td>
+            <td class="font-bold-title">${displayValue(day)}</td>
             <td>${displayValue(className)}</td>
             <td>${displayValue(subjectName)}</td>
             <td>${displayValue(teacherName)}</td>
-            <td>${formatTime(record.start_time)}</td>
-            <td>${formatTime(record.end_time)}</td>
+            <td>${startTimeFormatted}</td>
+            <td>${endTimeFormatted}</td>
             <td>${displayValue(record.room ?? record.room_name)}</td>
+            <td>
+              <div class="portal-action-wrapper">
+                <button type="button" class="portal-action-btn action-toggle-btn">
+                  Actions ▾
+                </button>
+                <div class="portal-dropdown-menu">
+                  <button type="button" class="portal-dropdown-item view-schedule" data-index="${index}">
+                    👁️ Inspect Schedule
+                  </button>
+                  <button type="button" class="portal-dropdown-item copy-schedule-info" data-text="${escapeHTML(`${day}:${subjectName} (${startTimeFormatted} -${endTimeFormatted})`)}">
+                    📋 Copy Summary
+                  </button>
+                </div>
+              </div>
+            </td>
           </tr>
         `;
       }).join("");
+
+      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleActionDropdown(btn);
+        });
+      });
+
+      tbody.querySelectorAll(".view-schedule").forEach(button => {
+        button.addEventListener("click", () => {
+          const record = filtered[button.dataset.index];
+          const day = record.day ?? record.day_of_week ?? 'N/A';
+          const className = record.class_name ?? record.classes?.name ?? record.class_id ?? 'N/A';
+          const subject = record.subject_name ?? record.subjects?.name ?? record.subject_id ?? 'N/A';
+          alert(`--- Timetable Entry Details ---\nDay: ${day}\nClass: ${className}\nSubject: ${subject}\nTime: ${formatTime(record.start_time)} - ${formatTime(record.end_time)}\nRoom: ${record.room ?? record.room_name ?? 'N/A'}`);
+        });
+      });
+
+      tbody.querySelectorAll(".copy-schedule-info").forEach(button => {
+        button.addEventListener("click", () => {
+          const text = button.dataset.text;
+          if (text) {
+            navigator.clipboard.writeText(text);
+            alert(`Copied schedule summary: ${text}`);
+          }
+        });
+      });
     }
 
     async function loadSchedule() {
@@ -161,16 +229,11 @@
 
       tbody.innerHTML = `
         <tr>
-          <td colspan="7">Loading academic schedule...</td>
+          <td colspan="8" class="loading-cell">Loading academic schedule...</td>
         </tr>
       `;
 
       try {
-        /*
-          This query assumes the timetable table is named
-          "schedules". It reads existing records only.
-          No sample records are inserted.
-        */
         const { data, error } = await supabase
           .from("schedules")
           .select("*")
@@ -189,7 +252,7 @@
 
         tbody.innerHTML = `
           <tr>
-            <td colspan="7">
+            <td colspan="8" class="empty-state-cell">
               <div class="empty-state">
                 <h3>Could not load timetable</h3>
                 <p>
@@ -197,7 +260,7 @@
                   its column names are correct, and your
                   Supabase permissions allow access.
                 </p>
-                <p id="scheduleError"></p>
+                <p id="scheduleError" style="color: #DC2626; font-size: 13px; margin-top: 6px;"></p>
               </div>
             </td>
           </tr>
@@ -235,43 +298,41 @@
             <h1>Academic Schedule</h1>
             <p>
               View school timetables and academic schedules
-              for GRACAIS.
+              for GRACAIS [Grades 4th - 12th].
             </p>
           </div>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="refreshSchedule"
+          >
+            ↻ Refresh Timetable
+          </button>
         </section>
 
-        <section class="card">
-          <div class="card-header">
+        <section class="card portal-card">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
             <div>
               <h2>Schedule Records</h2>
-              <p>Timetable information from the connected database.</p>
+              <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.88rem;">Timetable information from the connected database.</p>
             </div>
-
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="refreshSchedule"
-            >
-              Refresh
-            </button>
+            <p id="scheduleStatus" aria-live="polite" style="font-weight: 600; color: #063B7A; margin: 0;">Preparing schedule...</p>
           </div>
 
-          <div class="form-group">
-            <label for="scheduleSearch">Search schedule</label>
-            <input
-              type="search"
-              id="scheduleSearch"
-              placeholder="Search by day, class, subject, or teacher..."
-              autocomplete="off"
-            >
+          <div class="table-toolbar" style="margin-bottom: 16px;">
+            <div class="search-input-wrapper">
+              <input
+                type="search"
+                id="scheduleSearch"
+                placeholder="🔍 Search by day, class, subject, or teacher..."
+                autocomplete="off"
+                style="width:100%; padding: 10px 14px; border: 1px solid #D9E5F0; border-radius: 8px;"
+              >
+            </div>
           </div>
-
-          <p id="scheduleStatus" aria-live="polite">
-            Preparing schedule...
-          </p>
 
           <div class="table-container">
-            <table>
+            <table class="portal-table">
               <thead>
                 <tr>
                   <th>Day</th>
@@ -281,16 +342,163 @@
                   <th>Start Time</th>
                   <th>End Time</th>
                   <th>Room</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="scheduleRows">
                 <tr>
-                  <td colspan="7">Loading academic schedule...</td>
+                  <td colspan="8" class="loading-cell">Loading academic schedule...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
+
+        <style>
+          .portal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #D9E5F0;
+            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+            padding: 24px;
+          }
+
+          .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+
+          .page-heading h1 {
+            color: #063B7A;
+            font-size: 1.5rem;
+            margin: 0;
+          }
+
+          .page-heading p {
+            color: #64748B;
+            margin: 4px 0 0 0;
+            font-size: 0.9rem;
+          }
+
+          .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+          }
+
+          .portal-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.88rem;
+          }
+
+          .portal-table th {
+            background: #F8FAFC;
+            color: #063B7A;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 2px solid #E2E8F0;
+            white-space: nowrap;
+          }
+
+          .portal-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #E2E8F0;
+            color: #334155;
+            vertical-align: middle;
+          }
+
+          .font-bold-title {
+            font-weight: 600;
+            color: #0F172A;
+          }
+
+          /* Dropdown Menu System */
+          .portal-action-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+          }
+
+          .portal-action-btn {
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            color: #0F172A;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .portal-action-btn:hover {
+            background: #E2E8F0;
+          }
+
+          .portal-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            min-width: 170px;
+            z-index: 50;
+            overflow: hidden;
+          }
+
+          .portal-dropdown-menu.show {
+            display: block;
+          }
+
+          .portal-dropdown-item {
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            color: #334155;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s ease;
+          }
+
+          .portal-dropdown-item:hover {
+            background: #F8FAFC;
+            color: #063B7A;
+          }
+
+          .loading-cell {
+            text-align: center;
+            padding: 24px;
+            color: #64748B;
+          }
+
+          .empty-state-cell {
+            text-align: center;
+            padding: 32px 16px;
+            color: #64748B;
+          }
+
+          #refreshSchedule:disabled {
+            opacity: 0.65;
+            cursor: wait;
+          }
+        </style>
       `;
 
       document
@@ -313,7 +521,7 @@
 
       if (pageContent) {
         pageContent.innerHTML = `
-          <section class="card">
+          <section class="card portal-card">
             <h2>Unable to load Academic Schedule</h2>
             <p>Check the shared portal files and authentication configuration.</p>
           </section>
