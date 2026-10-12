@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -392,7 +391,7 @@
       registrar: "./admin/dashboard.html",
       teacher: "./teacher/dashboard.html",
       instructor: "./teacher/dashboard.html",
-      student: "./students/dashboard.html"
+      student: "./student-dashboard.html" // Updated to match root file path
     };
 
     function showMessage(text) {
@@ -451,7 +450,6 @@
           .eq("id", data.user.id)
           .maybeSingle();
 
-        /* UPDATED: Show the actual Supabase profile error. */
         if (profileError) {
           console.error("Profile lookup failed:", {
             message: profileError.message,
