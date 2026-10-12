@@ -6,9 +6,16 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Student Portal Dashboard">
   <title>Student Dashboard | GRACAIS E-Portal</title>
-  <link rel="icon" href="./0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
-  <link rel="stylesheet" href="./assets/style.css">
+
+  <link
+    rel="icon"
+    href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png"
+    type="image/png"
+  >
+
+  <link rel="stylesheet" href="../assets/style.css">
 </head>
+
 <body>
   <div id="app">
     <main class="page-content" id="pageContent">
@@ -19,101 +26,205 @@
   </div>
 
   <script type="module">
-    import { requireUser, setupLogout } from "./assets/app.js";
-    import { initLayout } from "./assets/layout.js";
-    import { supabase } from "./assets/supabase.js";
+    import {
+      requireUser,
+      setupLogout
+    } from "../assets/app.js";
+
+    import {
+      initLayout
+    } from "../assets/layout.js";
+
+    import {
+      supabase
+    } from "../assets/supabase.js";
 
     const ALLOWED_ROLES = ["student"];
 
     async function initStudentDashboard() {
-      // Initialize layout with student role navigation
-      if (typeof initLayout === "function") {
-        initLayout("student", "student-dashboard.html", "Student Dashboard");
-      }
-      if (typeof setupLogout === "function") {
-        setupLogout();
-      }
-
-      // Secure the page for students
-      const auth = await requireUser(ALLOWED_ROLES);
-      if (!auth) return;
-
       const pageContent = document.getElementById("pageContent");
-      if (!pageContent) return;
 
-      pageContent.innerHTML = `
-        <section class="page-heading" style="margin-bottom: 24px;">
-          <div>
-            <h1>Welcome, Student</h1>
-            <p>Graceland Academy International School of Excellence (GRACAIS) [Grades 4th - 12th].</p>
-          </div>
-        </section>
-
-        <div class="portal-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-          <div class="card portal-card">
-            <h2>Attendance Records</h2>
-            <p>View your personal attendance history.</p>
-            <div id="studentAttendance" style="margin-top: 12px; font-weight: 500; color: #334155;">Loading attendance...</div>
-          </div>
-
-          <div class="card portal-card">
-            <h2>Academic Profile</h2>
-            <p>Your enrollment and class details.</p>
-            <div id="studentProfile" style="margin-top: 12px; font-weight: 500; color: #334155;">Loading profile...</div>
-          </div>
-        </div>
-
-        <style>
-          .portal-card {
-            background: #ffffff;
-            border-radius: 12px;
-            border: 1px solid #D9E5F0;
-            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
-            padding: 24px;
-          }
-          .page-heading h1 { color: #063B7A; font-size: 1.5rem; margin: 0; }
-          .page-heading p { color: #64748B; margin: 4px 0 0 0; font-size: 0.9rem; }
-        </style>
-      `;
-
-      // Fetch student data safely
       try {
-        const userId = auth.user?.id;
-        
-        // Fetch profile info
-        const { data: profileData } = await supabase
-          .from("user_profiles")
-          .select("*")
-          .eq("id", userId)
-          .maybeSingle();
+        // Initialize the student portal layout.
+        initLayout(
+          "student",
+          "dashboard.html",
+          "Student Dashboard"
+        );
 
-        const profileDiv = document.getElementById("studentProfile");
-        if (profileDiv) {
-          profileDiv.innerHTML = profileData 
-            ? `Name: ${profileData.first_name || ''} ${profileData.last_name || ''}<br>Role: Student<br>Status: Active`
-            : `Account connected successfully.`;
+        setupLogout();
+
+        // Verify that the current user is an authorized student.
+        const auth = await requireUser(ALLOWED_ROLES);
+
+        if (!auth || !auth.user) {
+          return;
         }
 
-        // Fetch attendance for this user
-        const { data: attendanceData } = await supabase
-          .from("attendance")
-          .select("*")
-          .eq("student_id", userId)
-          .order("date", { ascending: false })
-          .limit(5);
+        // Display the dashboard after authentication succeeds.
+        pageContent.innerHTML = `
+          <section class="page-heading" style="margin-bottom: 24px;">
+            <div>
+              <h1>Welcome, Student</h1>
+              <p>
+                Graceland Academy International School of Excellence
+                (GRACAIS)
+              </p>
+            </div>
+          </section>
 
-        const attendanceDiv = document.getElementById("studentAttendance");
-        if (attendanceDiv) {
-          if (!attendanceData || attendanceData.length === 0) {
-            attendanceDiv.innerHTML = "No attendance records found.";
+          <div class="portal-grid"
+            style="
+              display: grid;
+              grid-template-columns:
+                repeat(auto-fit, minmax(280px, 1fr));
+              gap: 20px;
+            ">
+
+            <div class="card portal-card">
+              <h2>Attendance Records</h2>
+              <p>View your personal attendance history.</p>
+              <div id="studentAttendance"
+                style="margin-top: 12px; color: #334155;">
+                Loading attendance...
+              </div>
+            </div>
+
+            <div class="card portal-card">
+              <h2>Academic Profile</h2>
+              <p>Your enrollment and class details.</p>
+              <div id="studentProfile"
+                style="margin-top: 12px; color: #334155;">
+                Loading profile...
+              </div>
+            </div>
+          </div>
+
+          <style>
+            .portal-card {
+              background: #ffffff;
+              border-radius: 12px;
+              border: 1px solid #D9E5F0;
+              box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+              padding: 24px;
+            }
+
+            .page-heading h1 {
+              color: #063B7A;
+              font-size: 1.5rem;
+              margin: 0;
+            }
+
+            .page-heading p {
+              color: #64748B;
+              margin: 4px 0 0;
+              font-size: 0.9rem;
+            }
+          </style>
+        `;
+
+        const userId = auth.user.id;
+
+        // Load the signed-in student's profile.
+        const { data: profileData, error: profileError } =
+          await supabase
+            .from("user_profiles")
+            .select("first_name, last_name, role, status")
+            .eq("id", userId)
+            .maybeSingle();
+
+        const profileDiv =
+          document.getElementById("studentProfile");
+
+        if (profileDiv) {
+          if (profileError) {
+            console.error(
+              "Student profile query failed:",
+              profileError
+            );
+
+            profileDiv.textContent =
+              "Unable to load your profile. Please try again later.";
+          } else if (profileData) {
+            const fullName = [
+              profileData.first_name,
+              profileData.last_name
+            ].filter(Boolean).join(" ");
+
+            profileDiv.textContent =
+              `Name: ${fullName || "Not provided"} | ` +
+              `Role: Student | ` +
+              `Status: ${profileData.status || "Unknown"}`;
           } else {
-            attendanceDiv.innerHTML = attendanceData.map(a => 
-              `<div style="padding: 6px 0; border-bottom: 1px solid #E2E8F0;">Date: ${a.date || a.created_at || 'N/A'} — <b>${a.status || 'Present'}</b></div>`
-            ).join("");
+            profileDiv.textContent =
+              "Your account is connected, but no profile record was found.";
           }
         }
-      } catch (err) {
-        console.error("Error loading student details:", err);
+
+        // Load recent attendance records.
+        const { data: attendanceData, error: attendanceError } =
+          await supabase
+            .from("attendance")
+            .select("*")
+            .eq("student_id", userId)
+            .order("date", { ascending: false })
+            .limit(5);
+
+        const attendanceDiv =
+          document.getElementById("studentAttendance");
+
+        if (attendanceDiv) {
+          if (attendanceError) {
+            console.error(
+              "Student attendance query failed:",
+              attendanceError
+            );
+
+            attendanceDiv.textContent =
+              "Unable to load attendance records.";
+          } else if (!attendanceData || attendanceData.length === 0) {
+            attendanceDiv.textContent =
+              "No attendance records found.";
+          } else {
+            attendanceDiv.replaceChildren();
+
+            attendanceData.forEach((record) => {
+              const item = document.createElement("div");
+
+              item.style.padding = "8px 0";
+              item.style.borderBottom = "1px solid #E2E8F0";
+
+              const date = document.createElement("span");
+              date.textContent =
+                `Date: ${record.date || record.created_at || "N/A"}`;
+
+              const status = document.createElement("strong");
+              status.textContent =
+                ` — ${record.status || "Not specified"}`;
+
+              item.append(date, status);
+              attendanceDiv.appendChild(item);
+            });
+          }
+        }
+
+      } catch (error) {
+        console.error(
+          "Student dashboard initialization failed:",
+          error
+        );
+
+        if (pageContent) {
+          pageContent.innerHTML = `
+            <section style="padding: 24px; color: #063B7A;">
+              <h2>Unable to load Student Dashboard</h2>
+              <p>
+                Please refresh the page. If the problem continues,
+                contact the portal administrator.
+              </p>
+            </section>
+          `;
+        }
       }
     }
 
