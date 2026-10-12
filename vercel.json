@@ -1,0 +1,20 @@
+{
+  "cleanUrls": true,
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/student-dashboard",
+      "dest": "/student-dashboard.html"
+    },
+    {
+      "src": "/student",
+      "dest": "/student-dashboard.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
