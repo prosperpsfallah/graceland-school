@@ -11,7 +11,6 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="stylesheet" href="./assets/style.css">
 
-  <!-- GRACAIS LOGIN PAGE DESIGN -->
   <style>
     :root {
       --deep-blue: #063B7A;
@@ -50,7 +49,7 @@
           rgba(11, 92, 173, 0.45),
           transparent 35%
         ),
-        linear-gradients(
+        linear-gradient(
           135deg,
           #032A58 0%,
           #063B7A 52%,
@@ -391,7 +390,7 @@
       registrar: "./admin/dashboard.html",
       teacher: "./teacher/dashboard.html",
       instructor: "./teacher/dashboard.html",
-      student: "./student-dashboard.html" // Updated to match root file path
+      student: "/student-dashboard.html" // Fixed path for absolute root routing on Vercel
     };
 
     function showMessage(text) {
