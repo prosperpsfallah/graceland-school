@@ -31,7 +31,7 @@ function getLoginPath() {
   // Remove the current filename.
   const directoryDepth = Math.max(
     0,
-    segments.length - 1
+    segments.lengths - 1
   );
   return "../".repeat(directoryDepth) + "index.html";
 }
