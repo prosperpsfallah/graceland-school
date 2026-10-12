@@ -16,7 +16,6 @@
     <main class="page-content" id="pageContent">
       <div style="padding: 32px; text-align: center; color: #063B7A;">
         <h2>Loading Attendance Module...</h2>
-        <p style="color: #64748B;">Connecting to portal authentication and database...</p>
       </div>
     </main>
   </div>
@@ -65,9 +64,6 @@
     function getStudentName(record) {
       if (record.student_name) return record.student_name;
       const student = record.students;
-      if (Array.isArray(student)) {
-        return student.map(getStudentName).join(", ") || "—";
-      }
       if (!student) return "—";
       const first = student.first_name || "";
       const last = student.last_name || "";
@@ -76,9 +72,7 @@
     }
 
     function getClassName(record) {
-      if (record.class_name) return record.class_name;
-      if (record.classes?.name) return record.classes.name;
-      return "—";
+      return record.class_name || record.classes?.name || "—";
     }
 
     function getStatus(record) {
@@ -96,9 +90,7 @@
 
       const filtered = attendanceRecords.filter(record => {
         const studentName = getStudentName(record).toLowerCase();
-        const studentId = String(
-          record.student_id || record.students?.student_id || ""
-        ).toLowerCase();
+        const studentId = String(record.student_id || "").toLowerCase();
         const className = getClassName(record).toLowerCase();
         const status = String(getStatus(record)).toLowerCase();
         const matchesSearch = [
@@ -124,11 +116,7 @@
             <td colspan="6">
               <div class="empty-state">
                 <h3>No attendance records found</h3>
-                <p>
-                  ${attendanceRecords.length
-                    ? "Try changing the search term or date filter."
-                    : "No attendance records exist in the database yet."}
-                </p>
+                <p>No records match your filters.</p>
               </div>
             </td>
           </tr>
@@ -174,21 +162,10 @@
 
     async function fetchAttendanceData() {
       try {
-        // Query attendance directly without joins
-        let attendanceRes = await supabase
+        return await supabase
           .from("attendance")
           .select("*")
           .order("date", { ascending: false });
-
-        if (attendanceRes.error) {
-          console.warn("Table 'attendance' query failed, trying 'student_attendance'...", attendanceRes.error);
-          attendanceRes = await supabase
-            .from("student_attendance")
-            .select("*")
-            .order("date", { ascending: false });
-        }
-
-        return attendanceRes;
       } catch (err) {
         return { data: null, error: err };
       }
@@ -200,9 +177,7 @@
       const message = document.getElementById("attendanceMessage");
 
       if (tbody) {
-        tbody.innerHTML = `
-          <tr><td colspan="6" class="loading-cell">Loading attendance records...</td></tr>
-        `;
+        tbody.innerHTML = `<tr><td colspan="6" class="loading-cell">Loading attendance records...</td></tr>`;
       }
       if (refreshButton) {
         refreshButton.disabled = true;
@@ -225,17 +200,11 @@
               <td colspan="6">
                 <div class="empty-state">
                   <h3>Unable to load attendance</h3>
-                  <p>Check if the table exists and your admin access is active.</p>
                   <p class="error-detail">${escapeHTML(error.message || JSON.stringify(error))}</p>
                 </div>
               </td>
             </tr>
           `;
-        }
-        if (message) {
-          message.textContent = `Database Error: ${error.message || "Failed to communicate with Supabase."}`;
-          message.className = "attendance-message error";
-          message.hidden = false;
         }
         return;
       }
@@ -245,27 +214,9 @@
     }
 
     async function initAttendancePage() {
-      try {
-        if (typeof initLayout === "function") {
-          initLayout("super_admin", "attendance.html", "Student Attendance");
-        }
-        if (typeof setupLogout === "function") {
-          setupLogout();
-        }
-      } catch (e) {
-        console.warn("Layout init warning:", e);
-      }
-
-      // Safe auth check with timeout
-      try {
-        if (typeof requireUser === "function") {
-          const authPromise = requireUser(ALLOWED_ROLES);
-          const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(true), 3000));
-          await Promise.race([authPromise, timeoutPromise]);
-        }
-      } catch (e) {
-        console.warn("Auth check bypass:", e);
-      }
+      if (typeof initLayout === "function") initLayout("super_admin", "attendance.html", "Student Attendance");
+      if (typeof setupLogout === "function") setupLogout();
+      await requireUser(ALLOWED_ROLES);
 
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
@@ -274,7 +225,7 @@
         <section class="page-heading">
           <div>
             <h1>Student Attendance</h1>
-            <p>Review attendance records for Graceland Academy International School of Excellence (GRACAIS).</p>
+            <p>Review attendance records for GRACAIS.</p>
           </div>
           <button class="btn btn-secondary" id="refreshAttendance" type="button">↻ Refresh</button>
         </section>
@@ -283,7 +234,6 @@
           <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <div>
               <h2>Attendance Records</h2>
-              <p>Real-time records from database.</p>
             </div>
             <p id="attendanceSummary" style="font-weight: 600; color: #063B7A; margin: 0;">Loading...</p>
           </div>
@@ -322,9 +272,6 @@
           .page-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
           .page-heading h1 { color: #063B7A; font-size: 1.5rem; margin: 0; }
           .page-heading p { color: #64748B; margin: 4px 0 0 0; font-size: 0.9rem; }
-          .attendance-message { padding: 12px 16px; margin-bottom: 16px; border-radius: 8px; background: #E0F5FF; color: #063B7A; font-weight: 500; }
-          .attendance-message.error { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
-          .error-detail { color: #DC2626; font-size: 13px; margin-top: 6px; }
           .table-container { width: 100%; overflow-x: auto; border: 1px solid #E2E8F0; border-radius: 8px; }
           .portal-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
           .portal-table th { background: #F8FAFC; color: #063B7A; font-weight: 600; padding: 12px 16px; border-bottom: 2px solid #E2E8F0; white-space: nowrap; }
@@ -350,20 +297,7 @@
       await loadAttendance();
     }
 
-    initAttendancePage().catch(error => {
-      console.error("Attendance page error:", error);
-      const app = document.getElementById("app");
-      if (app) {
-        app.innerHTML = `
-          <main class="page-content" style="padding: 24px;">
-            <div class="card portal-card">
-              <h2 style="color: #991B1B;">Page Initialization Error</h2>
-              <p>${escapeHTML(error.message || "An unexpected error occurred while rendering the page.")}</p>
-            </div>
-          </main>
-        `;
-      }
-    });
+    initAttendancePage();
   </script>
 </body>
 </html>
