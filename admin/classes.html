@@ -6,16 +6,25 @@
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Class Management">
   <title>Classes | GRACAIS E-Portal</title>
-  <link rel="icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
-  <link rel="apple-touch-icon" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
+
+  <link
+    rel="icon"
+    href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png"
+    type="image/png"
+  >
+  <link
+    rel="apple-touch-icon"
+    href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png"
+  >
   <link rel="manifest" href="../manifest.json">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
+
 <body>
   <div id="portalLayout"></div>
+
   <script type="module">
-    import { requireUser } from "../assets/layout.js";
-    import { initLayout } from "../assets/layout.js";
+    import { requireUser, initLayout } from "../assets/layout.js";
     import { setupLogout } from "../assets/app.js";
     import { supabase } from "../assets/supabase.js";
 
@@ -30,549 +39,634 @@
     setupLogout();
 
     const auth = await requireUser(ALLOWED_ROLES);
+
     if (auth) {
       const pageContent = document.getElementById("pageContent");
-      pageContent.innerHTML = `
-        <section class="page-heading">
-          <div>
-            <h1>Class Management</h1>
-            <p>
-              Manage class records and grade levels for
-              Graceland Academy International School of Excellence (GRACAIS) [Grades 4th - 12th].
-            </p>
-          </div>
-          <button type="button" id="refreshClasses" class="btn btn-secondary">
-            ↻ Refresh Classes
-          </button>
-        </section>
 
-        <div class="portal-grid">
-          <!-- Add Class Form Card -->
-          <section class="card portal-card">
-            <div class="card-header">
-              <div>
-                <h2>Add a Class</h2>
-                <p>Create an actual class record in the school database.</p>
-              </div>
+      if (!pageContent) {
+        console.error(
+          "The portal layout did not create an element with id='pageContent'."
+        );
+        alert(
+          "The page layout could not be loaded. Check assets/layout.js."
+        );
+      } else {
+        pageContent.innerHTML = `
+          <section class="page-heading">
+            <div>
+              <h1>Class Management</h1>
+              <p>
+                Manage class records for Graceland Academy International
+                School of Excellence (GRACAIS), from 4th through 12th Grade.
+              </p>
             </div>
-            <form id="classForm">
-              <div class="form-group">
-                <label for="className">Class name</label>
-                <input
-                  id="className"
-                  name="className"
-                  type="text"
-                  placeholder="e.g. 4th Grade - Section A"
-                  required
-                >
+
+            <button
+              type="button"
+              id="refreshClasses"
+              class="btn btn-secondary"
+            >
+              ↻ Refresh Classes
+            </button>
+          </section>
+
+          <div class="classes-grid">
+
+            <section class="card classes-card">
+              <div class="card-header">
+                <div>
+                  <h2>Add a Class</h2>
+                  <p>Create a class record in the school database.</p>
+                </div>
               </div>
-              <div class="form-row">
+
+              <form id="classForm">
+                <div class="form-group">
+                  <label for="className">Class name</label>
+                  <input
+                    id="className"
+                    name="className"
+                    type="text"
+                    placeholder="e.g. 4th Grade - Section A"
+                    maxlength="100"
+                    required
+                  >
+                </div>
+
                 <div class="form-group">
                   <label for="gradeLevel">Grade level</label>
                   <select id="gradeLevel" name="gradeLevel" required>
                     <option value="">Select grade level</option>
-                    <option value="4th Grade">4th Grade</option>
-                    <option value="5th Grade">5th Grade</option>
-                    <option value="6th Grade">6th Grade</option>
-                    <option value="7th Grade">7th Grade</option>
-                    <option value="8th Grade">8th Grade</option>
-                    <option value="9th Grade">9th Grade</option>
-                    <option value="10th Grade">10th Grade</option>
-                    <option value="11th Grade">11th Grade</option>
-                    <option value="12th Grade">12th Grade</option>
+                    <option value="4">4th Grade</option>
+                    <option value="5">5th Grade</option>
+                    <option value="6">6th Grade</option>
+                    <option value="7">7th Grade</option>
+                    <option value="8">8th Grade</option>
+                    <option value="9">9th Grade</option>
+                    <option value="10">10th Grade</option>
+                    <option value="11">11th Grade</option>
+                    <option value="12">12th Grade</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label for="academicYear">Academic year</label>
-                  <select id="academicYear" name="academicYear" required>
-                    <option value="">Loading academic years...</option>
-                  </select>
+
+                <button
+                  type="submit"
+                  id="saveClass"
+                  class="btn btn-primary"
+                >
+                  + Save Class
+                </button>
+
+                <p id="formMessage" role="status" class="form-message"></p>
+              </form>
+            </section>
+
+            <section class="card classes-card">
+              <div class="classes-header">
+                <div>
+                  <h2>School Classes</h2>
+                  <p>Records retrieved from Supabase.</p>
                 </div>
-              </div>
-              <div class="form-group">
-                <label for="classStatus">Status</label>
-                <select id="classStatus" name="classStatus" required>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              <button type="submit" id="saveClass" class="btn btn-primary">
-                + Save Class
-              </button>
-              <p id="formMessage" role="status" class="form-message"></p>
-            </form>
-          </section>
 
-          <!-- Classes Table Card -->
-          <section class="card portal-card">
-            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
-              <div>
-                <h2>School Classes</h2>
-                <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.88rem;">Class records retrieved from Supabase database.</p>
+                <p id="tableMessage" role="status">
+                  Loading classes...
+                </p>
               </div>
-              <p id="tableMessage" role="status" style="font-weight: 600; color: #063B7A; margin: 0;">Loading classes...</p>
-            </div>
 
-            <div class="table-toolbar" style="margin-bottom: 16px;">
-              <div class="search-input-wrapper">
+              <div class="table-toolbar">
                 <input
                   type="search"
                   id="classSearch"
-                  placeholder="🔍 Search by class name, grade, or academic year..."
-                  style="width:100%; padding: 10px 14px; border: 1px solid #D9E5F0; border-radius: 8px;"
+                  placeholder="Search by class name or grade..."
+                  aria-label="Search classes"
                 >
               </div>
-            </div>
 
-            <div class="table-container">
-              <table class="portal-table">
-                <thead>
-                  <tr>
-                    <th>Class ID</th>
-                    <th>Class Name</th>
-                    <th>Grade Level</th>
-                    <th>Academic Year</th>
-                    <th>Status</th>
-                    <th style="text-align: right;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="classesBody">
-                  <tr><td colspan="6" class="loading-cell">Loading classes...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </div>
+              <div class="table-container">
+                <table class="portal-table">
+                  <thead>
+                    <tr>
+                      <th>Class ID</th>
+                      <th>Class Name</th>
+                      <th>Grade Level</th>
+                      <th>Date Created</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
 
-        <style>
-          .portal-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-          }
+                  <tbody id="classesBody">
+                    <tr>
+                      <td colspan="5" class="loading-cell">
+                        Loading classes...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
 
-          .portal-card {
-            background: #ffffff;
-            border-radius: 12px;
-            border: 1px solid #D9E5F0;
-            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
-            padding: 24px;
-          }
-
-          .page-heading {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 12px;
-          }
-
-          .page-heading h1 {
-            color: #063B7A;
-            font-size: 1.5rem;
-            margin: 0;
-          }
-
-          .page-heading p {
-            color: #64748B;
-            margin: 4px 0 0 0;
-            font-size: 0.9rem;
-          }
-
-          .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-          }
-
-          @media (max-width: 600px) {
-            .form-row {
-              grid-template-columns: 1fr;
+          <style>
+            .classes-grid {
+              display: grid;
+              grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.7fr);
+              gap: 20px;
+              align-items: start;
             }
-          }
 
-          #classForm {
-            display: grid;
-            gap: 16px;
-            margin-top: 12px;
-          }
+            .classes-card {
+              min-width: 0;
+              padding: 22px;
+              background: #fff;
+              border: 1px solid #D9E5F0;
+              border-radius: 12px;
+              box-shadow: 0 4px 16px rgba(3, 42, 88, 0.05);
+            }
 
-          .form-message {
-            margin-top: 8px;
-            font-size: 0.88rem;
-            font-weight: 500;
-            color: #063B7A;
-          }
+            .classes-card h2 {
+              margin-top: 0;
+              margin-bottom: 6px;
+              color: #063B7A;
+            }
 
-          .table-container {
-            width: 100%;
-            overflow-x: auto;
-            border: 1px solid #E2E8F0;
-            border-radius: 8px;
-          }
+            .classes-card p {
+              color: #64748B;
+            }
 
-          .portal-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.88rem;
-          }
+            .page-heading {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 14px;
+              flex-wrap: wrap;
+              margin-bottom: 20px;
+            }
 
-          .portal-table th {
-            background: #F8FAFC;
-            color: #063B7A;
-            font-weight: 600;
-            padding: 12px 16px;
-            border-bottom: 2px solid #E2E8F0;
-            white-space: nowrap;
-          }
+            .page-heading h1 {
+              color: #063B7A;
+              margin: 0;
+              font-size: 1.5rem;
+            }
 
-          .portal-table td {
-            padding: 14px 16px;
-            border-bottom: 1px solid #E2E8F0;
-            color: #334155;
-            vertical-align: middle;
-          }
+            .page-heading p {
+              margin-top: 6px;
+              color: #64748B;
+            }
 
-          .font-bold-title {
-            font-weight: 600;
-            color: #0F172A;
-          }
+            #classForm {
+              display: grid;
+              gap: 16px;
+              margin-top: 18px;
+            }
 
-          .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-          }
+            .form-group {
+              display: grid;
+              gap: 7px;
+            }
 
-          .status-badge.active {
-            background: #DCFCE7;
-            color: #15803D;
-          }
+            .form-group label {
+              font-weight: 600;
+              color: #063B7A;
+            }
 
-          .status-badge.inactive {
-            background: #F1F5F9;
-            color: #64748B;
-          }
+            .form-group input,
+            .form-group select,
+            #classSearch {
+              width: 100%;
+              box-sizing: border-box;
+              min-height: 44px;
+              padding: 10px 12px;
+              border: 1px solid #CBD5E1;
+              border-radius: 8px;
+              background: #fff;
+              color: #0F172A;
+              font: inherit;
+            }
 
-          /* Dropdown Menu System */
-          .portal-action-wrapper {
-            position: relative;
-            display: flex;
-            justify-content: flex-end;
-          }
+            .form-group input:focus,
+            .form-group select:focus,
+            #classSearch:focus {
+              outline: 2px solid #38BDF8;
+              outline-offset: 2px;
+            }
 
-          .portal-action-btn {
-            background: #F1F5F9;
-            border: 1px solid #CBD5E1;
-            color: #0F172A;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-          }
+            .form-message {
+              min-height: 20px;
+              margin: 0;
+              font-size: 0.9rem;
+              overflow-wrap: anywhere;
+            }
 
-          .portal-action-btn:hover {
-            background: #E2E8F0;
-          }
+            .form-message.success {
+              color: #15803D;
+            }
 
-          .portal-dropdown-menu {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 100%;
-            margin-top: 4px;
-            background: #ffffff;
-            border: 1px solid #E2E8F0;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            min-width: 160px;
-            z-index: 50;
-            overflow: hidden;
-          }
+            .form-message.error {
+              color: #B91C1C;
+            }
 
-          .portal-dropdown-menu.show {
-            display: block;
-          }
+            .classes-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 12px;
+              margin-bottom: 16px;
+            }
 
-          .portal-dropdown-item {
-            width: 100%;
-            text-align: left;
-            padding: 10px 14px;
-            background: transparent;
-            border: none;
-            color: #334155;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.15s ease;
-          }
+            .classes-header p {
+              margin: 5px 0 0;
+              font-size: 0.9rem;
+            }
 
-          .portal-dropdown-item:hover {
-            background: #F8FAFC;
-            color: #063B7A;
-          }
+            #tableMessage {
+              font-weight: 600;
+              color: #063B7A;
+            }
 
-          .loading-cell {
-            text-align: center;
-            padding: 24px;
-            color: #64748B;
-          }
+            .table-toolbar {
+              margin-bottom: 14px;
+            }
 
-          .empty-state-cell {
-            text-align: center;
-            padding: 32px 16px;
-            color: #64748B;
-          }
-        </style>
-      `;
+            .table-container {
+              width: 100%;
+              overflow-x: auto;
+              border: 1px solid #E2E8F0;
+              border-radius: 8px;
+            }
 
-      const form = document.getElementById("classForm");
-      const formMessage = document.getElementById("formMessage");
-      const tableMessage = document.getElementById("tableMessage");
-      const classesBody = document.getElementById("classesBody");
-      const searchInput = document.getElementById("classSearch");
-      const academicYearSelect = document.getElementById("academicYear");
-      const saveButton = document.getElementById("saveClass");
-      let classes = [];
-      let academicYears = [];
+            .portal-table {
+              width: 100%;
+              border-collapse: collapse;
+              text-align: left;
+              font-size: 0.88rem;
+            }
 
-      function escapeHTML(value) {
-        return String(value ?? "").replace(/[&<>"']/g, char => ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#039;"
-        })[char]);
-      }
+            .portal-table th {
+              padding: 12px;
+              background: #F0F7FF;
+              color: #063B7A;
+              border-bottom: 2px solid #D9E5F0;
+              white-space: nowrap;
+            }
 
-      function toggleActionDropdown(button) {
-        const currentDropdown = button.nextElementSibling;
-        const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
-        
-        allDropdowns.forEach(menu => {
-          if (menu !== currentDropdown) {
-            menu.classList.remove("show");
-          }
-        });
+            .portal-table td {
+              padding: 12px;
+              color: #334155;
+              border-bottom: 1px solid #E2E8F0;
+              vertical-align: middle;
+            }
 
-        if (currentDropdown) {
-          currentDropdown.classList.toggle("show");
+            .class-name-cell {
+              font-weight: 600;
+              color: #0F172A;
+            }
+
+            .class-id {
+              display: inline-block;
+              max-width: 150px;
+              overflow-wrap: anywhere;
+              font-family: monospace;
+              font-size: 0.78rem;
+            }
+
+            .grade-badge {
+              display: inline-block;
+              padding: 5px 9px;
+              border-radius: 7px;
+              background: #E0F5FF;
+              color: #063B7A;
+              font-weight: 600;
+              white-space: nowrap;
+            }
+
+            .action-buttons {
+              display: flex;
+              gap: 7px;
+              flex-wrap: wrap;
+            }
+
+            .action-button {
+              padding: 7px 9px;
+              border: 1px solid #CBD5E1;
+              border-radius: 7px;
+              background: #F8FAFC;
+              color: #063B7A;
+              font: inherit;
+              font-size: 0.8rem;
+              cursor: pointer;
+            }
+
+            .action-button:hover {
+              background: #E0F5FF;
+            }
+
+            .loading-cell,
+            .empty-state-cell {
+              padding: 26px 12px !important;
+              text-align: center;
+              color: #64748B !important;
+            }
+
+            button:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+
+            @media (max-width: 900px) {
+              .classes-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+
+            @media (max-width: 600px) {
+              .classes-card {
+                padding: 15px;
+              }
+
+              .page-heading h1 {
+                font-size: 1.3rem;
+              }
+
+              .portal-table {
+                font-size: 0.82rem;
+              }
+
+              .portal-table th,
+              .portal-table td {
+                padding: 10px;
+              }
+            }
+          </style>
+        `;
+
+        const form = document.getElementById("classForm");
+        const formMessage = document.getElementById("formMessage");
+        const tableMessage = document.getElementById("tableMessage");
+        const classesBody = document.getElementById("classesBody");
+        const searchInput = document.getElementById("classSearch");
+        const saveButton = document.getElementById("saveClass");
+
+        let classes = [];
+
+        function escapeHTML(value) {
+          return String(value ?? "").replace(/[&<>"']/g, character => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+          })[character]);
         }
-      }
 
-      document.addEventListener("click", (e) => {
-        if (!e.target.closest(".portal-action-wrapper")) {
-          document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
-            menu.classList.remove("show");
+        function gradeLabel(value) {
+          const grade = Number(value);
+
+          if (!Number.isInteger(grade) || grade < 4 || grade > 12) {
+            return value == null ? "—" : `Grade ${escapeHTML(value)}`;
+          }
+
+          const suffix =
+            grade % 100 >= 11 && grade % 100 <= 13
+              ? "th"
+              : ({ 1: "st", 2: "nd", 3: "rd" }[grade % 10] || "th");
+
+          return `${grade}${suffix} Grade`;
+        }
+
+        function formatDate(value) {
+          if (!value) return "—";
+
+          const date = new Date(value);
+
+          if (Number.isNaN(date.getTime())) return "—";
+
+          return date.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
           });
         }
-      });
 
-      async function loadAcademicYears() {
-        const { data, error } = await supabase
-          .from("academic_years")
-          .select("id, name")
-          .order("name", { ascending: false });
-
-        if (error) {
-          console.error("Academic years error:", error);
-          academicYearSelect.innerHTML =
-            '<option value="">Could not load academic years</option>';
-          formMessage.textContent =
-            "Academic years could not be loaded. Check your academic_years table columns.";
-          return;
+        function showFormMessage(message, type = "") {
+          formMessage.textContent = message;
+          formMessage.className = `form-message ${type}`;
         }
 
-        academicYears = data || [];
-        academicYearSelect.innerHTML =
-          '<option value="">Select academic year</option>' +
-          academicYears.map(year => `
-            <option value="${escapeHTML(year.id)}">
-              ${escapeHTML(year.name)}
-            </option>
-          `).join("");
-      }
+        function renderClasses() {
+          const term = searchInput.value.trim().toLowerCase();
 
-      function renderClasses() {
-        const term = searchInput.value.trim().toLowerCase();
-        const filtered = classes.filter(item => {
-          const year = academicYears.find(
-            entry => String(entry.id) === String(item.academic_year_id)
-          );
-          return [
-            item.id,
-            item.name,
-            item.grade_level,
-            item.status,
-            year?.name
-          ].some(value =>
-            String(value ?? "").toLowerCase().includes(term)
-          );
-        });
+          const filtered = classes.filter(item => {
+            const grade = gradeLabel(item.grade_level);
 
-        if (!filtered.length) {
-          classesBody.innerHTML = `
+            return [
+              item.id,
+              item.name,
+              item.grade_level,
+              grade,
+              formatDate(item.created_at)
+            ].some(value =>
+              String(value ?? "").toLowerCase().includes(term)
+            );
+          });
+
+          if (filtered.length === 0) {
+            classesBody.innerHTML = `
+              <tr>
+                <td colspan="5" class="empty-state-cell">
+                  ${
+                    term
+                      ? "No classes match your search."
+                      : "No classes have been added yet."
+                  }
+                </td>
+              </tr>
+            `;
+            return;
+          }
+
+          classesBody.innerHTML = filtered.map(item => `
             <tr>
-              <td colspan="6" class="empty-state-cell">No matching class records found.</td>
-            </tr>
-          `;
-          return;
-        }
-
-        classesBody.innerHTML = filtered.map((item, index) => {
-          const year = academicYears.find(
-            entry => String(entry.id) === String(item.academic_year_id)
-          );
-          const isActive = String(item.status || "").toLowerCase() === "active";
-
-          return `
-            <tr>
-              <td style="font-family: monospace;">${escapeHTML(item.id)}</td>
-              <td class="font-bold-title">${escapeHTML(item.name)}</td>
-              <td>${escapeHTML(item.grade_level)}</td>
-              <td>${escapeHTML(year?.name || "—")}</td>
               <td>
-                <span class="status-badge ${isActive ? "active" : "inactive"}">
-                  ${escapeHTML(item.status || "—")}
+                <span class="class-id">${escapeHTML(item.id)}</span>
+              </td>
+
+              <td class="class-name-cell">
+                ${escapeHTML(item.name)}
+              </td>
+
+              <td>
+                <span class="grade-badge">
+                  ${gradeLabel(item.grade_level)}
                 </span>
               </td>
+
+              <td>${escapeHTML(formatDate(item.created_at))}</td>
+
               <td>
-                <div class="portal-action-wrapper">
-                  <button type="button" class="portal-action-btn action-toggle-btn">
-                    Actions ▾
+                <div class="action-buttons">
+                  <button
+                    type="button"
+                    class="action-button view-class"
+                    data-id="${escapeHTML(item.id)}"
+                  >
+                    View
                   </button>
-                  <div class="portal-dropdown-menu">
-                    <button type="button" class="portal-dropdown-item view-class" data-index="${index}">
-                      👁️ View Details
-                    </button>
-                    <button type="button" class="portal-dropdown-item copy-class-id" data-id="${escapeHTML(item.id)}">
-                      📋 Copy Class ID
-                    </button>
-                  </div>
+
+                  <button
+                    type="button"
+                    class="action-button copy-class"
+                    data-id="${escapeHTML(item.id)}"
+                  >
+                    Copy ID
+                  </button>
                 </div>
               </td>
             </tr>
-          `;
-        }).join("");
+          `).join("");
 
-        classesBody.querySelectorAll(".action-toggle-btn").forEach(btn => {
-          btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            toggleActionDropdown(btn);
+          classesBody.querySelectorAll(".view-class").forEach(button => {
+            button.addEventListener("click", () => {
+              const item = classes.find(
+                record => String(record.id) === button.dataset.id
+              );
+
+              if (!item) return;
+
+              alert(
+                "CLASS DETAILS\n\n" +
+                `Class ID: ${item.id}\n` +
+                `Class Name: ${item.name}\n` +
+                `Grade Level: ${gradeLabel(item.grade_level)}\n` +
+                `Date Created: ${formatDate(item.created_at)}`
+              );
+            });
           });
-        });
 
-        classesBody.querySelectorAll(".view-class").forEach(button => {
-          button.addEventListener("click", () => {
-            const item = filtered[button.dataset.index];
-            const year = academicYears.find(
-              entry => String(entry.id) === String(item.academic_year_id)
-            );
-            alert(`--- Class Details ---\nClass ID: ${item.id}\nClass Name: ${item.name}\nGrade Level: ${item.grade_level}\nAcademic Year: ${year?.name || 'N/A'}\nStatus: ${item.status || 'N/A'}`);
+          classesBody.querySelectorAll(".copy-class").forEach(button => {
+            button.addEventListener("click", async () => {
+              const id = button.dataset.id;
+              if (!id) return;
+
+              try {
+                await navigator.clipboard.writeText(id);
+                button.textContent = "Copied!";
+              } catch (error) {
+                console.error("Copy class ID failed:", error);
+                window.prompt("Copy this Class ID:", id);
+              }
+            });
           });
-        });
+        }
 
-        classesBody.querySelectorAll(".copy-class-id").forEach(button => {
-          button.addEventListener("click", () => {
-            const id = button.dataset.id;
-            if (id) {
-              navigator.clipboard.writeText(id);
-              alert(`Copied Class ID: ${id}`);
-            }
-          });
-        });
-      }
+        async function loadClasses() {
+          tableMessage.textContent = "Loading classes...";
 
-      async function loadClasses() {
-        tableMessage.textContent = "Loading classes...";
-        classesBody.innerHTML =
-          '<tr><td colspan="6" class="loading-cell">Loading classes...</td></tr>';
-
-        const { data, error } = await supabase
-          .from("classes")
-          .select("id, name, grade_level, academic_year_id, status")
-          .order("name", { ascending: true });
-
-        if (error) {
-          console.error("Classes loading error:", error);
-          classes = [];
           classesBody.innerHTML = `
             <tr>
-              <td colspan="6" class="empty-state-cell">
-                Unable to load classes. Check the classes table columns
-                and Supabase access policies.
+              <td colspan="5" class="loading-cell">
+                Loading classes...
               </td>
             </tr>
           `;
-          tableMessage.textContent = "Class records could not be loaded.";
-          return;
+
+          try {
+            const { data, error } = await supabase
+              .from("classes")
+              .select("id, name, grade_level, created_at")
+              .order("grade_level", { ascending: true })
+              .order("name", { ascending: true });
+
+            if (error) throw error;
+
+            classes = data || [];
+
+            tableMessage.textContent =
+              `${classes.length} class record(s) loaded.`;
+
+            renderClasses();
+          } catch (error) {
+            console.error("Classes loading error:", error);
+
+            classes = [];
+
+            classesBody.innerHTML = `
+              <tr>
+                <td colspan="5" class="empty-state-cell">
+                  Could not load classes. Check the browser console
+                  and the Supabase SELECT policy for the classes table.
+                </td>
+              </tr>
+            `;
+
+            tableMessage.textContent = "Class records could not be loaded.";
+          }
         }
 
-        classes = data || [];
-        tableMessage.textContent = `${classes.length} class record(s) loaded.`;
-        renderClasses();
-      }
+        form.addEventListener("submit", async event => {
+          event.preventDefault();
 
-      form.addEventListener("submit", async event => {
-        event.preventDefault();
-        const name = document.getElementById("className").value.trim();
-        const gradeLevel = document.getElementById("gradeLevel").value;
-        const academicYearId = academicYearSelect.value;
-        const status = document.getElementById("classStatus").value;
+          const name =
+            document.getElementById("className").value.trim();
 
-        if (!name || !gradeLevel || !academicYearId || !status) {
-          formMessage.textContent = "Please complete all fields.";
-          return;
-        }
+          const gradeLevel =
+            Number(document.getElementById("gradeLevel").value);
 
-        saveButton.disabled = true;
-        formMessage.textContent = "Saving class...";
+          if (!name || !Number.isInteger(gradeLevel) ||
+              gradeLevel < 4 || gradeLevel > 12) {
+            showFormMessage(
+              "Enter a class name and select a grade from 4 to 12.",
+              "error"
+            );
+            return;
+          }
 
-        const { error } = await supabase
-          .from("classes")
-          .insert({
-            name,
-            grade_level: gradeLevel,
-            academic_year_id: academicYearId,
-            status
-          });
+          saveButton.disabled = true;
+          showFormMessage("Saving class...");
 
-        saveButton.disabled = false;
+          try {
+            const { data, error } = await supabase
+              .from("classes")
+              .insert({
+                name,
+                grade_level: gradeLevel
+              })
+              .select("id, name, grade_level, created_at")
+              .single();
 
-        if (error) {
-          console.error("Class save error:", error);
-          formMessage.textContent =
-            "Could not save the class. Check your database columns and insert permissions.";
-          return;
-        }
+            if (error) throw error;
 
-        form.reset();
-        document.getElementById("classStatus").value = "active";
-        formMessage.textContent = "Class saved successfully.";
-        await loadClasses();
-      });
+            form.reset();
 
-      searchInput.addEventListener("input", renderClasses);
+            showFormMessage("Class saved successfully.", "success");
 
-      document.getElementById("refreshClasses")
-        .addEventListener("click", async () => {
-          await loadAcademicYears();
-          await loadClasses();
+            await loadClasses();
+
+            if (data) {
+              tableMessage.textContent =
+                "Class created successfully.";
+            }
+          } catch (error) {
+            console.error("Class save error:", error);
+
+            showFormMessage(
+              "Could not save the class. Check the browser console " +
+              "and the Supabase INSERT policy for the classes table.",
+              "error"
+            );
+          } finally {
+            saveButton.disabled = false;
+          }
         });
 
-      await loadAcademicYears();
-      await loadClasses();
+        searchInput.addEventListener("input", renderClasses);
+
+        document
+          .getElementById("refreshClasses")
+          .addEventListener("click", loadClasses);
+
+        await loadClasses();
+      }
     }
   </script>
 </body>
