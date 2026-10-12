@@ -232,7 +232,6 @@
       font-size: 24px;
     }
 
-    /* Table Chart Layout */
     .table-container {
       width: 100%;
       overflow-x: auto;
@@ -282,7 +281,6 @@
     .late { background: #FEF3C7; color: #92400E; }
     .excused { background: #DBEAFE; color: #1D4ED8; }
 
-    /* Dropdown Action System */
     .portal-action-wrapper {
       position: relative;
       display: flex;
@@ -440,24 +438,24 @@
           <h1 id="welcomeTitle">My Attendance Records</h1>
           <p>
             Review your school attendance history, including days present,
-            absences, lateness, and excused absences when those records are available.
+            absences, lateness, and excused absences synchronized from school records.
           </p>
         </div>
 
         <section class="summary-grid">
           <div class="summary-card">
             <span>Days Present</span>
-            <strong id="presentCount">—</strong>
+            <strong id="presentCount">0</strong>
           </div>
 
           <div class="summary-card">
             <span>Days Absent</span>
-            <strong id="absentCount">—</strong>
+            <strong id="absentCount">0</strong>
           </div>
 
           <div class="summary-card">
             <span>Attendance Rate</span>
-            <strong id="attendanceRate">—</strong>
+            <strong id="attendanceRate">0%</strong>
           </div>
         </section>
 
@@ -472,7 +470,7 @@
             <div class="field">
               <label for="academicYear">Academic Year</label>
               <select id="academicYear">
-                <option value="">Academic years will load from school records</option>
+                <option value="">All academic years</option>
               </select>
             </div>
 
@@ -497,7 +495,7 @@
           </div>
 
           <div class="notice">
-            Attendance summaries are calculated from verified school records. Dashes above indicate that no attendance totals have been loaded yet.
+            Attendance summaries are calculated automatically from verified school database logs.
           </div>
         </section>
 
@@ -525,8 +523,8 @@
                 <tr>
                   <td colspan="4" class="empty-state-cell">
                     <div style="font-size:28px; margin-bottom:8px;">📅</div>
-                    <strong style="color:#063B7A; display:block; margin-bottom:4px;">No attendance records loaded</strong>
-                    <span>Attendance records have not been loaded into this page yet. Secure database connection required.</span>
+                    <strong style="color:#063B7A; display:block; margin-bottom:4px;">Loading attendance records...</strong>
+                    <span>Retrieving attendance history from database...</span>
                   </td>
                 </tr>
               </tbody>
@@ -537,19 +535,21 @@
         <div class="footer">
           GRACAIS E-Portal · Academic Information System
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   </div>
 
   <script type="module">
     import {
       requireUser,
       logout,
-      esc
+      esc,
+      getAttendanceRecords,
+      getAcademicYears
     } from "../assets/app.js";
 
     const ALLOWED_ROLES = ["student"];
-    let attendanceRecords = [];
+    let allAttendanceRecords = [];
 
     const sidebar = document.getElementById("sidebar");
     const menuButton = document.getElementById("menuButton");
@@ -586,14 +586,48 @@
       }
     });
 
-    function renderAttendance(records) {
+    function updateSummaryStats(records) {
+      let present = 0;
+      let absent = 0;
+
+      records.forEach(rec => {
+        const status = (rec.status || rec.attendance_status || "").toLowerCase();
+        if (status === "present") present++;
+        else if (status === "absent") absent++;
+      });
+
+      const total = records.length;
+      const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+
+      document.getElementById("presentCount").textContent = present;
+      document.getElementById("absentCount").textContent = absent;
+      document.getElementById("attendanceRate").textContent = rate + "%";
+    }
+
+    function renderAttendance() {
       const tbody = document.getElementById("attendanceRows");
-      const status = document.getElementById("attendanceStatus");
-      if (!tbody || !status) return;
+      const statusElement = document.getElementById("attendanceStatus");
+      const selectedYear = document.getElementById("academicYear").value;
+      const selectedMonth = document.getElementById("month").value;
 
-      status.textContent = `${records.length} record${records.length === 1 ? "" : "s"} shown`;
+      if (!tbody || !statusElement) return;
 
-      if (!records.length) {
+      const filtered = allAttendanceRecords.filter(record => {
+        const dateStr = record.date || record.attendance_date || "";
+        const recordDate = new Date(dateStr);
+        const recordYear = record.academic_year_id || record.year || "";
+        const recordMonth = !isNaN(recordDate.getTime()) ? recordDate.getMonth() + 1 : null;
+
+        const matchesYear = !selectedYear || String(recordYear) === String(selectedYear);
+        const matchesMonth = !selectedMonth || (recordMonth && String(recordMonth) === String(selectedMonth));
+
+        return matchesYear && matchesMonth;
+      });
+
+      statusElement.textContent = `${filtered.length} record${filtered.length === 1 ? "" : "s"} shown`;
+      updateSummaryStats(filtered);
+
+      if (!filtered.length) {
         tbody.innerHTML = `
           <tr>
             <td colspan="4" class="empty-state-cell">
@@ -606,7 +640,7 @@
         return;
       }
 
-      tbody.innerHTML = records.map((record, index) => {
+      tbody.innerHTML = filtered.map((record, index) => {
         const dateVal = record.date || record.attendance_date || "—";
         const statusVal = record.status || record.attendance_status || "Present";
         const remarksVal = record.remarks || record.note || "—";
@@ -649,7 +683,7 @@
 
       tbody.querySelectorAll(".inspect-attendance-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-          const rec = records[btn.dataset.index];
+          const rec = filtered[btn.dataset.index];
           alert(`--- Attendance Record ---\nDate: ${rec.date || rec.attendance_date || 'N/A'}\nStatus: ${rec.status || rec.attendance_status || 'Present'}\nRemarks: ${rec.remarks || rec.note || 'None'}`);
         });
       });
@@ -665,7 +699,6 @@
 
     async function initializeAttendancePage() {
       const result = await requireUser(ALLOWED_ROLES);
-
       if (!result) return;
 
       const profile = result.profile || {};
@@ -679,7 +712,28 @@
           "Attendance — " + esc(studentName);
       }
 
-      renderAttendance(attendanceRecords);
+      // Load academic years and records from backend
+      try {
+        if (typeof getAcademicYears === "function") {
+          const years = await getAcademicYears();
+          const yearSelect = document.getElementById("academicYear");
+          if (years && years.length) {
+            yearSelect.innerHTML = '<option value="">All academic years</option>' + 
+              years.map(y => `<option value="${y.id}">${esc(y.name || y.year)}</option>`).join("");
+          }
+        }
+
+        if (typeof getAttendanceRecords === "function") {
+          allAttendanceRecords = await getAttendanceRecords(profile.id || result.user.id);
+        }
+      } catch (err) {
+        console.error("Error loading attendance data:", err);
+      }
+
+      renderAttendance();
+
+      document.getElementById("academicYear").addEventListener("change", renderAttendance);
+      document.getElementById("month").addEventListener("change", renderAttendance);
     }
 
     initializeAttendancePage();
