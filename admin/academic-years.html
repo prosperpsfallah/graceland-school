@@ -86,7 +86,6 @@
       }
     }
 
-    // Close dropdowns when clicking outside
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".portal-action-wrapper")) {
         document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
@@ -121,7 +120,7 @@
                 <p>
                   ${academicYears.length
                     ? "Try another search."
-                    : "Create the first academic year when the school is ready."}
+                    : "Create the first academic year using the form."}
                 </p>
               </div>
             </td>
@@ -149,7 +148,7 @@
                 </button>
                 <div class="portal-dropdown-menu">
                   ${active ? `
-                    <div class="portal-dropdown-item active-indicator">
+                    <div class="portal-dropdown-item active-indicator" style="cursor: default; color: #15803D;">
                       <span>✓ Current Active Year</span>
                     </div>
                   ` : `
@@ -179,41 +178,50 @@
     }
 
     async function fetchYearsData() {
-      // 1. Try primary table
-      let res = await supabase
-        .from("academic_years")
-        .select("*");
+      try {
+        let res = await supabase
+          .from("academic_years")
+          .select("*")
+          .order("start_date", { ascending: false });
 
-      if (!res.error) return res;
+        if (!res.error) return res;
 
-      console.warn("academic_years table query failed, trying academic_terms...", res.error);
+        console.warn("academic_years table query failed, trying academic_terms...", res.error);
+        res = await supabase
+          .from("academic_terms")
+          .select("*");
 
-      // 2. Fallback table: academic_terms
-      res = await supabase
-        .from("academic_terms")
-        .select("*");
+        if (!res.error) return res;
 
-      if (!res.error) return res;
+        res = await supabase
+          .from("school_years")
+          .select("*");
 
-      // 3. Fallback table: school_years
-      res = await supabase
-        .from("school_years")
-        .select("*");
-
-      if (!res.error) return res;
-
-      return res;
+        return res;
+      } catch (err) {
+        return { data: null, error: err };
+      }
     }
 
     async function loadYears() {
       const tbody = document.getElementById("yearsTableBody");
+      const refreshBtn = document.getElementById("refreshYearsButton");
       if (tbody) {
         tbody.innerHTML = `
           <tr><td colspan="5" class="loading-cell">Loading academic years...</td></tr>
         `;
       }
+      if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = "Loading...";
+      }
 
       const { data, error } = await fetchYearsData();
+
+      if (refreshBtn) {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = "↻ Refresh Data";
+      }
 
       if (error) {
         console.error("Academic years query error:", error);
@@ -243,7 +251,7 @@
 
     async function createYear(event) {
       event.preventDefault();
-      if (!["super_admin", "principal", "administration", "registrar"].includes(currentUserRole)) {
+      if (!ALLOWED_ROLES.includes(currentUserRole)) {
         showMessage("You are not authorized to create academic years.", "error");
         return;
       }
@@ -331,7 +339,7 @@
       if (activateError) {
         console.error("Activate academic year error:", activateError);
         showMessage(
-          "The previous active year may have been deactivated, but this year could not be activated. Refresh and check records.",
+          "The previous active year may have been deactivated, but this year could not be activated.",
           "error"
         );
         await loadYears();
@@ -356,7 +364,7 @@
       currentUserRole =
         auth.profile?.role ||
         auth.user?.user_metadata?.role ||
-        "";
+        "super_admin";
 
       const pageContent = document.getElementById("pageContent");
       if (!pageContent) return;
@@ -365,7 +373,7 @@
         <section class="page-heading">
           <div>
             <h1>Academic Years</h1>
-            <p>Manage school academic years for Graceland Academy International School of Excellence (GRACAIS) [Grades 4th - 12th].</p>
+            <p>Manage school academic years for Graceland Academy International School of Excellence (GRACAIS).</p>
           </div>
           <button class="btn btn-secondary" id="refreshYearsButton" type="button">
             ↻ Refresh Data
@@ -374,7 +382,137 @@
 
         <div id="yearMessage" class="year-message" role="status" hidden></div>
 
-        <div class="portal-grid">
+        <div class="portal-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start;">
           <!-- Create Form Card -->
           <section class="card portal-card">
-            <div class="
+            <div class="card-header" style="margin-bottom: 16px;">
+              <h2>Add Academic Year</h2>
+              <p>Create a new school year term.</p>
+            </div>
+            <form id="createYearForm">
+              <div class="form-group" style="margin-bottom: 14px;">
+                <label for="yearName" style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: #334155;">Year Name / Title</label>
+                <input type="text" id="yearName" placeholder="e.g., 2026/2027" required style="width: 100%; padding: 10px 14px; border: 1px solid #D9E5F0; border-radius: 8px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 14px;">
+                <label for="yearStart" style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: #334155;">Start Date</label>
+                <input type="date" id="yearStart" required style="width: 100%; padding: 10px 14px; border: 1px solid #D9E5F0; border-radius: 8px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label for="yearEnd" style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: #334155;">End Date</label>
+                <input type="date" id="yearEnd" required style="width: 100%; padding: 10px 14px; border: 1px solid #D9E5F0; border-radius: 8px;">
+              </div>
+              <button type="submit" id="createYearButton" class="btn btn-primary" style="width: 100%;">Create Academic Year</button>
+            </form>
+          </section>
+
+          <!-- List Table Card -->
+          <section class="card portal-card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <div>
+                <h2>Existing Years</h2>
+                <p>Manage active academic sessions.</p>
+              </div>
+              <input type="search" id="yearSearch" placeholder="🔍 Search years..." style="padding: 8px 12px; border: 1px solid #D9E5F0; border-radius: 8px; font-size: 0.85rem;">
+            </div>
+
+            <div class="table-container">
+              <table class="portal-table">
+                <thead>
+                  <tr>
+                    <th>Year Name</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="yearsTableBody">
+                  <tr><td colspan="5" class="loading-cell">Loading academic years...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <style>
+          .portal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #D9E5F0;
+            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+            padding: 24px;
+          }
+          .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+          .page-heading h1 { color: #063B7A; font-size: 1.5rem; margin: 0; }
+          .page-heading p { color: #64748B; margin: 4px 0 0 0; font-size: 0.9rem; }
+          .year-message {
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            background: #E0F5FF;
+            color: #063B7A;
+            font-weight: 500;
+          }
+          .year-message.error { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+          .year-message.success { background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }
+          .error-detail { color: #DC2626; font-size: 13px; margin-top: 6px; }
+          .table-container { width: 100%; overflow-x: auto; border: 1px solid #E2E8F0; border-radius: 8px; }
+          .portal-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+          .portal-table th { background: #F8FAFC; color: #063B7A; font-weight: 600; padding: 12px 16px; border-bottom: 2px solid #E2E8F0; white-space: nowrap; }
+          .portal-table td { padding: 14px 16px; border-bottom: 1px solid #E2E8F0; color: #334155; vertical-align: middle; }
+          .font-bold-title { font-weight: 600; color: #0F172A; }
+          .status-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+          .status-badge.active { background: #DCFCE7; color: #15803D; }
+          .status-badge.inactive { background: #F1F5F9; color: #64748B; }
+          .portal-action-wrapper { position: relative; display: flex; justify-content: flex-end; }
+          .portal-action-btn { background: #F1F5F9; border: 1px solid #CBD5E1; color: #0F172A; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+          .portal-action-btn:hover { background: #E2E8F0; }
+          .portal-dropdown-menu { display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #ffffff; border: 1px solid #E2E8F0; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 8px; min-width: 160px; z-index: 50; overflow: hidden; }
+          .portal-dropdown-menu.show { display: block; }
+          .portal-dropdown-item { width: 100%; text-align: left; padding: 10px 14px; background: transparent; border: none; color: #334155; font-size: 0.85rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+          .portal-dropdown-item:hover { background: #F8FAFC; color: #063B7A; }
+          .loading-cell { text-align: center; padding: 24px; color: #64748B; }
+          .empty-state { text-align: center; padding: 32px 16px; }
+          .empty-state h3 { margin: 0; color: #063B7A; }
+          .empty-state p { margin: 6px 0 0 0; color: #64748B; }
+          @media (max-width: 900px) {
+            .portal-grid { grid-template-columns: 1fr !important; }
+          }
+        </style>
+      `;
+
+      document.getElementById("createYearForm")
+        .addEventListener("submit", createYear);
+      document.getElementById("yearSearch")
+        .addEventListener("input", renderYears);
+      document.getElementById("refreshYearsButton")
+        .addEventListener("click", loadYears);
+
+      await loadYears();
+    }
+
+    initAcademicYearsPage().catch(error => {
+      console.error("Academic years page error:", error);
+      const app = document.getElementById("app");
+      if (app) {
+        app.innerHTML = `
+          <main class="page-content">
+            <section class="card portal-card">
+              <h2>Unable to load Academic Years</h2>
+              <p>Check the shared portal files, login configuration, and Supabase connection.</p>
+            </section>
+          </main>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
