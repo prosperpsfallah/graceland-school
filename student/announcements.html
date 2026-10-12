@@ -159,7 +159,6 @@
       box-shadow: 0 0 0 3px rgba(6, 59, 122, 0.1);
     }
 
-    /* Table Chart Layout */
     .table-container {
       width: 100%;
       overflow-x: auto;
@@ -207,7 +206,6 @@
       text-transform: capitalize;
     }
 
-    /* Dropdown Action System */
     .portal-action-wrapper {
       position: relative;
       display: flex;
@@ -420,8 +418,8 @@
                 <tr>
                   <td colspan="4" class="empty-state-cell">
                     <div style="font-size:28px; margin-bottom:8px;">📢</div>
-                    <strong style="color:#063B7A; display:block; margin-bottom:4px;">No announcements loaded</strong>
-                    <span>Announcements have not been retrieved from the database yet. Published notices will appear here once connected.</span>
+                    <strong style="color:#063B7A; display:block; margin-bottom:4px;">Loading announcements...</strong>
+                    <span>Retrieving official communications from database...</span>
                   </td>
                 </tr>
               </tbody>
@@ -439,7 +437,8 @@
   <script type="module">
     import {
       requireUser,
-      logout
+      logout,
+      getAnnouncements // Synchronizes data from backend/app.js
     } from "../assets/app.js";
 
     const ALLOWED_ROLES = ["student"];
@@ -525,9 +524,8 @@
       tbody.innerHTML = filtered.map((item, index) => {
         const title = item.title || item.headline || "Untitled Announcement";
         const cat = item.category || item.type || "General";
-        const date = item.created_at || item.date || item.published_at
-          ? new Date(item.created_at || item.date || item.published_at).toLocaleDateString()
-          : "—";
+        const rawDate = item.created_at || item.date || item.published_at;
+        const date = rawDate ? new Date(rawDate).toLocaleDateString() : "—";
 
         return `
           <tr>
@@ -593,6 +591,17 @@
         document.getElementById("welcomeTitle").textContent =
           "Announcements for " + fullName;
       }
+
+      // Load records dynamically from app assets
+      try {
+        if (typeof getAnnouncements === "function") {
+          publishedAnnouncements = await getAnnouncements();
+        }
+      } catch (err) {
+        console.error("Error fetching announcements:", err);
+      }
+
+      renderAnnouncements();
 
       document.getElementById("categoryFilter").addEventListener("change", renderAnnouncements);
       document.getElementById("searchInput").addEventListener("input", renderAnnouncements);
