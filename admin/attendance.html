@@ -49,11 +49,12 @@
       })[character]);
     }
 
-    function formatDate(value) {
-      if (!value) return "—";
-      const date = new Date(value + "T00:00:00");
+    function extractRecordDate(record) {
+      const rawDate = record.date || record.attendance_date || record.created_at || record.timestamp || "";
+      if (!rawDate) return "—";
+      const date = new Date(rawDate);
       return Number.isNaN(date.getTime())
-        ? escapeHTML(value)
+        ? escapeHTML(rawDate)
         : date.toLocaleDateString(undefined, {
             year: "numeric",
             month: "short",
@@ -72,11 +73,11 @@
     }
 
     function getClassName(record) {
-      return record.class_name || record.classes?.name || "—";
+      return record.class_name || record.classes?.name || record.class_id || "—";
     }
 
     function getStatus(record) {
-      return record.status || record.attendance_status || "—";
+      return record.status || record.attendance_status || record.state || "—";
     }
 
     function renderAttendance() {
@@ -90,8 +91,8 @@
 
       const filtered = attendanceRecords.filter(record => {
         const studentName = getStudentName(record).toLowerCase();
-        const studentId = String(record.student_id || "").toLowerCase();
-        const className = getClassName(record).toLowerCase();
+        const studentId = String(record.student_id || record.id || "").toLowerCase();
+        const className = String(getClassName(record)).toLowerCase();
         const status = String(getStatus(record)).toLowerCase();
         const matchesSearch = [
           studentName,
@@ -99,8 +100,10 @@
           className,
           status
         ].some(value => value.includes(searchTerm));
+        
+        const recordDateStr = String(record.date || record.attendance_date || record.created_at || "");
         const matchesDate =
-          !selectedDate || record.date === selectedDate;
+          !selectedDate || recordDateStr.includes(selectedDate);
         return matchesSearch && matchesDate;
       });
 
@@ -116,7 +119,7 @@
             <td colspan="6">
               <div class="empty-state">
                 <h3>No attendance records found</h3>
-                <p>No records match your filters.</p>
+                <p>${attendanceRecords.length ? "No records match your filters." : "No attendance entries found in the database table."}</p>
               </div>
             </td>
           </tr>
@@ -134,10 +137,10 @@
 
         return `
           <tr>
-            <td class="font-bold-title">${escapeHTML(record.student_id || "—")}</td>
+            <td class="font-bold-title">${escapeHTML(record.student_id || record.id || "—")}</td>
             <td>${escapeHTML(getStudentName(record))}</td>
             <td>${escapeHTML(getClassName(record))}</td>
-            <td>${escapeHTML(formatDate(record.date))}</td>
+            <td>${escapeHTML(extractRecordDate(record))}</td>
             <td>
               <span class="status-badge ${badgeClass}">
                 ${escapeHTML(statusVal)}
@@ -155,17 +158,17 @@
       tbody.querySelectorAll(".view-attendance").forEach(button => {
         button.addEventListener("click", () => {
           const record = filtered[button.dataset.index];
-          alert(`Attendance Details:\nStudent: ${getStudentName(record)}\nDate: ${record.date}\nStatus: ${getStatus(record)}`);
+          alert(`Attendance Details:\nStudent: ${getStudentName(record)}\nDate: ${extractRecordDate(record)}\nStatus: ${getStatus(record)}`);
         });
       });
     }
 
     async function fetchAttendanceData() {
       try {
+        // Query attendance table without explicit column ordering to avoid missing column errors
         return await supabase
           .from("attendance")
-          .select("*")
-          .order("date", { ascending: false });
+          .select("*");
       } catch (err) {
         return { data: null, error: err };
       }
@@ -174,7 +177,6 @@
     async function loadAttendance() {
       const tbody = document.getElementById("attendanceTableBody");
       const refreshButton = document.getElementById("refreshAttendance");
-      const message = document.getElementById("attendanceMessage");
 
       if (tbody) {
         tbody.innerHTML = `<tr><td colspan="6" class="loading-cell">Loading attendance records...</td></tr>`;
