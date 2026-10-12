@@ -4,30 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#063B7A">
-  <meta name="description" content="GRACAIS Student Directory">
-  <title>Student Directory | GRACAIS</title>
-  <link rel="icon" type="image/png" href="../0D4244B7-EEBA-4E94-8009-2C2063D1E070.png">
-  <link rel="stylesheet" href="../assets/style.css">
+  <meta name="description" content="GRACAIS Student Portal">
+  <title>Student Dashboard | GRACAIS</title>
+  <link rel="icon" type="image/png" href="./logo.png">
+  <link rel="stylesheet" href="./assets/style.css">
 </head>
 <body>
   <div id="portalLayout"></div>
   <script type="module">
-    import { setupLogout, esc } from "../assets/app.js";
-    import { initLayout, requireUser } from "../assets/layout.js";
-    import { supabase } from "../assets/supabase.js";
+    import { setupLogout, esc } from "./assets/app.js";
+    import { initLayout, requireUser } from "./assets/layout.js";
+    import { supabase } from "./assets/supabase.js";
 
-    const ALLOWED_ROLES = [
-      "super_admin",
-      "principal",
-      "administration",
-      "registrar",
-      "teacher"
-    ];
+    const ALLOWED_ROLES = ["student"];
 
     initLayout(
-      "super_admin",
-      "students.html",
-      "Student Directory"
+      "student",
+      "student-dashboard.html",
+      "Student Dashboard"
     );
 
     setupLogout();
@@ -38,42 +32,18 @@
 
       if (content) {
         content.innerHTML = `
-          <!-- Header Section -->
           <section class="card portal-card">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
-              <div>
-                <p style="color:#063B7A; font-weight:700; font-size:12px; letter-spacing:1px; text-transform:uppercase; margin:0 0 4px 0;">
-                  GRACAIS DIRECTORY
-                </p>
-                <h2 style="margin:0; color:#063B7A; font-size:24px;">Student Records</h2>
-                <p style="margin:4px 0 0 0; color:#64748B; font-size:14px;">
-                  View and manage all registered student profiles and school IDs.
-                </p>
-              </div>
-              <div>
-                <input type="text" id="searchStudent" placeholder="Search by name or ID..." style="padding: 10px; width: 250px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 14px;">
-              </div>
-            </div>
+            <h2 style="margin:0 0 8px 0; color:#063B7A;">Welcome to Your Student Portal</h2>
+            <p style="margin:0; color:#64748B; font-size:14px;">
+              View your academic records, assignments, and school details below.
+            </p>
           </section>
 
-          <!-- Student Table Section -->
-          <section class="card portal-card" style="margin-top:22px; overflow-x:auto;">
-            <table style="width:100%; border-collapse: collapse; text-align: left;">
-              <thead>
-                <tr style="border-bottom: 2px solid #E2E8F0; color: #475569; font-size: 13px; text-transform: uppercase;">
-                  <th style="padding: 12px;">School ID</th>
-                  <th style="padding: 12px;">Full Name</th>
-                  <th style="padding: 12px;">Email</th>
-                  <th style="padding: 12px;">Grade Level</th>
-                  <th style="padding: 12px;">Status</th>
-                </tr>
-              </thead>
-              <tbody id="studentTableBody">
-                <tr>
-                  <td colspan="5" style="padding: 24px; text-align: center; color: #64748B;">Loading students...</td>
-                </tr>
-              </tbody>
-            </table>
+          <section class="card portal-card" style="margin-top:22px;">
+            <h3 style="margin-top:0; color:#063B7A;">My Profile Information</h3>
+            <div id="studentProfileInfo" style="color:#334155; font-size:14px; line-height:1.8;">
+              Loading profile details...
+            </div>
           </section>
 
           <style>
@@ -84,76 +54,28 @@
               box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
               padding: 24px;
             }
-            .status-badge {
-              display: inline-flex;
-              align-items: center;
-              padding: 4px 10px;
-              border-radius: 12px;
-              font-size: 0.75rem;
-              font-weight: 600;
-            }
-            .status-badge.active {
-              background: #DCFCE7;
-              color: #15803D;
-            }
           </style>
         `;
 
-        let allStudents = [];
-
-        async function fetchStudents() {
-          const tableBody = document.getElementById("studentTableBody");
-          
-          // Query user_profiles where role is student
-          const { data, error } = await supabase
+        try {
+          const { data: profile } = await supabase
             .from("user_profiles")
             .select("*")
-            .eq("role", "student")
-            .order("first_name", { ascending: true });
+            .eq("id", auth.user.id)
+            .single();
 
-          if (error) {
-            console.error("Error fetching students:", error);
-            tableBody.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: #EF4444;">Failed to load student records.</td></tr>`;
-            return;
+          if (profile) {
+            document.getElementById("studentProfileInfo").innerHTML = `
+              <p><strong>Name:</strong> ${esc(profile.first_name || "")} ${esc(profile.last_name || "")}</p>
+              <p><strong>School ID:</strong> ${esc(profile.school_id || "N/A")}</p>
+              <p><strong>Email:</strong> ${esc(profile.email || auth.user.email)}</p>
+              <p><strong>Grade Level:</strong> Grade ${esc(profile.grade_level || "4")}</p>
+              <p><strong>Status:</strong> <span style="color:#15803D; font-weight:600;">${esc(profile.status || "Active")}</span></p>
+            `;
           }
-
-          allStudents = data || [];
-          renderStudents(allStudents);
+        } catch (err) {
+          console.error("Error loading profile:", err);
         }
-
-        function renderStudents(students) {
-          const tableBody = document.getElementById("studentTableBody");
-
-          if (students.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: #64748B;">No students found.</td></tr>`;
-            return;
-          }
-
-          tableBody.innerHTML = students.map(student => `
-            <tr style="border-bottom: 1px solid #F1F5F9; font-size: 14px; color: #1E293B;">
-              <td style="padding: 12px; font-weight: 600; color: #063B7A;">${esc(student.school_id || "N/A")}</td>
-              <td style="padding: 12px;">${esc(student.first_name)} ${esc(student.last_name)}</td>
-              <td style="padding: 12px; color: #64748B;">${esc(student.email || "—")}</td>
-              <td style="padding: 12px;">Grade ${esc(student.grade_level || "4")}</td>
-              <td style="padding: 12px;">
-                <span class="status-badge active">${esc(student.status || "Active")}</span>
-              </td>
-            </tr>
-          `).join("");
-        }
-
-        // Live search functionality
-        document.getElementById("searchStudent").addEventListener("input", (e) => {
-          const query = e.target.value.toLowerCase();
-          const filtered = allStudents.filter(s => 
-            `${s.first_name} ${s.last_name}`.toLowerCase().includes(query) ||
-            (s.school_id && s.school_id.toLowerCase().includes(query)) ||
-            (s.email && s.email.toLowerCase().includes(query))
-          );
-          renderStudents(filtered);
-        });
-
-        await fetchStudents();
       }
     }
   </script>
