@@ -10,7 +10,6 @@
   <link rel="apple-touch-icon" href="./logo.png">
   <link rel="manifest" href="./manifest.json">
   <link rel="stylesheet" href="./assets/style.css">
-
   <style>
     :root {
       --deep-blue: #063B7A;
@@ -20,15 +19,12 @@
       --sky-blue-light: #E0F5FF;
       --light-bg: #F4F9FD;
     }
-
     * {
       box-sizing: border-box;
     }
-
     html {
       min-height: 100%;
     }
-
     body.login-page {
       min-height: 100vh;
       margin: 0;
@@ -56,13 +52,11 @@
           #0B5CAD 100%
         );
     }
-
     .login-container {
       width: 100%;
       max-width: 460px;
       margin: auto;
     }
-
     .login-card {
       width: 100%;
       padding: 38px 34px 24px;
@@ -72,12 +66,10 @@
       border-radius: 22px;
       box-shadow: 0 24px 70px rgba(0, 15, 40, 0.3);
     }
-
     .school-header {
       margin-bottom: 30px;
       text-align: center;
     }
-
     .school-logo {
       display: block;
       width: 94px;
@@ -86,7 +78,6 @@
       object-fit: contain;
       border-radius: 16px;
     }
-
     .school-header h1 {
       margin: 0 0 8px;
       color: var(--deep-blue);
@@ -94,7 +85,6 @@
       font-weight: 800;
       letter-spacing: 3px;
     }
-
     .school-name {
       max-width: 330px;
       margin: 0 auto 14px;
@@ -103,7 +93,6 @@
       font-weight: 600;
       line-height: 1.6;
     }
-
     .portal-label {
       display: inline-block;
       margin: 0;
@@ -116,33 +105,27 @@
       font-weight: 800;
       letter-spacing: 1.2px;
     }
-
     .login-heading {
       margin-bottom: 24px;
     }
-
     .login-heading h2 {
       margin: 0 0 8px;
       color: var(--deep-blue-dark);
       font-size: 25px;
       font-weight: 750;
     }
-
     .login-heading p {
       margin: 0;
       color: #718096;
       font-size: 14px;
       line-height: 1.6;
     }
-
     #loginForm {
       width: 100%;
     }
-
     .form-group {
       margin-bottom: 19px;
     }
-
     .form-group label {
       display: block;
       margin-bottom: 8px;
@@ -150,7 +133,6 @@
       font-size: 13px;
       font-weight: 700;
     }
-
     .form-group input {
       display: block;
       width: 100%;
@@ -168,17 +150,14 @@
         box-shadow 0.2s ease,
         background 0.2s ease;
     }
-
     .form-group input::placeholder {
       color: #94A3B8;
     }
-
     .form-group input:focus {
       background: #FFFFFF;
       border-color: var(--sky-blue);
       box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.16);
     }
-
     .login-message {
       min-height: 0;
       margin: 0;
@@ -187,7 +166,6 @@
       line-height: 1.6;
       overflow-wrap: anywhere;
     }
-
     .login-message:not(:empty) {
       margin: 0 0 15px;
       padding: 11px 12px;
@@ -195,7 +173,6 @@
       border: 1px solid #FECACA;
       border-radius: 8px;
     }
-
     .login-button {
       display: block;
       width: 100%;
@@ -220,64 +197,52 @@
         box-shadow 0.2s ease,
         opacity 0.2s ease;
     }
-
     .login-button:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 10px 23px rgba(6, 59, 122, 0.28);
     }
-
     .login-button:focus-visible {
       outline: 3px solid var(--sky-blue);
       outline-offset: 3px;
     }
-
     .login-button:disabled {
       opacity: 0.7;
       cursor: wait;
     }
-
     .login-footer {
       margin-top: 27px;
       padding-top: 18px;
       border-top: 1px solid #E7EEF5;
       text-align: center;
     }
-
     .login-footer p {
       margin: 0;
       color: #8291A5;
       font-size: 11px;
       line-height: 1.6;
     }
-
     @media (max-width: 480px) {
       body.login-page {
         padding: 20px 14px;
       }
-
       .login-card {
         padding: 30px 22px 22px;
         border-radius: 18px;
       }
-
       .school-logo {
         width: 82px;
         height: 82px;
       }
-
       .school-header h1 {
         font-size: 27px;
       }
-
       .school-name {
         font-size: 13px;
       }
-
       .login-heading h2 {
         font-size: 23px;
       }
     }
-
     @media (prefers-reduced-motion: reduce) {
       *,
       *::before,
@@ -288,7 +253,6 @@
     }
   </style>
 </head>
-
 <body class="login-page">
   <main class="login-container">
     <section class="login-card">
@@ -299,23 +263,18 @@
           class="school-logo"
           onerror="this.style.display='none'"
         >
-
         <h1>GRACAIS</h1>
-
         <p class="school-name">
           Graceland Academy International School of Excellence
         </p>
-
         <p class="portal-label">
           ACADEMIC MANAGEMENT PORTAL
         </p>
       </header>
-
       <div class="login-heading">
         <h2>Welcome Back</h2>
         <p>Sign in to access your school portal.</p>
       </div>
-
       <form id="loginForm">
         <div class="form-group">
           <label for="email">Email Address</label>
@@ -328,7 +287,6 @@
             required
           >
         </div>
-
         <div class="form-group">
           <label for="password">Password</label>
           <input
@@ -340,14 +298,12 @@
             required
           >
         </div>
-
         <p
           id="loginMessage"
           class="login-message"
           role="alert"
           aria-live="polite"
         ></p>
-
         <button
           type="submit"
           id="loginButton"
@@ -356,7 +312,6 @@
           Sign In
         </button>
       </form>
-
       <footer class="login-footer">
         <p>
           &copy; <span id="currentYear"></span>
@@ -365,24 +320,20 @@
       </footer>
     </section>
   </main>
-
   <script>
     document.getElementById("currentYear").textContent =
       new Date().getFullYear();
   </script>
-
   <script type="module">
     import {
       supabase,
       supabaseReady
     } from "./assets/supabase.js";
-
     const form = document.getElementById("loginForm");
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
     const message = document.getElementById("loginMessage");
     const button = document.getElementById("loginButton");
-
     const ROLE_DESTINATIONS = {
       super_admin: "/admin/dashboard.html",
       principal: "/admin/dashboard.html",
@@ -390,56 +341,47 @@
       registrar: "/admin/dashboard.html",
       teacher: "/teacher/dashboard.html",
       instructor: "/teacher/dashboard.html",
-      student: "/student-dashboard.html"
+      // Corrected: match the existing student/dashboard.html file.
+      student: "/student/dashboard.html"
     };
-
     function showMessage(text) {
       message.textContent = text;
     }
-
     function normalizeRole(role) {
       return String(role || "")
         .trim()
         .toLowerCase()
         .replace(/[\s-]+/g, "_");
     }
-
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       showMessage("");
-
       if (!supabaseReady || !supabase) {
         showMessage(
           "The Supabase connection is not configured. Check assets/supabase.js."
         );
         return;
       }
-
       const email = emailInput.value.trim();
       const password = passwordInput.value;
-
       button.disabled = true;
       button.textContent = "Signing In...";
-
       try {
         const { data, error } =
           await supabase.auth.signInWithPassword({
             email,
             password
           });
-
         if (error) {
           showMessage(
             error.message || "Sign-in failed. Check your credentials."
           );
           return;
         }
-
         if (!data.user) {
           showMessage("Sign-in did not return a user account.");
           return;
         }
-
         const {
           data: profile,
           error: profileError
@@ -448,7 +390,6 @@
           .select("role, status")
           .eq("id", data.user.id)
           .maybeSingle();
-
         if (profileError) {
           console.error("Profile lookup failed:", {
             message: profileError.message,
@@ -456,7 +397,6 @@
             details: profileError.details,
             hint: profileError.hint
           });
-
           showMessage(
             "Profile error: " +
             profileError.message +
@@ -464,51 +404,37 @@
               ? " (Code: " + profileError.code + ")"
               : "")
           );
-
           return;
         }
-
         if (!profile) {
           await supabase.auth.signOut();
-
           showMessage(
             "Your account has no school profile yet. Contact the school administrator."
           );
-
           return;
         }
-
         const status = String(profile.status || "")
           .trim()
           .toLowerCase();
-
         if (!["active", "approved"].includes(status)) {
           await supabase.auth.signOut();
-
           showMessage(
             "Your school account is not active yet. Contact the school administrator."
           );
-
           return;
         }
-
         const role = normalizeRole(profile.role);
         const destination = ROLE_DESTINATIONS[role];
-
         if (!destination) {
           await supabase.auth.signOut();
-
           showMessage(
             "Your account has an unrecognized school role. Contact the administrator."
           );
-
           return;
         }
-
         window.location.replace(destination);
       } catch (error) {
         console.error("Login error:", error);
-
         showMessage(
           "Unable to complete sign-in. Check your connection and try again."
         );
