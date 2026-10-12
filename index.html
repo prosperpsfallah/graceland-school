@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#063B7A">
   <meta name="description" content="GRACAIS Academic Management Portal">
-  <title>Login | Graceland Academy International School of Excellence</title>
+  <title>Graceland Academy International School of Excellence</title>
   <link rel="icon" type="image/png" href="./logo.png">
   <link rel="apple-touch-icon" href="./logo.png">
   <link rel="manifest" href="./manifest.json">
@@ -25,14 +25,10 @@
       box-sizing: border-box;
     }
 
-    html {
-      min-height: 100%;
-    }
-
-    body.login-page {
+    body {
       min-height: 100vh;
       margin: 0;
-      padding: 28px 16px;
+      padding: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -57,319 +53,80 @@
         );
     }
 
-    .login-container {
+    .landing-card {
       width: 100%;
-      max-width: 460px;
-      margin: auto;
-    }
-
-    .login-card {
-      width: 100%;
-      padding: 38px 34px 24px;
-      overflow: hidden;
+      max-width: 480px;
+      padding: 40px 32px;
       background: #FFFFFF;
-      border: 1px solid rgba(255, 255, 255, 0.8);
       border-radius: 22px;
       box-shadow: 0 24px 70px rgba(0, 15, 40, 0.3);
-    }
-
-    .school-header {
-      margin-bottom: 30px;
       text-align: center;
     }
 
     .school-logo {
       display: block;
-      width: 94px;
-      height: 94px;
+      width: 90px;
+      height: 90px;
       margin: 0 auto 16px;
       object-fit: contain;
       border-radius: 16px;
     }
 
-    .school-header h1 {
+    h1 {
       margin: 0 0 8px;
       color: var(--deep-blue);
-      font-size: 30px;
+      font-size: 26px;
       font-weight: 800;
-      letter-spacing: 3px;
     }
 
-    .school-name {
-      max-width: 330px;
-      margin: 0 auto 14px;
-      color: #40566D;
+    p {
+      margin: 0 0 24px;
+      color: #64748B;
       font-size: 14px;
-      font-weight: 600;
-      line-height: 1.6;
+      line-height: 1.5;
     }
 
-    .portal-label {
+    .btn-primary {
       display: inline-block;
-      margin: 0;
-      padding: 8px 13px;
-      color: var(--deep-blue);
-      background: var(--sky-blue-light);
-      border: 1px solid #B9E8FC;
-      border-radius: 30px;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 1.2px;
-    }
-
-    .login-heading {
-      margin-bottom: 24px;
-    }
-
-    .login-heading h2 {
-      margin: 0 0 8px;
-      color: var(--deep-blue-dark);
-      font-size: 25px;
-      font-weight: 750;
-    }
-
-    .login-heading p {
-      margin: 0;
-      color: #718096;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    #loginForm {
       width: 100%;
-    }
-
-    .form-group {
-      margin-bottom: 19px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      color: #243B53;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .form-group input {
-      display: block;
-      width: 100%;
-      min-height: 49px;
-      padding: 13px 14px;
-      color: #18324D;
-      background: #F8FBFE;
-      border: 1px solid #D6E2EF;
-      border-radius: 10px;
-      outline: none;
-      font-family: inherit;
-      font-size: 14px;
-      transition:
-        border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        background 0.2s ease;
-    }
-
-    .form-group input::placeholder {
-      color: #94A3B8;
-    }
-
-    .form-group input:focus {
-      background: #FFFFFF;
-      border-color: var(--sky-blue);
-      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.16);
-    }
-
-    .login-message {
-      min-height: 0;
-      margin: 0;
-      color: #B42318;
-      font-size: 13px;
-      line-height: 1.6;
-      overflow-wrap: anywhere;
-    }
-
-    .login-message:not(:empty) {
-      margin: 0 0 15px;
-      padding: 11px 12px;
-      background: #FFF1F0;
-      border: 1px solid #FECACA;
-      border-radius: 8px;
-    }
-
-    .login-button {
-      display: block;
-      width: 100%;
-      min-height: 50px;
-      margin-top: 8px;
-      padding: 14px 18px;
+      padding: 14px;
       color: #FFFFFF;
-      background: linear-gradient(
-        110deg,
-        var(--deep-blue),
-        var(--primary-blue)
-      );
+      background: linear-gradient(110deg, var(--deep-blue), var(--primary-blue));
       border: none;
       border-radius: 10px;
-      box-shadow: 0 7px 18px rgba(6, 59, 122, 0.2);
-      cursor: pointer;
-      font-family: inherit;
       font-size: 15px;
       font-weight: 750;
-      transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        opacity 0.2s ease;
+      text-decoration: none;
+      box-shadow: 0 7px 18px rgba(6, 59, 122, 0.2);
+      transition: transform 0.2s ease;
     }
 
-    .login-button:hover:not(:disabled) {
+    .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 23px rgba(6, 59, 122, 0.28);
     }
 
-    .login-button:focus-visible {
-      outline: 3px solid var(--sky-blue);
-      outline-offset: 3px;
-    }
-
-    .login-button:disabled {
-      opacity: 0.7;
-      cursor: wait;
-    }
-
-    .login-footer {
-      margin-top: 27px;
-      padding-top: 18px;
-      border-top: 1px solid #E7EEF5;
-      text-align: center;
-    }
-
-    .login-footer p {
-      margin: 0;
-      color: #8291A5;
-      font-size: 11px;
-      line-height: 1.6;
-    }
-
-    @media (max-width: 480px) {
-      body.login-page {
-        padding: 20px 14px;
-      }
-
-      .login-card {
-        padding: 30px 22px 22px;
-        border-radius: 18px;
-      }
-
-      .school-logo {
-        width: 82px;
-        height: 82px;
-      }
-
-      .school-header h1 {
-        font-size: 27px;
-      }
-
-      .school-name {
-        font-size: 13px;
-      }
-
-      .login-heading h2 {
-        font-size: 23px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        scroll-behavior: auto !important;
-        transition: none !important;
-      }
+    .loading-text {
+      color: #64748B;
+      font-size: 14px;
+      font-weight: 500;
     }
   </style>
 </head>
+<body>
+  <main class="landing-card">
+    <img
+      src="./logo.png"
+      alt="GRACAIS Logo"
+      class="school-logo"
+      onerror="this.style.display='none'"
+    >
+    <h1>GRACAIS E-Portal</h1>
+    <p>Graceland Academy International School of Excellence [Grades 4th - 12th]</p>
 
-<body class="login-page">
-  <main class="login-container">
-    <section class="login-card">
-      <header class="school-header">
-        <img
-          src="./logo.png"
-          alt="GRACAIS School Logo"
-          class="school-logo"
-          onerror="this.style.display='none'"
-        >
-
-        <h1>GRACAIS</h1>
-
-        <p class="school-name">
-          Graceland Academy International School of Excellence
-        </p>
-
-        <p class="portal-label">
-          ACADEMIC MANAGEMENT PORTAL
-        </p>
-      </header>
-
-      <div class="login-heading">
-        <h2>Welcome Back</h2>
-        <p>Sign in to access your school portal.</p>
-      </div>
-
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="email">Email Address</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="Enter your email address"
-            autocomplete="username"
-            required
-          >
-        </div>
-
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Enter your password"
-            autocomplete="current-password"
-            required
-          >
-        </div>
-
-        <p
-          id="loginMessage"
-          class="login-message"
-          role="alert"
-          aria-live="polite"
-        ></p>
-
-        <button
-          type="submit"
-          id="loginButton"
-          class="login-button"
-        >
-          Sign In
-        </button>
-      </form>
-
-      <footer class="login-footer">
-        <p>
-          &copy; <span id="currentYear"></span>
-          GRACAIS. All rights reserved.
-        </p>
-      </footer>
-    </section>
+    <div id="contentArea">
+      <p class="loading-text">Checking portal session...</p>
+    </div>
   </main>
-
-  <script>
-    document.getElementById("currentYear").textContent =
-      new Date().getFullYear();
-  </script>
 
   <script type="module">
     import {
@@ -377,11 +134,7 @@
       supabaseReady
     } from "./assets/supabase.js";
 
-    const form = document.getElementById("loginForm");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const message = document.getElementById("loginMessage");
-    const button = document.getElementById("loginButton");
+    const contentArea = document.getElementById("contentArea");
 
     const ROLE_DESTINATIONS = {
       super_admin: "./admin/dashboard.html",
@@ -390,12 +143,8 @@
       registrar: "./admin/dashboard.html",
       teacher: "./teacher/dashboard.html",
       instructor: "./teacher/dashboard.html",
-      student: "/student-dashboard.html" // Fixed path for absolute root routing on Vercel
+      student: "./student-dashboard.html" // Correct path resolved here
     };
-
-    function showMessage(text) {
-      message.textContent = text;
-    }
 
     function normalizeRole(role) {
       return String(role || "")
@@ -404,91 +153,45 @@
         .replace(/[\s-]+/g, "_");
     }
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      showMessage("");
-
+    async function checkSessionAndRedirect() {
       if (!supabaseReady || !supabase) {
-        showMessage(
-          "The Supabase connection is not configured. Check assets/supabase.js."
-        );
+        contentArea.innerHTML = `
+          <p style="color: #B42318; margin-bottom: 16px;">Supabase client not initialized.</p>
+          <a href="./login.html" class="btn-primary">Go to Login</a>
+        `;
         return;
       }
 
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      button.disabled = true;
-      button.textContent = "Signing In...";
-
       try {
-        const { data, error } =
-          await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-        if (error) {
-          showMessage(
-            error.message || "Sign-in failed. Check your credentials."
-          );
+        if (sessionError || !session) {
+          // No active session, redirect to login page
+          window.location.replace("./login.html");
           return;
         }
 
-        if (!data.user) {
-          showMessage("Sign-in did not return a user account.");
-          return;
-        }
-
-        const {
-          data: profile,
-          error: profileError
-        } = await supabase
+        // Fetch user role profile
+        const { data: profile, error: profileError } = await supabase
           .from("user_profiles")
           .select("role, status")
-          .eq("id", data.user.id)
+          .eq("id", session.user.id)
           .maybeSingle();
 
-        if (profileError) {
-          console.error("Profile lookup failed:", {
-            message: profileError.message,
-            code: profileError.code,
-            details: profileError.details,
-            hint: profileError.hint
-          });
-
-          showMessage(
-            "Profile error: " +
-            profileError.message +
-            (profileError.code
-              ? " (Code: " + profileError.code + ")"
-              : "")
-          );
-
+        if (profileError || !profile) {
+          contentArea.innerHTML = `
+            <p style="color: #B42318; margin-bottom: 16px;">Account profile not found.</p>
+            <a href="./login.html" class="btn-primary">Go to Login</a>
+          `;
           return;
         }
 
-        if (!profile) {
-          await supabase.auth.signOut();
-
-          showMessage(
-            "Your account has no school profile yet. Contact the school administrator."
-          );
-
-          return;
-        }
-
-        const status = String(profile.status || "")
-          .trim()
-          .toLowerCase();
-
+        const status = String(profile.status || "").trim().toLowerCase();
         if (!["active", "approved"].includes(status)) {
-          await supabase.auth.signOut();
-
-          showMessage(
-            "Your school account is not active yet. Contact the school administrator."
-          );
-
+          contentArea.innerHTML = `
+            <p style="color: #B42318; margin-bottom: 16px;">Account is not active.</p>
+            <a href="./login.html" class="btn-primary">Go to Login</a>
+          `;
           return;
         }
 
@@ -496,27 +199,22 @@
         const destination = ROLE_DESTINATIONS[role];
 
         if (!destination) {
-          await supabase.auth.signOut();
-
-          showMessage(
-            "Your account has an unrecognized school role. Contact the administrator."
-          );
-
+          contentArea.innerHTML = `
+            <p style="color: #B42318; margin-bottom: 16px;">Unrecognized user role.</p>
+            <a href="./login.html" class="btn-primary">Go to Login</a>
+          `;
           return;
         }
 
+        // Redirect to appropriate dashboard
         window.location.replace(destination);
-      } catch (error) {
-        console.error("Login error:", error);
-
-        showMessage(
-          "Unable to complete sign-in. Check your connection and try again."
-        );
-      } finally {
-        button.disabled = false;
-        button.textContent = "Sign In";
+      } catch (err) {
+        console.error("Session check error:", err);
+        window.location.replace("./login.html");
       }
-    });
+    }
+
+    checkSessionAndRedirect();
   </script>
 </body>
 </html>
