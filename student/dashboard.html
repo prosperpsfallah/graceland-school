@@ -4,598 +4,120 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#063B7A">
-  <meta name="description" content="GRACAIS Student Academic Portal">
-  <title>Student Dashboard & Academic Hub | GRACAIS</title>
-  <link rel="icon" href="../logo.png" type="image/png">
-  <link rel="stylesheet" href="../assets/style.css">
-
-  <style>
-    .student-page {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    .welcome-panel {
-      padding: 28px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #063B7A, #0B5CAD);
-      color: white;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.08);
-    }
-
-    .welcome-panel h1 {
-      font-size: clamp(1.5rem, 4vw, 2.2rem);
-      margin: 0 0 10px 0;
-    }
-
-    .welcome-panel p {
-      line-height: 1.7;
-      margin: 0;
-      color: #E0F5FF;
-    }
-
-    .student-label {
-      display: inline-block;
-      margin-bottom: 12px;
-      padding: 4px 12px;
-      border: 1px solid rgba(255,255,255,.45);
-      border-radius: 30px;
-      font-size: .82rem;
-      font-weight: 600;
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .section-title {
-      color: #063B7A;
-      font-size: 1.25rem;
-      margin-bottom: 16px;
-    }
-
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-      margin-bottom: 26px;
-    }
-
-    .dashboard-card {
-      display: block;
-      padding: 20px;
-      border: 1px solid #D9E5F0;
-      border-radius: 12px;
-      background: white;
-      color: #17324d;
-      text-decoration: none;
-      box-shadow: 0 4px 16px rgba(3,42,88,.04);
-      transition: transform .15s ease, border-color .15s ease;
-      cursor: pointer;
-    }
-
-    .dashboard-card:hover {
-      transform: translateY(-2px);
-      border-color: #063B7A;
-    }
-
-    .card-icon {
-      display: grid;
-      place-items: center;
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      background: #E0F5FF;
-      color: #063B7A;
-      font-size: 1.25rem;
-      font-weight: bold;
-      margin-bottom: 14px;
-    }
-
-    .dashboard-card h3 {
-      color: #063B7A;
-      margin: 0 0 6px 0;
-      font-size: 1.05rem;
-    }
-
-    .dashboard-card p {
-      color: #64748b;
-      font-size: .88rem;
-      line-height: 1.6;
-      margin: 0;
-    }
-
-    .portal-card {
-      background: white;
-      border: 1px solid #D9E5F0;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
-    }
-
-    .status-note {
-      background: #FFF8E6;
-      border: 1px solid #F4D58D;
-      color: #795716;
-      border-radius: 10px;
-      padding: 14px 18px;
-      line-height: 1.6;
-      margin-bottom: 24px;
-      font-size: 0.9rem;
-    }
-
-    .profile-details {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .detail-item {
-      padding: 14px;
-      background: #F8FAFC;
-      border: 1px solid #E2E8F0;
-      border-radius: 8px;
-      overflow-wrap: anywhere;
-    }
-
-    .detail-item small {
-      display: block;
-      color: #64748b;
-      margin-bottom: 4px;
-      font-size: 0.8rem;
-    }
-
-    .detail-item strong {
-      color: #0F172A;
-      font-size: 0.95rem;
-    }
-
-    /* Table & Actions Styling */
-    .table-container {
-      width: 100%;
-      overflow-x: auto;
-      border: 1px solid #E2E8F0;
-      border-radius: 8px;
-      margin-top: 16px;
-    }
-
-    .portal-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.88rem;
-    }
-
-    .portal-table th {
-      background: #F8FAFC;
-      color: #063B7A;
-      font-weight: 600;
-      padding: 12px 16px;
-      border-bottom: 2px solid #E2E8F0;
-      white-space: nowrap;
-    }
-
-    .portal-table td {
-      padding: 14px 16px;
-      border-bottom: 1px solid #E2E8F0;
-      color: #334155;
-      vertical-align: middle;
-    }
-
-    .grade-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 12px;
-      background: #E0F5FF;
-      color: #063B7A;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .portal-action-wrapper {
-      position: relative;
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .portal-action-btn {
-      background: #F1F5F9;
-      border: 1px solid #CBD5E1;
-      color: #0F172A;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .portal-action-btn:hover { background: #E2E8F0; }
-
-    .portal-dropdown-menu {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: 100%;
-      margin-top: 4px;
-      background: #ffffff;
-      border: 1px solid #E2E8F0;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      min-width: 170px;
-      z-index: 50;
-      overflow: hidden;
-    }
-
-    .portal-dropdown-menu.show { display: block; }
-
-    .portal-dropdown-item {
-      width: 100%;
-      text-align: left;
-      padding: 10px 14px;
-      background: transparent;
-      border: none;
-      color: #334155;
-      font-size: 0.85rem;
-      font-weight: 500;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: background 0.15s ease;
-    }
-
-    .portal-dropdown-item:hover {
-      background: #F8FAFC;
-      color: #063B7A;
-    }
-
-    .empty-state-cell {
-      text-align: center;
-      padding: 32px 16px;
-      color: #64748B;
-    }
-
-    @media (max-width: 850px) {
-      .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    @media (max-width: 560px) {
-      .student-page { padding: 16px; }
-      .dashboard-grid, .profile-details { grid-template-columns: 1fr; }
-      .welcome-panel { padding: 20px; }
-    }
-  </style>
+  <meta name="description" content="GRACAIS Student Portal Dashboard">
+  <title>Student Dashboard | GRACAIS E-Portal</title>
+  <link rel="icon" href="./0D4244B7-EEBA-4E94-8009-2C2063D1E070.png" type="image/png">
+  <link rel="stylesheet" href="./assets/style.css">
 </head>
-
 <body>
   <div id="app">
-    <p style="padding:24px;">Checking student access…</p>
+    <main class="page-content" id="pageContent">
+      <div style="padding: 40px; text-align: center; color: #063B7A;">
+        <h2>Loading Student Dashboard...</h2>
+      </div>
+    </main>
   </div>
 
   <script type="module">
-    import {
-      requireUser,
-      setupLogout,
-      esc
-    } from "../assets/app.js";
+    import { requireUser, setupLogout } from "./assets/app.js";
+    import { initLayout } from "./assets/layout.js";
+    import { supabase } from "./assets/supabase.js";
 
     const ALLOWED_ROLES = ["student"];
-    let studentSummaryRecords = [];
 
-    function toggleActionDropdown(button) {
-      const currentDropdown = button.nextElementSibling;
-      const allDropdowns = document.querySelectorAll(".portal-dropdown-menu");
-      
-      allDropdowns.forEach(menu => {
-        if (menu !== currentDropdown) {
-          menu.classList.remove("show");
-        }
-      });
-
-      if (currentDropdown) {
-        currentDropdown.classList.toggle("show");
+    async function initStudentDashboard() {
+      // Initialize layout with student role navigation
+      if (typeof initLayout === "function") {
+        initLayout("student", "student-dashboard.html", "Student Dashboard");
       }
-    }
-
-    document.addEventListener("click", (e) => {
-      if (!e.target.closest(".portal-action-wrapper")) {
-        document.querySelectorAll(".portal-dropdown-menu").forEach(menu => {
-          menu.classList.remove("show");
-        });
-      }
-    });
-
-    function renderSummaryTable(records) {
-      const tbody = document.getElementById("summaryTableBody");
-      const status = document.getElementById("summaryStatus");
-      if (!tbody || !status) return;
-
-      status.textContent = `${records.length} record${records.length === 1 ? "" : "s"} loaded`;
-
-      if (!records.length) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="5" class="empty-state-cell">
-              <div style="font-size:28px; margin-bottom:8px;">📘</div>
-              <strong style="color:#063B7A; display:block; margin-bottom:4px;">No academic records connected</strong>
-              <span>Your grades, subjects, and attendance summary will sync automatically when verified in Supabase.</span>
-            </td>
-          </tr>
-        `;
-        return;
+      if (typeof setupLogout === "function") {
+        setupLogout();
       }
 
-      tbody.innerHTML = records.map((item, index) => {
-        const subjectName = item.subject_name || "—";
-        const gradeVal = item.grade || "—";
-        const attendanceVal = item.attendance || "—";
-        const periodVal = item.period || "Current";
+      // Secure the page for students
+      const auth = await requireUser(ALLOWED_ROLES);
+      if (!auth) return;
 
-        return `
-          <tr>
-            <td style="font-weight:600; color:#0F172A;">${esc(subjectName)}</td>
-            <td><span class="grade-badge">${esc(gradeVal)}</span></td>
-            <td>${esc(attendanceVal)}</td>
-            <td>${esc(periodVal)}</td>
-            <td>
-              <div class="portal-action-wrapper">
-                <button type="button" class="portal-action-btn action-toggle-btn">
-                  Actions ▾
-                </button>
-                <div class="portal-dropdown-menu">
-                  <button type="button" class="portal-dropdown-item inspect-btn" data-index="${index}">
-                    👁️ Inspect Record
-                  </button>
-                  <button type="button" class="portal-dropdown-item copy-btn" data-subject="${esc(subjectName)}" data-grade="${esc(gradeVal)}">
-                    📋 Copy Summary
-                  </button>
-                </div>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join("");
+      const pageContent = document.getElementById("pageContent");
+      if (!pageContent) return;
 
-      tbody.querySelectorAll(".action-toggle-btn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          toggleActionDropdown(btn);
-        });
-      });
+      pageContent.innerHTML = `
+        <section class="page-heading" style="margin-bottom: 24px;">
+          <div>
+            <h1>Welcome, Student</h1>
+            <p>Graceland Academy International School of Excellence (GRACAIS) [Grades 4th - 12th].</p>
+          </div>
+        </section>
 
-      tbody.querySelectorAll(".inspect-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const item = records[btn.dataset.index];
-          alert(`--- Academic Details ---\nSubject: ${item.subject_name || 'N/A'}\nGrade: ${item.grade || 'N/A'}\nAttendance Rate: ${item.attendance || 'N/A'}\nPeriod: ${item.period || 'N/A'}`);
-        });
-      });
-
-      tbody.querySelectorAll(".copy-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const text = `${btn.dataset.subject}: ${btn.dataset.grade}`;
-          navigator.clipboard.writeText(text);
-          alert(`Copied summary: ${text}`);
-        });
-      });
-    }
-
-    function renderDashboard(profile) {
-      const app = document.getElementById("app");
-
-      const firstName = profile.first_name || "";
-      const lastName = profile.last_name || "";
-      const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Student";
-
-      app.innerHTML = `
-        <div class="portal-shell">
-          <aside class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-              <img
-                src="../logo.png"
-                alt="GRACAIS logo"
-                style="width:48px;height:48px;object-fit:contain;"
-                onerror="this.style.display='none'"
-              >
-              <div>
-                <strong>GRACAIS</strong>
-                <small>Student Portal</small>
-              </div>
-            </div>
-
-            <nav class="sidebar-nav" aria-label="Student navigation">
-              <a href="./dashboard.html" aria-current="page">Dashboard</a>
-              <a href="./grades.html">My Grades</a>
-              <a href="./attendance.html">My Attendance</a>
-              <a href="./subjects.html">My Subjects</a>
-              <a href="./schedule.html">My Schedule</a>
-              <a href="./announcements.html">Announcements</a>
-              <a href="./profile.html">My Profile</a>
-              <a href="./password.html">Change Password</a>
-            </nav>
-
-            <div class="sidebar-footer">
-              <button type="button" id="logoutButton" class="logout-button">
-                Sign Out
-              </button>
-            </div>
-          </aside>
-
-          <div class="main-area">
-            <header class="topbar">
-              <button
-                type="button"
-                id="menuButton"
-                aria-label="Open navigation menu"
-                aria-expanded="false"
-              >☰</button>
-
-              <div>
-                <strong>Student Dashboard</strong>
-                <div style="font-size:13px;color:#64748b;">
-                  GRACAIS Academic Portal [Grades 4th - 12th]
-                </div>
-              </div>
-            </header>
-
-            <main class="student-page">
-              <section class="welcome-panel">
-                <span class="student-label">Student Account</span>
-                <h1>Welcome, ${esc(firstName || "Student")}!</h1>
-                <p>
-                  Access your academic grades, attendance logs, class timetables, and official announcements for Graceland Academy International School of Excellence.
-                </p>
-              </section>
-
-              <div class="status-note">
-                <strong>Student Portal Activity:</strong>
-                Academic records, grades, and schedules synchronize in real-time with authorized school records.
-              </div>
-
-              <!-- Quick Links Grid -->
-              <section>
-                <h2 class="section-title">Academic Modules</h2>
-
-                <div class="dashboard-grid">
-                  <a class="dashboard-card" href="./grades.html">
-                    <div class="card-icon" aria-hidden="true">A</div>
-                    <h3>My Grades</h3>
-                    <p>View your academic scores and grading period results.</p>
-                  </a>
-
-                  <a class="dashboard-card" href="./attendance.html">
-                    <div class="card-icon" aria-hidden="true">✓</div>
-                    <h3>My Attendance</h3>
-                    <p>Review recorded attendance history and stats.</p>
-                  </a>
-
-                  <a class="dashboard-card" href="./subjects.html">
-                    <div class="card-icon" aria-hidden="true">▤</div>
-                    <h3>My Subjects</h3>
-                    <p>View assigned class subjects and teachers.</p>
-                  </a>
-
-                  <a class="dashboard-card" href="./schedule.html">
-                    <div class="card-icon" aria-hidden="true">◷</div>
-                    <h3>My Schedule</h3>
-                    <p>Check your published class timetable.</p>
-                  </a>
-
-                  <a class="dashboard-card" href="./announcements.html">
-                    <div class="card-icon" aria-hidden="true">◉</div>
-                    <h3>Announcements</h3>
-                    <p>Read published notices from administration.</p>
-                  </a>
-
-                  <a class="dashboard-card" href="./profile.html">
-                    <div class="card-icon" aria-hidden="true">♙</div>
-                    <h3>My Profile</h3>
-                    <p>View account profile information and security.</p>
-                  </a>
-                </div>
-              </section>
-
-              <!-- Academic Overview Data Table Card -->
-              <section class="portal-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-                  <div>
-                    <h2 class="section-title" style="margin:0;">Academic Summary</h2>
-                    <p style="margin:4px 0 0 0; color:#64748b; font-size:0.88rem;">Overview of your connected subject records.</p>
-                  </div>
-                  <p id="summaryStatus" style="margin:0; font-weight:600; color:#063B7A; font-size:0.88rem;">0 records loaded</p>
-                </div>
-
-                <div class="table-container">
-                  <table class="portal-table">
-                    <thead>
-                      <tr>
-                        <th>Subject</th>
-                        <th>Grade</th>
-                        <th>Attendance</th>
-                        <th>Period</th>
-                        <th style="text-align: right;">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="summaryTableBody">
-                      <tr>
-                        <td colspan="5" class="empty-state-cell">
-                          <div style="font-size:28px; margin-bottom:8px;">📘</div>
-                          <strong style="color:#063B7A; display:block; margin-bottom:4px;">No academic records connected</strong>
-                          <span>Your grades, subjects, and attendance summary will sync automatically when verified in Supabase.</span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-
-              <!-- Profile Details Card -->
-              <section class="portal-card">
-                <h2 class="section-title" style="margin-top:0;">Student Identity</h2>
-
-                <div class="profile-details">
-                  <div class="detail-item">
-                    <small>Student Name</small>
-                    <strong>${esc(fullName)}</strong>
-                  </div>
-
-                  <div class="detail-item">
-                    <small>Account Role</small>
-                    <strong>Student (Grades 4th - 12th)</strong>
-                  </div>
-
-                  <div class="detail-item">
-                    <small>School ID</small>
-                    <strong>${esc(profile.school_id || "Not assigned")}</strong>
-                  </div>
-
-                  <div class="detail-item">
-                    <small>Account Status</small>
-                    <strong style="color:#15803D;">Active</strong>
-                  </div>
-                </div>
-              </section>
-            </main>
+        <div class="portal-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+          <div class="card portal-card">
+            <h2>Attendance Records</h2>
+            <p>View your personal attendance history.</p>
+            <div id="studentAttendance" style="margin-top: 12px; font-weight: 500; color: #334155;">Loading attendance...</div>
           </div>
 
-          <div id="sidebarOverlay" class="sidebar-overlay"></div>
+          <div class="card portal-card">
+            <h2>Academic Profile</h2>
+            <p>Your enrollment and class details.</p>
+            <div id="studentProfile" style="margin-top: 12px; font-weight: 500; color: #334155;">Loading profile...</div>
+          </div>
         </div>
+
+        <style>
+          .portal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #D9E5F0;
+            box-shadow: 0 4px 16px rgba(3, 42, 88, 0.04);
+            padding: 24px;
+          }
+          .page-heading h1 { color: #063B7A; font-size: 1.5rem; margin: 0; }
+          .page-heading p { color: #64748B; margin: 4px 0 0 0; font-size: 0.9rem; }
+        </style>
       `;
 
-      const menuButton = document.getElementById("menuButton");
-      const sidebar = document.getElementById("sidebar");
-      const overlay = document.getElementById("sidebarOverlay");
+      // Fetch student data safely
+      try {
+        const userId = auth.user?.id;
+        
+        // Fetch profile info
+        const { data: profileData } = await supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("id", userId)
+          .maybeSingle();
 
-      function closeMenu() {
-        sidebar.classList.remove("open");
-        overlay.classList.remove("show");
-        menuButton.setAttribute("aria-expanded", "false");
+        const profileDiv = document.getElementById("studentProfile");
+        if (profileDiv) {
+          profileDiv.innerHTML = profileData 
+            ? `Name: ${profileData.first_name || ''} ${profileData.last_name || ''}<br>Role: Student<br>Status: Active`
+            : `Account connected successfully.`;
+        }
+
+        // Fetch attendance for this user
+        const { data: attendanceData } = await supabase
+          .from("attendance")
+          .select("*")
+          .eq("student_id", userId)
+          .order("date", { ascending: false })
+          .limit(5);
+
+        const attendanceDiv = document.getElementById("studentAttendance");
+        if (attendanceDiv) {
+          if (!attendanceData || attendanceData.length === 0) {
+            attendanceDiv.innerHTML = "No attendance records found.";
+          } else {
+            attendanceDiv.innerHTML = attendanceData.map(a => 
+              `<div style="padding: 6px 0; border-bottom: 1px solid #E2E8F0;">Date: ${a.date || a.created_at || 'N/A'} — <b>${a.status || 'Present'}</b></div>`
+            ).join("");
+          }
+        }
+      } catch (err) {
+        console.error("Error loading student details:", err);
       }
-
-      menuButton.addEventListener("click", () => {
-        const isOpen = sidebar.classList.toggle("open");
-        overlay.classList.toggle("show", isOpen);
-        menuButton.setAttribute("aria-expanded", String(isOpen));
-      });
-
-      overlay.addEventListener("click", closeMenu);
-
-      document.addEventListener("keydown", event => {
-        if (event.key === "Escape") closeMenu();
-      });
-
-      renderSummaryTable(studentSummaryRecords);
     }
 
-    setupLogout();
-
-    const result = await requireUser(ALLOWED_ROLES);
-
-    if (result) {
-      renderDashboard(result.profile || {});
-      setupLogout();
-    }
+    initStudentDashboard();
   </script>
 </body>
 </html>
